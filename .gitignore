@@ -1,0 +1,36 @@
+# Gradle / build output
+.gradle/
+build/
+*/build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Machine-specific — contains YOUR SDK path, will break on other machines
+local.properties
+
+# IDE
+*.iml
+.idea/
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+
+# Signing keys — never commit these
+*.jks
+*.keystore
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+data/
+*.h5
+*.tflite
+*.pt
+*.onnx
