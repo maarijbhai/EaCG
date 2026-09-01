@@ -34,3 +34,6 @@ data/
 *.tflite
 *.pt
 *.onnx
+
+# Downloaded dataset (wget -r artefact) — never commit
+physionet.org/

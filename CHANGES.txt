@@ -1,0 +1,355 @@
+================================================================================
+CHANGES — ECG-App
+Session of 2026-09-01
+================================================================================
+
+Everything below was done in one session, starting from a repository that
+contained three tracked files (.gitattributes, .gitignore, README.md) and no
+code at all. The Python prototype described in CLAUDE.md had never been
+written; this session wrote it.
+
+Read section 6 before running anything. The dataset is still incomplete and
+the reason is not something a re-run will fix by itself.
+
+
+--------------------------------------------------------------------------------
+1. DATASET — moved, protected, partially repaired
+--------------------------------------------------------------------------------
+
+1.1  Moved the PTB-XL copy to the location CLAUDE.md specifies.
+
+       from  physionet.org/files/ptb-xl/1.0.3/
+       to    data/ptb-xl/1.0.3/
+
+     The old path was a `wget -r` artefact — wget recreates the server's URL
+     path on disk, which is why the dataset was sitting in a directory named
+     after the hostname. The move was a same-volume directory rename, so it
+     was instant rather than a 42,000-file copy.
+
+     Deleted afterwards: physionet.org/robots.txt and the empty directory
+     chain above 1.0.3. Nothing else was in that tree.
+
+1.2  Closed a live commit hazard.  .gitignore covered `data/` but said
+     nothing about `physionet.org/`, so the entire dataset — ~42,000 files,
+     ~479 MB of clinical waveforms — was untracked and committable. A single
+     `git add -A` would have written it into history permanently. Added:
+
+       # Downloaded dataset (wget -r artefact) — never commit
+       physionet.org/
+
+     The rule is kept even though that directory no longer exists, so a
+     future re-download into the same place is protected. The dataset's new
+     home under data/ was already covered by the existing `data/` rule.
+
+1.3  Partially repaired the incomplete download.  State before and after:
+
+                        before        after      complete
+       records100/.dat  20,947        20,947     21,799
+       records500/.dat       0         4,277     21,799
+
+     The 100 Hz gap (852 records) is unchanged — see section 6.
+
+
+--------------------------------------------------------------------------------
+2. REPOSITORY HOUSEKEEPING
+--------------------------------------------------------------------------------
+
+2.1  Deleted python/pipeline_initial.py — a zero-byte placeholder whose name
+     matched nothing in the documented layout.
+
+2.2  Added .gitkeep to android/ and data/.  Both directories existed locally
+     but were empty, and git cannot track an empty directory, so the layout
+     documented in CLAUDE.md did not survive a clone. data/.gitkeep is
+     force-added because `data/` is otherwise ignored wholesale.
+
+2.3  Committed CLAUDE.md.  It was untracked, meaning the project's domain
+     invariants and design decisions existed only on one machine.
+
+
+--------------------------------------------------------------------------------
+3. NEW CODE — python/ecgproto/
+--------------------------------------------------------------------------------
+
+Written to the module layout in CLAUDE.md. British spelling throughout
+(digitise, binarise, normalise). Docstrings carry the domain invariants
+rather than restating the code.
+
+  __init__.py    Package doc; states that the classical pipeline is the
+                 control condition and is not to be improved away.
+
+  ptbxl.py       PTB-XL loading and labels.
+                 - load_metadata()      parses scp_codes, aggregates the five
+                                        diagnostic superclasses
+                 - superclass_matrix()  (N, 5) MULTI-LABEL indicator. Rows may
+                                        sum to 0 or >1. Sigmoid + BCE, never
+                                        softmax.
+                 - split_folds()        strat_fold 1-8 / 9 / 10. Exists so no
+                                        caller reaches for train_test_split;
+                                        21,799 records come from 18,869
+                                        patients and a random split leaks them.
+                 - load_record()        (n, 12) float64 IN MILLIVOLTS.
+                                        wfdb.rdsamp returns p_signal, which has
+                                        already had ADC gain applied — anything
+                                        that multiplies by gain again is
+                                        double-converting. The function raises
+                                        if a header does not declare mV.
+
+  synth.py       Test signals and single-strip rendering.
+                 - synthetic_ecg()      sum of five Gaussians. A FIXTURE, not a
+                                        physiological model.
+                 - render_printout()    one continuous lead, red grid, 1 mm
+                                        minor / 5 mm major, 25 mm/s, 10 mm/mV
+                 - draw_trace()         sub-pixel polyline (shift=4); integer
+                                        vertices would quantise amplitude
+                                        visibly at low px/mm
+                 - RenderSpec           ground-truth geometry. Explicitly the
+                                        answer key: digitise() must never be
+                                        handed one, or the calibration question
+                                        is begged.
+
+  layout.py      Clinical 3x4 + rhythm strip.
+                 - render_12lead()      12 cells of 2.5 s + full-width lead II
+                 - CellSpec             records t_start_s/t_end_s IN THE
+                                        ORIGINAL RECORDING per cell, because
+                                        columns are CONSECUTIVE windows — V4
+                                        (column 3) is 7.5-10.0 s while lead I
+                                        (column 0) is 0.0-2.5 s. They are not
+                                        simultaneous.
+                 - printed_fraction     measured at 33.3%, matching the
+                                        documented invariant exactly
+                 - lead labels are drawn in the same ink as the trace, so
+                                        binarisation returns them as signal.
+                                        Deliberate: real printouts are labelled
+                                        and segmentation must reject them.
+
+  digitise.py    The classical pipeline. Single continuous strip only.
+                 - estimate_grid_pitch()  see section 4
+                 - binarise_trace()       thresholds 255-R. Both white paper
+                                          and red grid keep a saturated red
+                                          channel; neutral ink does not. Breaks
+                                          on black-and-white photocopies, as
+                                          documented.
+                 - trace_positions()      per-column ink centroid; NaN where no
+                                          ink, so "no data" cannot be read as
+                                          "0 mV"
+                 - baseline_from_trace()  median. See section 4.
+                 - pixels_to_mv()         (baseline - y) / px_per_mv. See
+                                          section 4.
+                 - digitise()             returns DigitiseResult with the
+                                          signal, the recovered calibration and
+                                          a coverage figure
+
+  evaluate.py    Metrics, reported together or not at all.
+                 - snr_db, shifted_snr_db, rmse_mv, pcc
+                 - gain_ratio()   ADDED beyond the CLAUDE.md list. Least-squares
+                                  amplitude scale. It is what separates "the
+                                  calibration is wrong" from "the image needs
+                                  more pixels" — both raise RMSE, and without
+                                  it the two are indistinguishable. This turned
+                                  out to matter; see section 5.
+                 - Metrics.diagnose()  reads the metrics jointly and names the
+                                  likely fault in words
+
+  run_baseline.py   synthetic signal -> render -> digitise -> score, swept over
+                    px_per_mm. Isolates resolution.
+  run_ptbxl.py      the same on real PTB-XL waveforms, test fold only. Can also
+                    render a 3x4 printout, which it deliberately does NOT
+                    digitise.
+  verify_ptbxl.py   checksums the local copy against the shipped SHA256SUMS.txt.
+                    Existence alone is insufficient — a connection dropped
+                    mid-file leaves a short, readable, wrong .dat.
+  fetch_ptbxl.py    ADDED beyond the CLAUDE.md layout. Resumable, rate-limited
+                    fetcher. Justification in section 6.
+
+
+--------------------------------------------------------------------------------
+4. THE THREE THINGS MOST LIKELY TO BE GOT WRONG
+--------------------------------------------------------------------------------
+
+4.1  SIGN CONVENTION.  Image rows grow downward; millivolts grow upward.
+
+       mv = (baseline_px - y_px) / px_per_mv
+
+     Writing (y_px - baseline_px) yields a waveform correct in every respect
+     except inverted — which PCC reports as a tidy -1.0 rather than as a
+     failure. Verified both ways: upright PCC +0.995, deliberately flipped
+     PCC -0.995, and diagnose() names the sign convention in the flipped case.
+
+4.2  GRID PITCH, and why it no longer locks onto a harmonic.  The pitch is
+     taken as the MEDIAN SPACING BETWEEN SUCCESSIVE AUTOCORRELATION PEAKS,
+     not the tallest peak. On ECG paper the 5 mm peak is taller than the 1 mm
+     one — at a 5 mm lag the heavy major rules align with each other, whereas
+     at 1 mm the major rules must align with minor ones. Taking the global
+     maximum therefore locks onto the 5x harmonic. Peak spacing is immune to
+     which harmonic is tallest, because the peaks at 1, 2, 3 and 4 mm all
+     still exist.
+
+     Measured: pitch recovered to within 0.01% at 4, 6, 8, 12 and 16 px/mm.
+     At 3 px/mm it returns NaN and digitise() raises, rather than returning a
+     confident wrong answer.
+
+     Where it would still fail, and this is not hypothetical:
+       - Below ~3-4 px/mm, or under blur or JPEG chroma subsampling, the 1 mm
+         rules stop resolving and only the 5 mm ones survive. The peak spacing
+         is then a clean 5 mm and the function returns a CONFIDENT 5x ERROR.
+         Nothing in the autocorrelation distinguishes this. Guard it outside
+         by sanity-checking the implied paper speed.
+       - Rotation beyond ~1 degree smears line energy across the projection.
+       - Perspective makes a single pitch wrong everywhere but the centre;
+         GridEstimate.anisotropy catches the gross cases.
+       - Non-red grids: redness() returns near-zero on a photocopy.
+
+4.3  BASELINE ESTIMATION is the median inked row, and this is a real
+     limitation rather than a settled choice. The median assumes the trace
+     spends more than half its columns near baseline. That fails for a lead
+     with sustained large deflections — deep S waves in V1-V2, giant T waves,
+     VT, marked ST elevation at high rate. The estimate then drifts toward
+     the deflection and the whole signal acquires a DC offset which is
+     INVISIBLE TO PCC (offset-invariant) and shows up only in RMSE. This is
+     precisely why the metrics have to be read together.
+
+4.4  RESAMPLING BIAS in align_length — the default was changed to
+     "truncate" because "resample" flatters the digitiser. Stretching the
+     reconstruction onto the reference's length is a time warp fitted from
+     the very quantity being measured: if grid pitch was 2% off, so px_per_s
+     was 2% off, resampling by length ratio silently UNDOES that error before
+     any metric sees it.
+
+     Measured, on a signal with a deliberate 2% time error:
+
+       truncate   SNR  -2.08 dB     (correctly terrible)
+       resample   SNR  +49.40 dB    (error erased)
+
+     A 51 dB swing on the same pair of signals. "resample" is still
+     available, for the case where the length difference is known to be a
+     cropping artefact rather than a calibration one.
+
+
+--------------------------------------------------------------------------------
+5. VERIFICATION — measured, not assumed
+--------------------------------------------------------------------------------
+
+5.1  Resolution sweep, synthetic signal at 500 Hz (run_baseline.py):
+
+       px/mm   est px/mm   pitch err   SNR dB   RMSE mV     PCC    gain
+        3.0          --          --       --        --      --      --   fails
+        4.0       4.000      +0.01%     4.57    0.1057   0.778   0.603
+        6.0       6.000      +0.00%    10.23    0.0551   0.953   0.793
+        8.0       8.000      +0.00%    13.81    0.0365   0.981   0.864
+       12.0      12.000      +0.00%    19.44    0.0191   0.996   0.928
+       16.0      16.000      +0.00%    23.56    0.0119   0.998   0.956
+
+5.2  THE MOST IMPORTANT RESULT HERE is the gain column. The classical tracer
+     SYSTEMATICALLY UNDER-READS AMPLITUDE — by 40% at 4 px/mm, and still by
+     4.4% at 16 px/mm — while grid pitch is recovered essentially perfectly.
+
+     The cause is column-centroid tracing. On a steep QRS upstroke a single
+     pixel column contains a tall vertical run of ink, and its centroid sits
+     at the run's midpoint, so the R peak is clipped by roughly half the
+     within-column excursion. It is resolution-dependent, it is not a
+     calibration fault, and it is the dominant amplitude error of the
+     classical path. It is also the obvious thing a learned tracer would be
+     expected to beat, which makes it a useful number for the thesis.
+
+     Without gain_ratio this shows up only as elevated RMSE and would
+     plausibly have been misread as a calibration bug for some time.
+
+5.3  Real PTB-XL waveforms, test fold, 5 records x 2 leads at 100 Hz,
+     8 px/mm (run_ptbxl.py):
+
+       SNR  dB : median 10.13   IQR 8.57-12.12
+       RMSE mV : median 0.0489  max 0.0707
+       PCC     : median  0.972  min 0.933
+       gain    : 0.79-0.92, consistently below 1 — same effect as 5.2
+
+5.4  3x4 printout rendered from real record 9 and inspected visually. Grid,
+     traces and the discontinuities at the 2.5 s column boundaries all
+     present and correct. printed_fraction returns 33.3%, matching the
+     documented invariant. Deliberately not digitised.
+
+5.5  NOTE ON 5.1 AND 5.3: these are upper bounds, not field estimates. The
+     images are rendered by the same code that defines the grid — no camera,
+     no paper, no perspective, no shadow, no sensor noise. And at 100 Hz the
+     renderer interpolates between samples, which flatters the digitiser
+     further. Real-photograph numbers will be worse and are not yet
+     measurable.
+
+
+--------------------------------------------------------------------------------
+6. NOT DONE — read this before running anything
+--------------------------------------------------------------------------------
+
+6.1  THE DOWNLOAD IS INCOMPLETE, and it stopped for a reason worth knowing.
+
+     Fetching at 28-way concurrency got this machine RATE-LIMITED by
+     PhysioNet after roughly 4,500 requests. Once blocked, every subsequent
+     connection fails — including ones that would otherwise have succeeded —
+     and it had not lifted by the end of the session. Retrying harder is what
+     caused it; the fix is to wait and then go slower.
+
+     Outstanding:
+       records500/  17,522 of 21,799 records still missing
+       records100/     852 of 21,799 records still missing
+
+     To finish, once the block has lifted (test with:
+     curl -sS -o /dev/null -w "%{http_code}\n" https://physionet.org/files/ptb-xl/1.0.3/RECORDS
+     — a 200 means you are unblocked):
+
+       python python/fetch_ptbxl.py --concurrency 4
+       python python/verify_ptbxl.py
+
+     fetch_ptbxl.py recomputes the work list from what is on disk at the
+     start of every pass, so it resumes for free and can be interrupted
+     safely. Do not raise --concurrency to "speed it up".
+
+6.2  WHY THE MISSING 100 Hz RECORDS MATTER MORE THAN THE COUNT SUGGESTS.
+     The 852 are not a uniform sample. Loss by fold:
+
+       folds 1-8 (train)   780 of 17,418   4.5%
+       fold 9    (val)      35 of  2,183   1.6%
+       fold 10   (test)     37 of  2,198   1.7%
+
+     Nearly a 3x difference between train and test. This is not a clean 96%
+     subsample: the published folds are no longer the published folds, and
+     results will not be comparable with PTB-XL benchmark numbers until it is
+     repaired.
+
+6.3  The 500 Hz set matters for one specific reason: it is the control for
+     CLAUDE.md limitation #4. At 100 Hz and 25 mm/s there are fewer samples
+     than pixel columns, so the renderer interpolates and the digitiser looks
+     better than it should. Rendering from 500 Hz removes that effect. Until
+     records500 is complete, that check cannot be run.
+
+6.4  NO TESTS were written — they were not in the task list. The numeric
+     properties worth asserting, in rough priority order:
+       - pixels_to_mv sign: a trace above baseline yields positive mV
+       - estimate_grid_pitch recovers a rendered pitch to within ~1% across
+         4-16 px/mm, and returns NaN rather than a harmonic below that
+       - round-trip render -> digitise holds PCC > 0.95 at >= 8 px/mm
+       - align_length("truncate") preserves a deliberate time error that
+         align_length("resample") erases
+       - superclass_matrix rows can sum to 0 and to >1
+       - split_folds shares no patient_id between train and test
+
+6.5  STILL MISSING for a real 3x4 printout: lead segmentation. digitise()
+     traces straight across cell boundaries and produces a concatenation of
+     fragments of different leads at different times, silently. Nothing warns
+     about it. This is the next stage.
+
+6.6  STILL MISSING for Android: everything. android/ contains only .gitkeep.
+     No environment pinning either — numpy 2.5.2, opencv 5.0.0, scipy 1.16.2,
+     pandas 3.0.2, wfdb 4.3.1 are installed globally on Python 3.13.5 and
+     nothing records that they should be. pandas 3.x and opencv 5.x are both
+     recent majors; worth pinning before results depend on them.
+
+
+--------------------------------------------------------------------------------
+7. ENVIRONMENT AS TESTED
+--------------------------------------------------------------------------------
+
+  Python 3.13.5, Windows 11
+  numpy 2.5.2 · opencv 5.0.0 · scipy 1.16.2 · pandas 3.0.2 · wfdb 4.3.1
+  Repo at C:\dev\ECG-App — outside OneDrive, as CLAUDE.md requires
+  Disk: 75 GB free (the remaining 500 Hz download needs ~2.1 GB)
+
+================================================================================
