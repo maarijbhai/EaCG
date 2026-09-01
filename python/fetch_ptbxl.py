@@ -34,6 +34,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 import time
@@ -54,6 +55,23 @@ def missing_paths(root: Path, rate: str) -> list[str]:
     the runtime. Run verify_ptbxl.py afterwards to catch truncated files.
     """
     return [p for _, p in read_sums(root) if wanted(p, rate) and not (root / p).exists()]
+
+
+def reachable(timeout: int = 20) -> bool:
+    """One cheap request, to tell 'blocked' from 'slow'.
+
+    Without this the script grinds: when PhysioNet is refusing connections,
+    every one of the tens of thousands of queued requests still has to burn
+    its full connect timeout before failing. At 4-way concurrency and a 20 s
+    timeout that is hours of guaranteed failure. One probe up front turns
+    that into a sleep.
+    """
+    completed = subprocess.run(
+        ["curl", "-sS", "-o", os.devnull, "-w", "%{http_code}",
+         "--max-time", str(timeout), BASE_URL + "RECORDS"],
+        capture_output=True, text=True,
+    )
+    return completed.returncode == 0 and completed.stdout.strip() == "200"
 
 
 def fetch_pass(root: Path, paths: list[str], concurrency: int, timeout: int) -> int:
@@ -99,15 +117,24 @@ def main(argv: list[str] | None = None) -> int:
 
     for attempt in range(1, args.max_passes + 1):
         pending = missing_paths(root, args.rate)
-        print(f"pass {attempt}: {len(pending)} files missing")
+        print(f"pass {attempt}: {len(pending)} files missing", flush=True)
         if not pending:
             print("nothing left to fetch")
             return 0
+
         if args.dry_run:
+            # Before the reachability probe: a dry run reports what would be
+            # fetched, which is a question about the disk, not the network.
             for relative in pending[:10]:
                 print(f"  would fetch {relative}")
             print(f"  ... and {max(0, len(pending) - 10)} more")
             return 0
+
+        if not reachable(args.connect_timeout):
+            print(f"  physionet.org unreachable (rate-limited?) -- "
+                  f"waiting {args.cooldown}s", flush=True)
+            time.sleep(args.cooldown)
+            continue
 
         for start in range(0, len(pending), args.batch):
             batch = pending[start: start + args.batch]
