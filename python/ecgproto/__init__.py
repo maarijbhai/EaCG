@@ -11,9 +11,10 @@ Module map
 ptbxl     loading real 12-lead records and their multi-label diagnoses
 synth     synthetic test signals and single-strip printout rendering
 layout    clinical 3x4 + rhythm strip printout rendering
+deskew    recover and remove in-plane rotation (pipeline stage 2)
 digitise  image -> waveform, the classical pipeline
 evaluate  SNR / shifted SNR / RMSE / PCC reconstruction metrics
 """
 
-__all__ = ["ptbxl", "synth", "layout", "digitise", "evaluate"]
+__all__ = ["ptbxl", "synth", "layout", "deskew", "digitise", "evaluate"]
 __version__ = "0.1.0"

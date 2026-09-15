@@ -1,0 +1,29 @@
+{
+  "experiment": "interp",
+  "utc": "2026-09-15T22:23:23+00:00",
+  "git_commit": "44503a2d9a3da2a4dc4182e2e6d0c580d31a5839",
+  "git_dirty": true,
+  "params": {
+    "root": "C:\\dev\\ECG-App\\data\\ptb-xl\\1.0.3",
+    "n": 12,
+    "n_interp": 6,
+    "rate": 100,
+    "lead": "II",
+    "px_per_mm": 8.0,
+    "angles": [
+      1.0,
+      3.0
+    ],
+    "measure": "ssd",
+    "interp": "nearest",
+    "sim_interp": "lanczos"
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "scipy": "1.16.2",
+    "opencv": "5.0.0",
+    "platform": "Windows-11-10.0.26100-SP0"
+  },
+  "n_rows": 36
+}

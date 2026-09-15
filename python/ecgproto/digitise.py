@@ -43,6 +43,7 @@ class GridEstimate:
     confidence: float          # mean autocorrelation height at accepted peaks
     n_peaks_x: int
     n_peaks_y: int
+    spacing_cv: float = float("nan")   # see below; the usable discriminator
 
     @property
     def px_per_mm(self) -> float:
@@ -55,6 +56,152 @@ class GridEstimate:
         mean = self.px_per_mm
         return abs(self.px_per_mm_x - self.px_per_mm_y) / mean if mean else float("inf")
 
+    # `confidence` is the mean autocorrelation height at the accepted peaks,
+    # and it does not work as a trust signal. Measured across every condition
+    # tested for the deskew report -- clean, rotated, blurred, JPEG-crushed,
+    # and outright failed estimates alike -- it stayed inside 0.45 to 0.64.
+    # The reason is structural rather than a tuning problem: peaks are
+    # *selected* by `peak_fraction` as a fraction of the maximum, so whatever
+    # survives selection is tall by construction and the mean height of the
+    # survivors is nearly a constant of the algorithm. It is kept because
+    # removing a field from a frozen dataclass breaks callers, and because a
+    # diagnostic known to be uninformative is worth more than a silently
+    # misleading one.
+    #
+    # `spacing_cv` is the coefficient of variation of the spacings between
+    # successive autocorrelation peaks. A clean comb has near-identical
+    # spacings, so it is small; a profile picking up unrelated structure has
+    # erratic ones. It is **advisory, not a rejection criterion**, because
+    # measurement showed it does not separate the cases that matter:
+    #
+    #   render at 4.0 px/mm   pitch correct to -0.0%   spacing_cv 0.412
+    #   fixture at 200 dpi    pitch wrong by +399%     spacing_cv 0.184
+    #
+    # The high value on the correct estimate is quantisation -- at a 4 px
+    # pitch the sub-sample refinement has little to work with, and the
+    # spacing scatter is a fixed fraction of a pixel divided by a small
+    # pitch. The low value on the wrong one is worse news: an unresolved
+    # minor grid produces a *genuinely regular* comb of 5 mm rules, and
+    # every internal statistic agrees it is excellent.
+    #
+    # A ratio of autocorrelation height at 5x the pitch against the pitch
+    # itself was also tried, on the theory that major rules are darker and
+    # would betray which family had been found. It does not separate either
+    # (1.21 and 1.31 on correct estimates; 1.48 on one that was 4x wrong).
+    #
+    # The conclusion is the one `estimate_grid_pitch` already documents:
+    # nothing inside the autocorrelation distinguishes a 1 mm grid from a
+    # 5 mm grid misread as 1 mm, because the two are the same picture at
+    # different distances. Only `check_calibration`'s paper-speed test,
+    # which brings in one fact from outside the image, catches it.
+
+
+#: Plausible ECG paper speeds, mm/s. 25 is conventional and 50 is the
+#: common alternative; the bounds are set wide enough to admit both plus
+#: honest estimation error, and narrow enough that the 5x harmonic failure
+#: (25 -> 5 mm/s, or 125) falls outside on either side.
+PAPER_SPEED_RANGE_MM_S = (15.0, 60.0)
+
+#: Largest |x - y| / mean accepted between the two axis pitches. Mild
+#: perspective moves them a few percent apart; a harmonic lock on one axis
+#: alone moves them by 60% or more.
+MAX_ANISOTROPY = 0.15
+
+#: Largest accepted coefficient of variation of autocorrelation peak
+#: spacings. A resolved grid sits near zero.
+MAX_SPACING_CV = 0.25
+
+
+@dataclass(frozen=True)
+class CalibrationCheck:
+    """Whether a `GridEstimate` may be trusted, and if not, why not.
+
+    These are the guards the `GridEstimate` docstrings promised and nothing
+    consulted. Audit finding B1: `estimate_grid_pitch` can lock onto a
+    harmonic and return a confident, self-consistent, wrong pitch, and the
+    resulting waveform is plausible in shape and wrong in amplitude by an
+    integer factor. Nothing downstream can detect that from the waveform,
+    so it has to be caught here or not at all.
+    """
+
+    ok: bool
+    reasons: tuple[str, ...]              # any of these means: do not use
+    warnings: tuple[str, ...] = ()        # worth logging, not worth refusing
+    implied_mm_per_s: float = float("nan")
+
+    def __bool__(self) -> bool:
+        return self.ok
+
+
+def check_calibration(
+    grid: GridEstimate,
+    image_width_px: int | None = None,
+    mm_per_s: float = MM_PER_S,
+    expected_duration_s: float | None = None,
+    max_anisotropy: float = MAX_ANISOTROPY,
+    max_spacing_cv: float = MAX_SPACING_CV,
+    paper_speed_range: tuple[float, float] = PAPER_SPEED_RANGE_MM_S,
+) -> CalibrationCheck:
+    """Sanity-check a recovered pitch before anything is calibrated with it.
+
+    The paper-speed test is the only one of these that can catch the 5x
+    harmonic failure, and it needs one fact from outside the image:
+    roughly how long the strip is meant to be. Grid pitch alone cannot
+    distinguish a correctly-read 1 mm grid from a 5 mm grid misread as
+    1 mm, because both are internally consistent -- the second is simply a
+    picture of a smaller region of paper. Supplying `expected_duration_s`
+    turns the strip width into an implied paper speed, and 25 mm/s misread
+    by 5x implies either 5 or 125 mm/s, both far outside anything a
+    machine prints. Without it the check is skipped rather than faked, and
+    the returned reasons say so.
+    """
+    reasons: list[str] = []
+    warnings: list[str] = []
+
+    if not np.isfinite(grid.px_per_mm_x) or not np.isfinite(grid.px_per_mm_y):
+        reasons.append(
+            f"an axis failed to resolve (x={grid.px_per_mm_x}, y={grid.px_per_mm_y})"
+        )
+    elif grid.anisotropy > max_anisotropy:
+        reasons.append(
+            f"anisotropy {grid.anisotropy:.3f} exceeds {max_anisotropy:.3f} "
+            f"(x={grid.px_per_mm_x:.3f}, y={grid.px_per_mm_y:.3f} px/mm) -- "
+            "perspective, or one axis locked onto a harmonic"
+        )
+
+    # Advisory only. See `GridEstimate`: this fires on correct estimates at
+    # low px/mm and stays quiet on the 5x harmonic failure, so rejecting on
+    # it would cost good measurements without buying the one it cannot see.
+    if np.isfinite(grid.spacing_cv) and grid.spacing_cv > max_spacing_cv:
+        warnings.append(
+            f"autocorrelation peak spacings are irregular "
+            f"(cv {grid.spacing_cv:.3f} > {max_spacing_cv:.3f})"
+        )
+
+    implied = float("nan")
+    if expected_duration_s and image_width_px and np.isfinite(grid.px_per_mm_x):
+        implied = image_width_px / (grid.px_per_mm_x * expected_duration_s)
+        lo, hi = paper_speed_range
+        if not (lo <= implied <= hi):
+            reasons.append(
+                f"implied paper speed {implied:.1f} mm/s outside "
+                f"[{lo:.0f}, {hi:.0f}] -- pitch is probably wrong by an "
+                f"integer factor (nominal {mm_per_s:.0f} mm/s)"
+            )
+
+    if expected_duration_s is None:
+        warnings.append(
+            "paper-speed check skipped: no expected_duration_s supplied, so "
+            "an integer-factor pitch error cannot be detected"
+        )
+
+    return CalibrationCheck(
+        ok=not reasons,
+        reasons=tuple(reasons),
+        warnings=tuple(warnings),
+        implied_mm_per_s=implied,
+    )
+
 
 @dataclass(frozen=True)
 class DigitiseResult:
@@ -65,6 +212,7 @@ class DigitiseResult:
     grid: GridEstimate
     baseline_px: float
     coverage: float            # fraction of columns that actually had ink
+    calibration: CalibrationCheck | None = None
 
 
 def redness(image: np.ndarray) -> np.ndarray:
@@ -121,18 +269,24 @@ def estimate_grid_pitch(
       photocopy and the profile is then mostly trace, not grid.
     """
     response = redness(image)
-    px_x, peaks_x, conf_x = _pitch_1d(
+    px_x, peaks_x, conf_x, cv_x = _pitch_1d(
         response.sum(axis=0), min_pitch_px, max_pitch_px, peak_fraction
     )
-    px_y, peaks_y, conf_y = _pitch_1d(
+    px_y, peaks_y, conf_y, cv_y = _pitch_1d(
         response.sum(axis=1), min_pitch_px, max_pitch_px, peak_fraction
     )
+    # The worse axis, not the mean: one bad axis is enough to poison
+    # `px_per_mm`, and averaging would hide it behind a good one.
+    worst_cv = float(np.nanmax([cv_x, cv_y])) if np.any(
+        np.isfinite([cv_x, cv_y])
+    ) else float("nan")
     return GridEstimate(
         px_per_mm_x=px_x,
         px_per_mm_y=px_y,
         confidence=float(np.nanmean([conf_x, conf_y])),
         n_peaks_x=peaks_x,
         n_peaks_y=peaks_y,
+        spacing_cv=worst_cv,
     )
 
 
@@ -141,43 +295,54 @@ def _pitch_1d(
     min_pitch_px: float,
     max_pitch_px: float,
     peak_fraction: float,
-) -> tuple[float, int, float]:
-    """Fundamental period of a 1-D comb, by autocorrelation peak spacing."""
+) -> tuple[float, int, float, float]:
+    """Fundamental period of a 1-D comb, by autocorrelation peak spacing.
+
+    Returns ``(pitch_px, n_peaks, mean_peak_height, spacing_cv)``. The last
+    is the coefficient of variation of the spacings between successive
+    peaks -- see `GridEstimate` for why it, and not the peak height, is the
+    value worth thresholding on.
+    """
     profile = np.asarray(profile, dtype=np.float64)
     profile = profile - profile.mean()
     if not np.any(profile):
-        return float("nan"), 0, 0.0
+        return float("nan"), 0, 0.0, float("nan")
 
     # FFT autocorrelation, zero-padded to avoid circular wraparound.
     n = 1 << int(np.ceil(np.log2(len(profile) * 2)))
     spectrum = np.fft.rfft(profile, n=n)
     ac = np.fft.irfft(spectrum * np.conj(spectrum), n=n)[: len(profile)]
     if ac[0] <= 0:
-        return float("nan"), 0, 0.0
+        return float("nan"), 0, 0.0, float("nan")
     ac = ac / ac[0]
 
     hi = min(int(max_pitch_px * 6), len(ac) - 1)
     if hi <= int(min_pitch_px) + 2:
-        return float("nan"), 0, 0.0
+        return float("nan"), 0, 0.0, float("nan")
 
     peaks, props = sps.find_peaks(ac[:hi], height=peak_fraction * ac[:hi].max())
     peaks = peaks[peaks >= min_pitch_px]
     if len(peaks) < 2:
         # One peak (or none) is not a comb; fall back to its lag if plausible.
         if len(peaks) == 1 and min_pitch_px <= peaks[0] <= max_pitch_px:
-            return float(_refine(ac, peaks[0])), 1, float(ac[peaks[0]])
-        return float("nan"), int(len(peaks)), 0.0
+            # A single peak has no spacings to be regular about.
+            return float(_refine(ac, peaks[0])), 1, float(ac[peaks[0]]), float("nan")
+        return float("nan"), int(len(peaks)), 0.0, float("nan")
 
     refined = np.array([_refine(ac, p) for p in peaks], dtype=np.float64)
     # Include the origin: the lag of the first peak is itself one period.
     spacings = np.diff(np.concatenate(([0.0], refined)))
     pitch = float(np.median(spacings))
+    spacing_cv = (
+        float(np.std(spacings) / pitch) if pitch > 0 and len(spacings) > 1
+        else float("nan")
+    )
 
     if not (min_pitch_px <= pitch <= max_pitch_px):
-        return float("nan"), int(len(peaks)), 0.0
+        return float("nan"), int(len(peaks)), 0.0, spacing_cv
 
     heights = props["peak_heights"][peaks >= min_pitch_px] if len(props) else ac[peaks]
-    return pitch, int(len(peaks)), float(np.mean(heights))
+    return pitch, int(len(peaks)), float(np.mean(heights)), spacing_cv
 
 
 def _refine(ac: np.ndarray, lag: int) -> float:
@@ -302,6 +467,8 @@ def digitise(
     mm_per_mv: float = MM_PER_MV,
     grid: GridEstimate | None = None,
     max_gap_px: int = 12,
+    expected_duration_s: float | None = None,
+    strict: bool = True,
 ) -> DigitiseResult:
     """Trace a **single continuous strip** and return it in millivolts.
 
@@ -322,6 +489,22 @@ def digitise(
         raise ValueError(
             "grid pitch estimation failed; cannot calibrate. "
             f"({grid.px_per_mm_x=}, {grid.px_per_mm_y=})"
+        )
+
+    # B1 guards. `strict` defaults to raising because the failure being
+    # guarded against produces a waveform that looks entirely reasonable and
+    # is wrong by an integer factor -- returning it with a warning attached
+    # invites it into a results table. Pass strict=False to score the
+    # failures deliberately, as the deskew experiments do.
+    calibration = check_calibration(
+        grid,
+        image_width_px=image.shape[1],
+        mm_per_s=mm_per_s,
+        expected_duration_s=expected_duration_s,
+    )
+    if strict and not calibration.ok:
+        raise ValueError(
+            "calibration rejected: " + "; ".join(calibration.reasons)
         )
 
     mask = binarise_trace(image)
@@ -359,6 +542,7 @@ def digitise(
         grid=grid,
         baseline_px=baseline_px,
         coverage=coverage,
+        calibration=calibration,
     )
 
 

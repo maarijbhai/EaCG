@@ -1,0 +1,5 @@
+measure,max_abs_error_deg,median_abs_error_deg,median_margin,min_margin,median_ms
+variance,0.0011,5e-05,142.53,57.9,431.6
+ssd,0.0008,4e-05,660.4,47.54,426.7
+kurtosis,11.8552,3.94488,2.78,0.91,636.8
+entropy,0.0019,6e-05,inf,inf,439.4

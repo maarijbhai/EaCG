@@ -794,3 +794,193 @@ Nothing else was touched; digitise.py in particular was not.
       decision before the first real run fills the directory.
 
 ================================================================================
+
+
+================================================================================
+CHANGES - ECG-App
+Session of 2026-09-16
+================================================================================
+
+Pipeline stage 2: geometric rectification (deskew). New module, new
+measurement driver, and the B1 calibration guards wired up.
+
+Added:    python/ecgproto/deskew.py, python/run_deskew.py,
+          results/deskew/{angle,measures,endtoend,interp,failure,cost,
+          guards}.{csv,json}
+Modified: python/ecgproto/digitise.py (see 9.3 -- this was necessary, and
+          the extent of it is stated because the task said to say so),
+          python/ecgproto/__init__.py, CLAUDE.md, this changelog.
+
+
+--------------------------------------------------------------------------------
+9.1 DESKEW
+--------------------------------------------------------------------------------
+
+Method: projection profile sharpness maximisation. The grid is a periodic
+lattice of straight lines; axis-aligned, its projection onto an image axis
+is a comb of sharp peaks, and rotation smears them together. Sharpness of
+the projection is therefore a function of angle with a maximum at the true
+skew.
+
+The search never warps the image. Binning pixels by y - x*tan(a) collects
+any line of slope a into one bin, and because rounding that index makes the
+shift constant over runs of adjacent columns, each projection is one
+grouped column sum plus a few hundred shifted vector adds. No interpolation
+happens during the search, which matters because interpolation is a
+low-pass filter acting on exactly the detail being measured. At a = 0 the
+operation is identical to the projection estimate_grid_pitch already takes.
+
+Coarse pass: +/-10 deg at 0.5 deg on a copy reduced to 900 px longest side.
+Fine pass: +/-0.75 deg at 0.05 deg at full resolution, then a parabolic fit
+to the objective for sub-step precision.
+
+RESULTS (results/deskew/):
+
+  Angle recovery, 3 fixtures x 17 true angles over +/-8 deg:
+    max abs error 0.0043 deg, median 0.00000, mean 0.00034.
+    Worst cases are all on the 150 dpi fixture, the lowest-resolution one.
+
+  End-to-end, 12 PTB-XL test-fold records, lead II, 8 px/mm strips:
+    unrotated            SNR 8.58  RMSE 0.0494  PCC 0.973  gain 0.869
+    rotated 1 deg        12/12 FAIL (grid pitch NaN)
+    deskewed 1 deg       SNR 8.60  RMSE 0.0503  PCC 0.963  gain 0.857
+    round-trip control   SNR 8.49  RMSE 0.0503  PCC 0.963  gain 0.857
+    rotated 3 deg        12/12 FAIL
+    deskewed 3 deg       SNR 8.35  RMSE 0.0493  PCC 0.970  gain 0.864
+    round-trip control   SNR 8.36  RMSE 0.0493  PCC 0.970  gain 0.864
+
+    Deskew matches the round-trip control to three decimals. The control
+    rotates and unrotates by the *known* angle, so it carries the
+    interpolation cost and none of the estimation error. The two agreeing
+    means the angle estimate contributes nothing measurable, and the whole
+    residual gap to the unrotated condition -- about 1 point of PCC and 1.2
+    of gain -- is the price of one interpolation.
+
+  Failure boundaries, all at 2 deg unless stated:
+    angle          exact to +/-44 deg; aliases by 90 deg at 46 deg, which
+                   is the square lattice symmetry itself, not a defect
+    blur           exact to sigma = 8 px (margin falls 569 -> 33)
+    JPEG           exact to quality 5 (margin falls 464 -> 52)
+    grid fade      exact down to 10% saturation; FAILS at 0% (pure grey)
+                   with an explicit error, and a luminance response_fn
+                   recovers the same 2.000 deg with margin 307 -- the
+                   method is colour-agnostic, only the default front end
+                   is red-specific
+    grid coverage  exact to 15% of frame (error 0.0018 deg), but the
+                   margin collapses 337 -> 12.4, so margin is the signal
+                   to watch
+
+  Cost. estimate_skew against estimate_grid_pitch, median of 3:
+    2.10 MP    195 / 347 ms   vs  29 / 32 ms     x6.8 - x11.0
+    3.74 MP    372 / 540 ms   vs  50 / 55 ms     x7.4 -  x9.9
+    8.41 MP   1691 / 1941 ms  vs 130 / 139 ms   x13.0 - x14.0
+    (first figure at 0 deg, second at 3 deg; cost grows with |angle|
+    because the shear spans more bins.)
+
+    This is the headline problem. Deskew is 7-14x the cost of what was
+    already the most expensive stage, and it is superlinear in pixels.
+    On a phone this does not fit as written. The coarse pass is cheap; the
+    fine pass at full resolution is where the time goes, and reducing its
+    resolution is the obvious lever. Not attempted yet.
+
+  Sharpness measure. variance and ssd both reach ~0.001 deg accuracy;
+  ssd has 4.6x the median peak prominence (660 vs 143) at equal cost, so
+  ssd is the default. kurtosis fails outright (median error 3.9 deg).
+  entropy is accurate but its margin is not interpretable, being a ratio
+  of two negative numbers.
+
+  Interpolation, simulation held fixed at Lanczos:
+    lanczos   pitch shift 0.064%  contrast 0.919  PCC 0.9697  gain 0.8779
+    nearest               0.070%           0.949      0.9628      0.8727
+    bicubic               0.075%           0.949      0.9592      0.8693
+    bilinear              0.090%           0.926      0.9537      0.8647
+
+    Lanczos is the default on the waveform metrics. The robust finding is
+    negative: bilinear, the OpenCV default, is worst on every axis.
+
+
+--------------------------------------------------------------------------------
+9.2 A MISTAKE WORTH RECORDING
+--------------------------------------------------------------------------------
+
+The first interpolation comparison varied the warp used to *simulate* the
+test rotation together with the warp used to *correct* it. It concluded
+nearest-neighbour won on every axis by a wide margin, and that conclusion
+was written into the module as its default before the flaw was noticed. An
+image simulated with nearest arrives at the correction step less blurred,
+so nearest was being credited for its own simulation. With the simulation
+pinned to Lanczos the ordering changes and Lanczos wins.
+
+run_deskew.py now has separate --interp and --sim-interp flags. CLAUDE.md
+gained a convention line about it.
+
+
+--------------------------------------------------------------------------------
+9.3 B1 GUARDS, AND WHAT THEY CANNOT DO
+--------------------------------------------------------------------------------
+
+GridEstimate.confidence and .anisotropy were documented as the way to
+distrust a pitch estimate and were consulted by nothing. digitise.py was
+modified to close that, which is the whole of what was changed there:
+
+  - GridEstimate gains spacing_cv (default NaN, so existing construction
+    sites keep working); _pitch_1d returns a fourth value to supply it.
+  - New CalibrationCheck dataclass and check_calibration function.
+  - digitise() gains expected_duration_s and strict (default True) and
+    calls the check; DigitiseResult gains .calibration.
+
+Guards: an axis that failed to resolve, anisotropy above 0.15, and implied
+paper speed outside 15-60 mm/s. spacing_cv is advisory only.
+
+The measurements say plainly what does and does not work.
+
+confidence does not discriminate. It sat at 0.68 on an estimate that was
+399% wrong and 0.63 on one that was correct. The reason is structural:
+peaks are selected as a fraction of the maximum, so the survivors are tall
+by construction and their mean height is close to a constant of the
+algorithm.
+
+spacing_cv does not discriminate either, in the way that matters:
+    render at 4.0 px/mm    pitch correct to -0.0%    spacing_cv 0.412
+    fixture at 200 dpi     pitch wrong by +399%      spacing_cv 0.184
+It is high on a good estimate at low resolution (quantisation) and low on
+a bad one (an unresolved minor grid is a genuinely regular comb of 5 mm
+rules). A major/minor autocorrelation height ratio was also tried and
+fails the same way: 1.21 and 1.31 on correct estimates, 1.48 on one that
+was 4x wrong. Hence advisory, not a rejection criterion.
+
+The paper-speed check is the one that works, and it works because it
+brings in a fact from outside the image:
+    fixture 200 dpi clean   implied 5.6 mm/s   REJECTED  (true err +399%)
+    fixture blurred/JPEG    implied 5.6 mm/s   REJECTED
+    render at 8.0 px/mm     implied 26.0 mm/s  accepted  (true err -0.0%)
+    render at 4.0 px/mm     implied 26.0 mm/s  accepted  (true err -0.0%)
+    render at 2.5 px/mm     implied  6.5 mm/s  REJECTED  (true err +300%)
+No false positives and no false negatives across the eleven conditions
+tested. It is skipped, with a warning saying so, when the caller supplies
+no expected_duration_s -- which is most callers today.
+
+This confirms what the estimate_grid_pitch docstring already predicted:
+nothing inside the autocorrelation can distinguish a 1 mm grid from a 5 mm
+grid misread as 1 mm, because they are the same picture at different
+distances.
+
+
+--------------------------------------------------------------------------------
+9.4 WHAT THIS DID NOT DO
+--------------------------------------------------------------------------------
+
+  - No lead segmentation. digitise() is still single-strip.
+  - No Android work. deskew.py is not ported to Kotlin.
+  - estimate_grid_pitch peak selection was NOT changed, though it is now
+    known to be 5x wrong on realistic printouts. Changing it is a
+    behaviour change to the control condition and deserves its own task
+    and its own before/after numbers.
+  - No perspective correction. deskew is in-plane rotation only;
+    estimate_skew exists separately from deskew so that the two transforms
+    can be composed and applied in a single warp when it arrives.
+  - No tests. There are still none in the repository.
+  - Still a closed loop. Rotation is simulated by warping an image this
+    repository drew. A photograph has never been through this path.
+
+================================================================================

@@ -20,17 +20,24 @@ has not been started.
 
 ```
 ECG-App/
-├── android/          NOT YET CREATED
+├── android/          Kotlin/Compose app; image loading only so far
+│   └── app/src/main/assets/reference/   3 printouts of known px/mm
 ├── python/           the prototype (this is what exists)
 │   ├── ecgproto/
 │   │   ├── ptbxl.py      PTB-XL loader
 │   │   ├── synth.py      signal synthesis + single-strip rendering
 │   │   ├── layout.py     clinical 3x4 12-lead printout rendering
+│   │   ├── deskew.py     stage 2: recover and remove in-plane rotation
 │   │   ├── digitise.py   classical (non-ML) digitisation pipeline
 │   │   └── evaluate.py   SNR / shifted SNR / RMSE / PCC
 │   ├── run_baseline.py   experiment on synthetic signals
 │   ├── run_ptbxl.py      experiment on real PTB-XL records
+│   ├── run_deskew.py     deskew measurement suite -> results/deskew/
+│   ├── make_print_target.py  print a lead at true physical scale
+│   ├── score_photo.py    score a photograph of that print
 │   └── verify_ptbxl.py   dataset download integrity check
+├── results/          committed measurements — CSV + provenance JSON
+├── out/              gitignored — generated artefacts, reproducible
 └── data/             gitignored — PTB-XL lives here, NOT in the repo
 ```
 
@@ -105,6 +112,26 @@ scope boundaries.
 5. **`synth.synthetic_ecg` is a sum of Gaussians**, not a physiological
    model. It is a test fixture only, used when PTB-XL is unavailable.
 
+6. **`estimate_grid_pitch` reports the 5 mm rule, not the 1 mm rule, on
+   the ecg-image-kit fixtures.** Measured 2026-09-16: it returns 39.26
+   px/mm against a true 7.874, a 5x error, on all three reference
+   printouts. The minor rules *are* resolved — autocorrelation peaks exist
+   at lags 8, 16, 24 — but they stand at 0.11–0.19 against 0.87 for the
+   5 mm peaks, so `peak_fraction=0.20` filters most of them out and the
+   median spacing collapses onto the majors. This never appeared on
+   `synth` renders, whose minor and major rules have similar contrast, and
+   it is the strongest evidence so far that synthetic images flatter the
+   pipeline. Nothing inside the autocorrelation can detect it (both
+   `spacing_cv` and a major/minor height ratio were tried and fail);
+   `digitise.check_calibration`'s paper-speed test catches it, and needs
+   `expected_duration_s` to do so. Fixing the selection itself is
+   deliberately left open — see `results/deskew/guards.csv`.
+
+7. **Deskew must run before grid estimation.** At 1 and 3 degrees,
+   digitisation of a rendered strip fails outright in 12/12 records
+   (`estimate_grid_pitch` returns NaN). Deskew recovers it to within ~1%
+   of the unrotated PCC. Rotation is not a tolerable input condition.
+
 ## Technical decisions already made
 
 - **Kotlin, not C++/NDK.** LiteRT inference and OpenCV already run
@@ -129,6 +156,16 @@ scope boundaries.
 - The classical pipeline is a deliberate **control condition**. Every ML
   component added later must be justified against its numbers. Do not
   delete or "improve away" the classical path.
+- **Measurements are committed.** Every experiment writes a CSV plus a
+  JSON sidecar carrying the git commit, the parameters and the library
+  versions, under `results/`. A number that exists only in a terminal
+  scrollback cannot be cited or rechecked later. `out/` is the opposite:
+  regenerable artefacts, gitignored.
+- **Vary one thing at a time, and check that you did.** The first
+  interpolation comparison in `run_deskew.py` varied the warp used to
+  *simulate* a rotation together with the warp used to *correct* it, and
+  produced a confident, wrong conclusion. Simulation parameters and
+  parameters under test need separate flags.
 
 ---
 
