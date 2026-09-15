@@ -26,6 +26,31 @@ Two rendering choices are load-bearing for the rest of the pipeline:
   the trace is drawn by interpolating between samples. The rendered curve
   is therefore smoother than a real printout at the same scale, which
   flatters the digitiser. Render at 500 Hz to remove this effect.
+
+**The strip must be tall enough for the signal, and this is a measurement
+concern rather than a cosmetic one.** `cv2.polylines` clips silently at the
+canvas edge: a trace that leaves the strip does not disappear, it flattens
+against the boundary. Column coverage still reports ~100% and nothing
+raises, so the reconstruction loses amplitude and every symptom points at
+the tracer instead of at the paper. That matters here more than it would
+elsewhere, because the project's headline finding is that the classical
+tracer *under-reads amplitude*; canvas clipping biases the gain ratio in
+exactly the same direction and would be indistinguishable from it.
+
+The old 40 mm default spans only +/-2.0 mV at 10 mm/mV, which PTB-XL
+exceeds far more often than a glance at a few lead-II strips suggests.
+Measured over the 2,198-record test fold at 100 Hz, all 12 leads:
+
+    lead-traces needing more than +/-2.0 mV      1,971 / 26,376   7.5 %
+    records with at least one such lead            892 /  2,198  40.6 %
+    worst leads          V4 20.2 %   V2 17.7 %   V5 16.3 %   V3 16.1 %
+    per-lead half-extent   p50 0.93 mV   p99 3.28 mV   max 12.97 mV
+
+`DEFAULT_HEIGHT_MM` is therefore set from the 99th percentile of that
+distribution, and `on_overflow` defaults to raising so the residual 1 %
+leaves the sample loudly and countably instead of quietly biased. Height
+costs blank paper and nothing else -- it does not change `px_per_mv`, so
+amplitude resolution is unaffected and only the pixel count grows.
 """
 
 from __future__ import annotations
@@ -51,6 +76,23 @@ COLOUR_TRACE = (32, 32, 32)
 #: Sub-pixel bits for cv2.polylines. See `draw_trace`.
 SUBPIXEL_BITS = 4
 
+#: Vertical gap kept between the trace extremes and the strip edge. Two
+#: millimetres is two minor grid squares -- enough that a trace which fits is
+#: visibly inside the paper rather than grazing it, which also keeps the
+#: outermost ink away from the image border where `trace_positions` would
+#: compute a centroid from a truncated column.
+CLEARANCE_MM = 2.0
+
+#: Strip height in millimetres. At 10 mm/mV this is +/-3.5 mV of paper and
+#: +/-3.3 mV of usable range after `CLEARANCE_MM`, which covers the 99th
+#: percentile of per-lead amplitude in the PTB-XL test fold (see the module
+#: docstring). The 100th percentile would need 263 mm for the sake of a
+#: handful of records; those are better raised on than rendered.
+DEFAULT_HEIGHT_MM = 70.0
+
+#: How `render_printout` reacts to a signal taller than the strip.
+OVERFLOW_MODES = ("raise", "expand", "clip")
+
 
 @dataclass(frozen=True)
 class RenderSpec:
@@ -60,6 +102,16 @@ class RenderSpec:
     whole question the thesis asks is whether scale can be recovered from
     image content, and passing the true pitch in would beg it. Use it to
     score `estimate_grid_pitch`, and to place leads when rendering.
+
+    The four amplitude fields exist so that clipping is detectable *after*
+    the fact. `render_printout` refuses to clip by default, but a caller
+    that asked for `on_overflow="clip"` -- or that built a spec by hand, as
+    `layout` does -- can still produce a flattened trace, and a run that
+    silently lost amplitude is worth strictly less than one that says so.
+    They default to zero so that callers constructing a spec for geometry
+    alone need not supply them; `clipped=False` then means "not checked"
+    rather than "checked and fine", which is why `render_printout` always
+    fills them in.
     """
 
     px_per_mm: float
@@ -70,6 +122,10 @@ class RenderSpec:
     fs: float               # Hz of the source signal
     width_px: int
     height_px: int
+    v_min_mv: float = 0.0           # most negative sample drawn
+    v_max_mv: float = 0.0           # most positive sample drawn
+    required_height_mm: float = 0.0  # strip height the signal needed
+    clipped: bool = False           # True if ink fell outside the canvas
 
     @property
     def px_per_s(self) -> float:
@@ -78,6 +134,16 @@ class RenderSpec:
     @property
     def px_per_mv(self) -> float:
         return self.px_per_mm * self.mm_per_mv
+
+    @property
+    def height_mm(self) -> float:
+        """Strip height actually rendered, which `on_overflow="expand"` grows."""
+        return self.height_px / self.px_per_mm
+
+    @property
+    def headroom_mm(self) -> float:
+        """Millimetres of unused vertical paper. Negative means clipped."""
+        return self.height_mm - self.required_height_mm
 
 
 def synthetic_ecg(
@@ -122,6 +188,33 @@ def synthetic_ecg(
     return signal
 
 
+def required_height_mm(
+    signal: np.ndarray,
+    mm_per_mv: float = MM_PER_MV,
+    clearance_mm: float = CLEARANCE_MM,
+) -> float:
+    """Strip height in millimetres that would hold `signal` without clipping.
+
+    The extent is taken from the signal's **actual minimum and maximum**,
+    not from a symmetric assumption about its peak. An ECG is not centred
+    on zero and is frequently not even close: across the PTB-XL test fold,
+    |min| exceeds |max| on 94.7 % of AVR traces and 93.2 % of V1, because
+    those leads are dominated by a downward deflection. Sizing from
+    `signal.max()` alone would under-size exactly the leads that overflow
+    most often.
+
+    The baseline sits at the middle of the strip, so the binding constraint
+    is the *larger* of the two extents and the returned height is symmetric
+    about zero. Keeping the baseline centred is what makes the grid rows
+    land on whole millimetres either side of it, as they do on real paper.
+    """
+    signal = np.asarray(signal, dtype=np.float64).ravel()
+    if signal.size == 0:
+        return 2.0 * clearance_mm
+    half_extent_mv = float(max(abs(np.nanmin(signal)), abs(np.nanmax(signal))))
+    return 2.0 * (half_extent_mv * mm_per_mv + clearance_mm)
+
+
 def render_printout(
     signal: np.ndarray,
     fs: float,
@@ -129,8 +222,10 @@ def render_printout(
     mm_per_s: float = MM_PER_S,
     mm_per_mv: float = MM_PER_MV,
     margin_mm: float = 5.0,
-    height_mm: float = 40.0,
+    height_mm: float = DEFAULT_HEIGHT_MM,
     trace_thickness: int = 2,
+    on_overflow: str = "raise",
+    clearance_mm: float = CLEARANCE_MM,
 ) -> tuple[np.ndarray, RenderSpec]:
     """Render one continuous lead as a gridded strip.
 
@@ -141,9 +236,50 @@ def render_printout(
     upward. Every inverse of this in `digitise` carries the same sign flip;
     getting it wrong produces a perfectly shaped, perfectly inverted trace
     that scores near -1.0 on PCC rather than failing loudly.
+
+    `on_overflow` decides what happens when the signal is taller than
+    `height_mm`. See the module docstring for why this is checked at all.
+
+    ``"raise"``   the default. A signal that does not fit is a measurement
+                  that cannot be trusted, and an experiment is better off
+                  skipping it visibly than recording a quietly flattened
+                  one. The message names the amplitude and the height that
+                  would have worked.
+    ``"expand"``  grow the strip to fit, rounded up to a whole millimetre so
+                  the grid still lands on integer rules. Use when every
+                  record must be scored and the image size does not matter.
+    ``"clip"``    the pre-2026-09-14 behaviour, kept so that earlier runs can
+                  be reproduced exactly. It sets ``spec.clipped``, which is
+                  the only difference from the old silent version.
     """
+    if on_overflow not in OVERFLOW_MODES:
+        raise ValueError(
+            f"on_overflow must be one of {OVERFLOW_MODES}, got {on_overflow!r}"
+        )
+
     signal = np.asarray(signal, dtype=np.float64).ravel()
     duration_s = len(signal) / fs
+
+    needed_mm = required_height_mm(signal, mm_per_mv, clearance_mm)
+    v_min = float(np.nanmin(signal)) if signal.size else 0.0
+    v_max = float(np.nanmax(signal)) if signal.size else 0.0
+    clipped = False
+
+    if needed_mm > height_mm:
+        if on_overflow == "raise":
+            raise ValueError(
+                f"signal spans {v_min:+.3f} .. {v_max:+.3f} mV and needs a "
+                f"{needed_mm:.1f} mm strip at {mm_per_mv:g} mm/mV, but "
+                f"height_mm={height_mm:g} was given. Raising rather than "
+                f"clipping: a clipped trace flattens against the canvas edge "
+                f"and depresses the recovered gain exactly as a tracing fault "
+                f"would. Pass height_mm={np.ceil(needed_mm):.0f}, or "
+                f'on_overflow="expand".'
+            )
+        if on_overflow == "expand":
+            height_mm = float(np.ceil(needed_mm))
+        else:
+            clipped = True
 
     width_px = int(round((duration_s * mm_per_s + 2 * margin_mm) * px_per_mm))
     height_px = int(round(height_mm * px_per_mm))
@@ -162,6 +298,10 @@ def render_printout(
         fs=fs,
         width_px=width_px,
         height_px=height_px,
+        v_min_mv=v_min,
+        v_max_mv=v_max,
+        required_height_mm=needed_mm,
+        clipped=clipped,
     )
     draw_trace(image, signal, spec, thickness=trace_thickness)
     return image, spec

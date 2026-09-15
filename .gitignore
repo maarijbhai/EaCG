@@ -37,3 +37,9 @@ data/
 
 # Downloaded dataset (wget -r artefact) — never commit
 physionet.org/
+
+# Third-party tools cloned outside the repo (ecg-image-kit); defensive
+vendor/
+
+# Generated print targets — reproducible from make_print_target.py
+out/

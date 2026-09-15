@@ -11,6 +11,10 @@ written; this session wrote it.
 Read section 6 before running anything. The dataset is still incomplete and
 the reason is not something a re-run will fix by itself.
 
+    SUPERSEDED 2026-09-14. The dataset is complete and checksum-verified;
+    see section 8.1. Section 6.1, 6.2 and 6.3 describe a state that no
+    longer exists and are kept only as a record of it.
+
 
 --------------------------------------------------------------------------------
 1. DATASET — moved, protected, partially repaired
@@ -351,5 +355,442 @@ rather than restating the code.
   numpy 2.5.2 · opencv 5.0.0 · scipy 1.16.2 · pandas 3.0.2 · wfdb 4.3.1
   Repo at C:\dev\ECG-App — outside OneDrive, as CLAUDE.md requires
   Disk: 75 GB free (the remaining 500 Hz download needs ~2.1 GB)
+
+================================================================================
+
+
+================================================================================
+CHANGES — ECG-App
+Session of 2026-09-14
+================================================================================
+
+Two pieces of work this session: an audit of everything under python/, and
+then the follow-up task: PART 1 fixed B5, the silent clipping in the
+renderer, and PART 2 built the real-photograph path. No photograph has
+been taken yet.
+
+Modified: python/ecgproto/synth.py and this changelog.
+Added:    python/make_print_target.py, python/score_photo.py,
+          docs/photo_protocol.md.
+Nothing else was touched; digitise.py in particular was not.
+
+
+--------------------------------------------------------------------------------
+8. CORRECTIONS TO THE 2026-09-01 RECORD
+--------------------------------------------------------------------------------
+
+8.1  THE DATASET IS COMPLETE. Section 6.1 above, and the warning under the
+     2026-09-01 banner, are both out of date. Verified 2026-09-14:
+
+       python python/verify_ptbxl.py
+         expecting : 87203 files (rate=both)
+         mode      : full sha256
+         ok      : 87203     missing : 0     corrupt : 0        exit 0
+
+     That is every file in the published manifest present AND hashing
+     correctly — 21,799 records at both 100 Hz and 500 Hz, no truncation.
+     A separate size scan corroborates: all 21,799 100 Hz .dat files are
+     exactly 24,000 bytes and all 21,799 500 Hz files exactly 120,000, which
+     is what WFDB format-16 gives for 1000x12 and 5000x12 samples.
+
+     Consequences: the fold bias described in 6.2 (4.5% of train missing
+     against 1.7% of test) is gone, the published folds are the published
+     folds again, and results from this copy are comparable with PTB-XL
+     benchmark numbers. The 500 Hz control described in 6.3 is runnable.
+
+8.2  CLAUDE.md IS ALSO STALE ON THIS. Its "Status: early" section and the
+     data notes still imply the download is in progress. It was left
+     unedited — it holds project doctrine and that is not this task's to
+     rewrite — but it should be corrected. CLAUDE.md also omits
+     python/fetch_ptbxl.py from its repository layout.
+
+
+--------------------------------------------------------------------------------
+9. B5 FIXED — the renderer no longer clips in silence
+--------------------------------------------------------------------------------
+
+9.1  THE DEFECT. synth.render_printout defaulted to height_mm=40, which at
+     10 mm/mV is +/-2.0 mV. cv2.polylines clips at the canvas edge without
+     raising, so an over-tall trace flattened against the boundary rather
+     than vanishing. Coverage still read ~100% and nothing warned.
+
+     Why it mattered more than an ordinary rendering bug: the project's
+     headline result is that the classical tracer under-reads amplitude
+     (gain ratio 0.87 on real records). Canvas clipping pushes gain in the
+     SAME direction, so the two were confounded.
+
+9.2  HOW MUCH OF PTB-XL DOES NOT FIT. Surveyed over the whole test fold —
+     2,198 records, 100 Hz, all 12 leads, 26,376 lead-traces. Half-extent
+     required is max(|min|, |max|), because an ECG is not centred on zero.
+
+       lead-traces needing more than +/-2.0 mV   1,971 / 26,376    7.5%
+       records with at least one such lead         892 /  2,198   40.6%
+
+       worst leads   V4 20.2%   V2 17.7%   V5 16.3%   V3 16.1%   V6 7.3%
+       best leads    AVR 0.1%   I 0.5%   AVL 1.0%   II 1.4%
+
+       per-lead half-extent   p50 0.93   p99 3.28   max 12.97 mV
+       worst lead per record  p50 1.84   p99 5.25   max 12.97 mV
+
+     Asymmetry is real and large: |min| exceeds |max| on 94.7% of AVR
+     traces and 93.2% of V1. Sizing a canvas from signal.max() alone would
+     under-size precisely the leads that overflow most.
+
+9.3  THE CHANGE. synth.py only.
+
+     - CLEARANCE_MM = 2.0 and DEFAULT_HEIGHT_MM = 70.0 added.
+     - required_height_mm(signal, mm_per_mv, clearance_mm) added — the fit
+       computation, from actual min and max.
+     - render_printout gains on_overflow="raise"|"expand"|"clip", default
+       "raise", and clearance_mm. Its height_mm default moves 40 -> 70.
+     - RenderSpec gains v_min_mv, v_max_mv, required_height_mm and clipped,
+       plus height_mm and headroom_mm properties. All four new fields have
+       defaults, so layout.py's hand-built RenderSpec is unaffected.
+
+     WHY 70 mm, i.e. the 99th percentile. Height costs blank paper and
+     nothing else — it does not change px_per_mv, so amplitude resolution is
+     untouched and only the pixel count grows. But the tail is brutal: p100
+     would need 263 mm for a handful of records. 70 mm covers 99% of
+     lead-traces, and because the default is now "raise" the residual 1%
+     leaves the sample loudly and countably rather than quietly biased.
+     Measured attrition on V2, the second-worst lead: 1 skip in 40 records.
+
+9.4  HOW MUCH OF THE DEFICIT WAS THE RENDERER? This is the question Part 1
+     had to answer. Method: score each trace twice, identically except for
+     the renderer — (A) height_mm=40, on_overflow="clip", the behaviour the
+     audit measured; (C) on_overflow="expand", clipping made impossible.
+     A -> C is purely the renderer.
+
+     ON THE AUDIT'S OWN SAMPLE (12 records x leads II and V1, 8 px/mm):
+
+       clipped under the old default            0 of 24 lead-traces
+       median gain        A 0.869  ->  C 0.869        (+0.000)
+       median SNR dB      A 9.30   ->  C 9.30
+       median PCC         A 0.973  ->  C 0.973
+       median RMSE mV     A 0.0489 ->  C 0.0489
+
+     NOT ONE TRACE IN THE AUDITED SAMPLE WAS CLIPPED. Leads II and V1 are
+     among the least affected in the corpus (1.4% and 5.3%), and none of
+     the twelve records drawn happened to overflow.
+
+     >>> The thesis draft's numbers do NOT need correcting. The 0.87 gain
+     >>> deficit is the tracer, not the renderer. B5 was a real defect and
+     >>> a live confound, but it had not yet contaminated any reported
+     >>> figure.
+
+     WHERE IT DOES BITE (40 records x V2, V3, V4, V5 — 160 traces):
+
+       clipped: 27 of 160 = 16.9%
+       median gain, clipped traces only   V4 0.788 -> 0.811   (+0.023)
+                                          V3 0.832 -> 0.851   (+0.019)
+                                          V5 0.832 -> 0.832   (+0.000)
+       median gain, unclipped traces      0.847 -> 0.847      (+0.000)  [control]
+
+     So the renderer's contribution, where it exists at all, is about +0.02
+     of gain on the affected traces — real, but an order of magnitude below
+     the ~0.13 total deficit.
+
+9.5  THE WORSE FAILURE WAS NOT GAIN, IT WAS NaN. One trace in the 160 lost
+     the measurement entirely:
+
+       ecg_id 180, V2: spans -5.674 .. +2.041 mV, needs a 117 mm strip
+         old renderer (40 mm, clip):  coverage 90.5%, 3.5% NaN in the
+                                      output, gain nan, SNR nan
+         with on_overflow="expand":   0% NaN, gain 0.960, SNR 14.93 dB,
+                                      PCC 0.990
+
+     The trace left the canvas for 9.5% of columns, leaving gaps longer
+     than max_gap_px, which _interpolate_gaps correctly refuses to bridge —
+     and digitise() then returned NaN without checking. That is audit
+     finding B2, triggered in practice by B5. One such trace turns a median
+     into nan, so the damage is not confined to the record that caused it.
+
+     Note the direction of the result: record 180 is one of the BEST
+     reconstructions in the whole study (gain 0.960) once the paper is big
+     enough for it. The old renderer was not merely depressing its score,
+     it was destroying it.
+
+     B2 itself was NOT fixed — out of scope for this task.
+
+9.6  RE-RUNS, with the fix in place. Both scripts, unmodified.
+
+       run_baseline.py   px/mm  4.0   6.0    8.0   12.0   16.0
+                         gain  .598  .793   .864   .928   .956
+                         SNR   4.45 10.14  13.81  19.44  23.56
+                         (3.0 px/mm still fails at grid estimation)
+
+       run_ptbxl.py --n 12 --leads II V1
+                         n = 24 lead-traces from 12 records, 0 skipped
+                         SNR  dB median  9.30   IQR 8.08-10.64
+                         RMSE mV median  0.0489  max 0.0889
+                         PCC     median  0.973   min 0.932
+
+     These differ from the audit's figures only in the third decimal
+     (4 px/mm gain 0.603 -> 0.598; record 40 lead II SNR 10.33 -> 10.22).
+     The cause is the taller default canvas: more white paper shifts the
+     Otsu threshold slightly, and more grid rows enter the y-projection.
+     Nothing of substance moved.
+
+9.7  A SECOND CONFOUND IN THE RESOLUTION SWEEP — REPORTED, NOT FIXED.
+     The task asked whether trace thickness scales with resolution. IT DOES
+     NOT. trace_thickness is a fixed 2 px at every px_per_mm, so the ink is
+     a different physical width at every point in the sweep:
+
+       4 px/mm -> 2 px = 0.500 mm        16 px/mm -> 2 px = 0.125 mm
+
+     A 4x physical variation across the sweep. And ink width is the most
+     influential parameter in the entire experiment. At a FIXED 8 px/mm,
+     varying only thickness:
+
+       thickness    1p     2p     3p     4p     5p     6p
+       = mm      0.125  0.250  0.375  0.500  0.625  0.750
+       gain        nan  0.864  0.725  0.726  0.540  0.541
+       SNR dB      nan  13.81   7.32   7.32   3.19   3.16
+       coverage   3.4%   100%   100%   100%   100%   100%
+
+     A swing of 0.32 in gain from ink width alone — more than twice the
+     whole amplitude deficit under study. (1 px collapses entirely: the
+     anti-aliased line is too faint for Otsu, coverage 3.4%, another B2
+     NaN.)
+
+     Holding ink at a physically constant 0.3 mm instead, the sweep's
+     trend REVERSES above 8 px/mm:
+
+       px/mm            4.0    6.0    8.0   12.0   16.0
+       gain @ 2 px     0.598  0.793  0.864  0.928  0.956
+       gain @ 0.3 mm     nan  0.793  0.864  0.838  0.759
+
+     So the clean monotone "more pixels per millimetre is better" in 9.6 is
+     at least partly an artefact of the line getting physically thinner as
+     resolution rises. A defensible resolution sweep must hold physical ink
+     width constant.
+
+     Related, and also unfixed: draw_grid writes 1-pixel rules at every
+     resolution, so the grid has no physical width either (0.250 mm at
+     4 px/mm, 0.062 mm at 16). Real ECG paper rules are ~0.1-0.2 mm.
+     render_printout has no notion of physical line width at all —
+     everything but the geometry is specified in pixels.
+
+     NOT FIXED because it changes the meaning of every number in the
+     resolution sweep, and that is a decision to take deliberately rather
+     than as a side effect of a clipping fix.
+
+9.8  NOT COVERED BY THE B5 FIX: layout.render_12lead has the same defect
+     with a tighter budget. Its cells are 28 mm tall, i.e. +/-1.4 mV, and
+     it calls synth.draw_trace directly rather than render_printout, so the
+     new fit check does not apply to it. Large precordial deflections
+     currently cross into neighbouring rows — visible in any rendered 3x4.
+     Left alone: the task scoped B5 to render_printout, and cell overflow
+     also has to be understood alongside lead segmentation, which does not
+     exist yet.
+
+9.9  OTHER AUDIT FINDINGS: B1, B2, B3, B4, B6, B7, B8 were left alone as
+     instructed. B2 was hit in practice (9.5) but not fixed. Nothing
+     blocked this task.
+
+9.10 PART 2 was not started at the time section 9 was written. It has
+     since been built -- see section 10. No photograph has been taken, so
+     there is still no real-image number.
+
+     Also still true and worth repeating from 6.6: there is no
+     requirements.txt, pyproject.toml or lockfile, and no tests.
+
+================================================================================
+
+
+--------------------------------------------------------------------------------
+10. PART 2 — the real-photograph path, BUILT BUT NOT YET RUN
+--------------------------------------------------------------------------------
+
+10.1 WHAT EXISTS NOW. Three new files, none of which modify anything that
+     already existed:
+
+       python/make_print_target.py   PTB-XL record -> print-ready PDF at true
+                                     physical scale, + .npy ground truth
+                                     + JSON manifest
+       python/score_photo.py         photograph + manifest -> per-stage report
+                                     and the full metric set
+       docs/photo_protocol.md        what a human must do, precisely enough
+                                     to repeat
+
+     digitise.py was NOT modified. score_photo.py calls
+     estimate_grid_pitch, binarise_trace, trace_positions and digitise as
+     they are, and passes the grid estimate it already computed into
+     digitise(grid=...) so the pitch it reports is exactly the pitch used.
+
+10.2 TRUE PHYSICAL SCALE, and how it is achieved. px_per_mm = dpi / 25.4
+     (11.811 at the 300 dpi default). The page is composed at that scale and
+     written through Pillow with an explicit resolution, so the PDF MediaBox
+     is the true physical size. Verified by parsing the MediaBox back out:
+
+       841.92 x 595.20 pt  =  297.011 x 209.973 mm
+       A4 landscape        =  297.000 x 210.000 mm
+       error               =  +0.011 / -0.027 mm   (0.004% / 0.013%)
+
+     That residual is whole-pixel rounding of the page canvas and is three
+     orders of magnitude below the few-percent errors that "Fit to page"
+     introduces. The strip's own size is not rounded in the manifest: it is
+     recovered back from the pixel dimensions actually produced
+     (260.01 x 70.02 mm), and that recovered value is the ground truth
+     scoring uses.
+
+     DPI is used at print time, where a pixel really is 1/dpi inch, and then
+     thrown away. Nothing downstream infers scale from image DPI — Reyna et
+     al. are explicit that the correspondence does not hold for camera
+     capture, which is the whole reason the grid has to be the ruler.
+
+10.3 WHAT IS ON THE PAGE, and why in that arrangement.
+
+       header text         record identity, calibration, dpi, git commit,
+                           and the instruction to print at 100%
+       THE STRIP           the gridded region -- the only thing to crop to
+       crop marks          L-shaped, at the four strip corners, pointing
+                           AWAY from the strip
+       ruler band          100 mm horizontal, 50 mm vertical, 10 mm = 1 mV
+
+     Everything except the trace sits outside the strip deliberately.
+     digitise traces every column it is given and cannot reject non-trace
+     ink, so a calibration pulse or a label inside the strip would be
+     digitised as signal. The crop marks' inner vertex sits exactly on the
+     strip corner without putting ink inside it — "the corner of the grid"
+     is a judgement call at photograph resolution, a printed vertex is not.
+
+     The first draft had the 50 mm bar centred on the ruler band, which put
+     it INSIDE the strip. Caught on inspection and fixed; the band now hangs
+     downward from below the crop marks.
+
+     Three references rather than one, because they fail differently: the
+     100 mm bar catches uniform scaling ("Fit to page", the likeliest
+     fault), the 50 mm vertical catches ANISOTROPIC scaling that a
+     horizontal check alone would miss, and the 10 mm = 1 mV bar states the
+     same ruler in the unit the result is reported in.
+
+10.4 RECTIFICATION IS MANUAL AND DELIBERATELY SO. Four corners are supplied
+     (--corners, --pick, or corners_px in the manifest), not detected.
+     Automatic page detection and deskew are a later pipeline stage; building
+     them here would confound the measurement with the quality of a detector
+     nobody has written. This is the manual stand-in, not the real thing.
+
+     The warp output size comes ONLY from the photograph's own corner
+     geometry — the mean length of each pair of opposite edges. It never
+     uses the strip's known aspect ratio. Forcing the true aspect would hand
+     the estimator half the answer it is being tested on and would erase the
+     anisotropy that perspective introduces, which is one of the things
+     worth measuring.
+
+     True px/mm for scoring = warp output size / the strip's known physical
+     size. Ground truth is used to SCORE the estimate, never to produce it.
+
+10.5 TOOLING SELF-TEST ON SIMULATED PHOTOGRAPHS. No print has been made and
+     no photograph taken. To prove the two scripts run end to end before a
+     human spends time printing, the rendered page was put through a
+     synthetic camera: perspective warp, 2.5 degrees of rotation, lens blur,
+     illumination gradient, sensor noise, JPEG 88, at several frame sizes.
+
+     THESE ARE NOT PHOTOGRAPHS. No ink bleed, no paper texture, no fibre, no
+     thermal fade, no specular highlight, no rolling shutter, no chromatic
+     aberration, and the corner coordinates are exact rather than clicked.
+     The simulation is strictly easier than reality and every number from it
+     is optimistic. It proves the pipeline runs; it measures nothing about
+     the field.
+
+     A 12 MP simulated capture, square-ish on, scored:
+
+       rectified        2893 x 786 px from a 4032 x 3024 frame
+       true px/mm       11.126 horizontal, 11.226 vertical
+       estimated        11.127 (+0.01%),  11.264 (+0.34%)
+       SNR 8.48 dB   RMSE 0.0429 mV   PCC 0.994   gain 0.954
+       best shift       +0 samples
+
+10.6 THE SELF-TEST FOUND SOMETHING REAL: A SILENT 5x HARMONIC LOCK.
+
+     At an 8 MP frame, the COMBINATION of lens blur, JPEG compression and an
+     uneven illumination gradient made estimate_grid_pitch lock onto the
+     5 mm major rules on the VERTICAL axis only:
+
+       condition                        est x    est y   lock   PCC    gain
+       warp only                         9.00     9.07     -    0.995  0.962
+       + blur                            9.00     9.08     -    0.993  0.950
+       + blur + jpeg88                   9.00     9.09     -    0.994  0.950
+       + blur + jpeg88 + light           9.00    36.37    5x    0.994  0.238
+       + blur + jpeg88 + light + noise   9.00    36.38    5x    0.989  0.237
+       + light only                      9.00     9.08     -    0.995  0.964
+       + noise only                      9.00     9.07     -    0.995  0.961
+
+     (true px/mm 9.01 both axes; a separate sweep from 18.8 MP down to
+     3.1 MP with blur and JPEG but NO lighting gradient never locked, so
+     this is not simply a resolution floor.)
+
+     Read the last two columns of the locked rows. PCC 0.994 — the shape is
+     recovered essentially perfectly. Gain 0.238 — every amplitude is wrong
+     by a factor of five. Nothing raised. digitise accepted the pitch
+     because it is finite and positive.
+
+     This is audit finding B1 reproduced in practice, and it is the exact
+     failure evaluate.py's module docstring warns about: high PCC with a
+     wrong gain is a CALIBRATION fault, and a report quoting PCC alone would
+     have called this an excellent reconstruction.
+
+     The guard already exists and is already ignored. In the locked case
+     anisotropy = |9.00 - 36.37| / 22.69 = 1.21, against 0.012 in the clean
+     case — a hundredfold difference that GridEstimate computes and digitise
+     never reads. Fixing B1 is now backed by a measured case rather than an
+     argument. NOT fixed here: B1 was explicitly out of scope.
+
+10.7 A NEW FINDING, REPORTED NOT FIXED — Metrics.diagnose() misattributes.
+     In one locked run (x on 2x, y on 5x) PCC came out at -0.069, i.e.
+     essentially uncorrelated, and diagnose() reported:
+
+       "inverted: shape matches but sign is flipped -- check the
+        pixels-to-mV sign convention"
+
+     The sign convention was fine. diagnose() branches on `pcc < 0.0`, so
+     any trivially negative correlation is reported as a sign inversion and
+     sends the reader to debug the one thing that is not wrong. Claiming
+     inversion should require a strongly negative PCC (say < -0.7); between
+     roughly -0.7 and +0.7 the honest answer is that the tracer lost the
+     waveform. Call this B9. Not fixed: evaluate.py is outside this task.
+
+10.8 OBSERVATION: mild blur HELPS the centroid tracer. At 12 MP the clean
+     warp scored PCC 0.875 / gain 0.846, and adding lens blur and JPEG
+     improved it to 0.986 / 0.946. A hard-edged resampled line gives Otsu a
+     ragged mask; a slightly blurred one binarises to a smoother, more
+     symmetric run whose centroid is steadier. Worth remembering before
+     anyone "improves" capture by sharpening.
+
+10.9 WHAT A HUMAN MUST DO BEFORE ANY REAL NUMBER EXISTS. In order, and none
+     of it is optional:
+
+       1. Run make_print_target.py. Keep the .pdf, _truth.npy and
+          _manifest.json together — the .npy is what the photograph is
+          scored against and without it the photograph is unmeasurable.
+       2. Print at 100% scale, in COLOUR, on plain matte A4, landscape.
+          Turn OFF "Fit to page" / "Shrink oversized pages" — they are on by
+          default in most print dialogs. Greyscale breaks binarise_trace
+          outright: the grid becomes neutral and is returned AS the trace.
+       3. Measure the printed 100 mm and 50 mm bars with a real ruler.
+          Tolerance +/-0.5 mm. If either is wrong, reprint — do not
+          photograph it and do not try to correct afterwards. A scaled print
+          is a ruler of unknown length and nothing in the image reveals the
+          factor.
+       4. Photograph per docs/photo_protocol.md: flat matte surface, EVEN
+          DIFFUSE LIGHT (see 10.6 — uneven light is what broke the grid
+          estimate in simulation), highest resolution, HDR off, flash off,
+          focus on the grid. Nine shots: three identical square-on repeats
+          first, then two rotations, two tilts, one deliberately lit from
+          one side, one dim handheld.
+       5. Transfer at full resolution. Not through WhatsApp, Messenger,
+          Slack or iMessage — all recompress and several downscale.
+       6. Run score_photo.py --pick --save-corners --diagnostics, and LOOK
+          at the overlay image before believing any number.
+
+     Until step 4 happens there is no real-image measurement and this
+     changelog should not be read as containing one.
+
+10.10 HOUSEKEEPING NOTE, NOT ACTIONED: out/ is not in .gitignore, and
+      make_print_target.py writes ~0.8 MB PDFs into out/print_targets/. The
+      .npy and manifest are small and arguably belong in the repo as the
+      provenance of a result; the PDFs and photographs do not. Worth a
+      decision before the first real run fills the directory.
 
 ================================================================================
