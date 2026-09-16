@@ -983,4 +983,64 @@ distances.
   - Still a closed loop. Rotation is simulated by warping an image this
     repository drew. A photograph has never been through this path.
 
+--------------------------------------------------------------------------------
+9.5 END-TO-END DEMONSTRATION ON GENERATED PRINTOUTS
+--------------------------------------------------------------------------------
+
+python/demo_kit_pipeline.py runs every stage that exists against an
+ecg-image-kit printout and scores it against the generator companion .dat.
+deskew.py gained rotation_matrix() and transform_points() so that
+coordinates held in the original frame -- lead boxes, annotation, a future
+detector output -- can be carried through the same warp the image gets.
+
+Lead segmentation is FAKED: the script crops one lead using the
+ground-truth lead_bounding_box from the sidecar JSON. Every number is
+conditional on segmentation being solved perfectly.
+
+  gt_300dpi 00009_hr, rhythm strip II, clean:
+    deskew +0.000 deg (margin 1305)
+    grid 11.8262 px/mm (+0.13% vs true), implied 24.9 mm/s, accepted
+    SNR 7.47 dB   shifted 8.22   RMSE 0.0482 mV   PCC 0.9775   gain 0.945
+
+  poc_wrinkled 00009_hr, same lead, 200 dpi upscaled 2x:
+    deskew -1.000 deg (margin 352)
+    grid 15.7687 px/mm (+0.13% vs true at 2x), implied 24.9 mm/s, accepted
+    SNR 2.65 dB   shifted 4.68   RMSE 0.0840 mV   PCC 0.8004   gain 0.821
+
+Three things this surfaced that were not previously recorded.
+
+FIRST, and new: binarise_trace finishes with a 3x3 morphological opening,
+and erosion by a 3x3 kernel deletes any ink run that is not 3 px thick in
+both directions. On the 200 dpi rhythm strip the trace is ~3 px and column
+coverage goes from 100% thresholded to 24.9% after the opening; digitise
+then returns a signal largely NaN and every metric comes back NaN. At
+300 dpi the trace is ~4 px and coverage survives at 99.8%. This is NOT the
+red-channel dependency of CLAUDE.md limitation 2 -- thresholding is fine
+either way -- it is the despeckling step eating a thin line, and it sets a
+hard lower bound on usable capture resolution that nothing had measured.
+
+SECOND, confirming CLAUDE.md limitation 6 in the field: peak_fraction=0.20
+returns 41.30 px/mm on the 300 dpi crop against a true 11.81, and the
+guards reject it on both anisotropy (0.858) and implied paper speed
+(12.5 mm/s). At peak_fraction=0.03 it returns 11.8262, +0.13%. The B1
+guards did their job on a real image, in both directions.
+
+THIRD, artefacts the tracer cannot distinguish from signal:
+  - the lead-name label is dark neutral ink inside the ROI and is traced
+    as a waveform. Suppressed here by painting the ground-truth
+    text_bounding_box white, which is only available when the image was
+    generated with --lead_name_bbox. poc_* was not, so the label survives
+    as a spike at t=0 in the wrinkled figure.
+  - the calibration pulse trailing edge sits exactly where plotted_pixels
+    begins; the crop now starts 1 mm later.
+  - on the wrinkled image a dark stain near t=4.3 s produces a flat-topped
+    plateau roughly 0.3 mV high. The tracer follows the stain. Nothing in
+    the pipeline detects this, and it is the clearest single argument for
+    a learned tracer that has seen dirty paper.
+
+Suppressing the label and the pulse edge moved the clean case from
+SNR 5.57 / PCC 0.9272 to SNR 7.47 / PCC 0.9775.
+
+Figures land in out/demo/ and are regenerable, so they are not committed.
+
 ================================================================================

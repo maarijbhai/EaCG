@@ -417,6 +417,38 @@ def estimate_skew(
     }
 
 
+def rotation_matrix(
+    shape: tuple[int, int],
+    angle_deg: float,
+    expand: bool = True,
+) -> tuple[np.ndarray, tuple[int, int]]:
+    """The 2x3 affine for `rotate_image`, and the output size it produces.
+
+    Exposed separately because anything holding coordinates in the original
+    frame -- lead bounding boxes, a detector's output, annotation from a
+    generator -- has to move with the image. Without this, a caller either
+    reimplements the geometry and drifts out of sync with `rotate_image`, or
+    deskews before it has finished using its coordinates.
+    """
+    h, w = shape[:2]
+    centre = (w / 2.0, h / 2.0)
+    m = cv2.getRotationMatrix2D(centre, angle_deg, 1.0)
+    if not expand:
+        return m, (w, h)
+    cos, sin = abs(m[0, 0]), abs(m[0, 1])
+    new_w = int(np.ceil(h * sin + w * cos))
+    new_h = int(np.ceil(h * cos + w * sin))
+    m[0, 2] += new_w / 2.0 - centre[0]
+    m[1, 2] += new_h / 2.0 - centre[1]
+    return m, (new_w, new_h)
+
+
+def transform_points(m: np.ndarray, points_xy: np.ndarray) -> np.ndarray:
+    """Carry (x, y) points through a 2x3 affine. Shape (N, 2) in and out."""
+    pts = np.asarray(points_xy, dtype=np.float64).reshape(-1, 2)
+    return pts @ m[:, :2].T + m[:, 2]
+
+
 def rotate_image(
     image: np.ndarray,
     angle_deg: float,
@@ -441,19 +473,7 @@ def rotate_image(
             f"interpolation must be one of {tuple(INTERPOLATIONS)}, "
             f"got {interpolation!r}"
         )
-    h, w = image.shape[:2]
-    centre = (w / 2.0, h / 2.0)
-    m = cv2.getRotationMatrix2D(centre, angle_deg, 1.0)
-
-    if expand:
-        cos, sin = abs(m[0, 0]), abs(m[0, 1])
-        new_w = int(np.ceil(h * sin + w * cos))
-        new_h = int(np.ceil(h * cos + w * sin))
-        m[0, 2] += new_w / 2.0 - centre[0]
-        m[1, 2] += new_h / 2.0 - centre[1]
-        size = (new_w, new_h)
-    else:
-        size = (w, h)
+    m, size = rotation_matrix(image.shape[:2], angle_deg, expand=expand)
 
     return cv2.warpAffine(
         image,
