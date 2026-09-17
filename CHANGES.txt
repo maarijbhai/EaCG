@@ -1538,3 +1538,58 @@ between otherwise identical builds, so the third decimal place is noise.
 A threefold APK for one dependency is itself a deployment-characterisation
 result: OpenCV is not a free import on a phone, and the number is here so
 it can be cited rather than re-derived.
+
+
+--------------------------------------------------------------------------------
+12.2 A ROTATION CONTROL, WHICH IS THE GROUND TRUTH MECHANISM
+--------------------------------------------------------------------------------
+
+A slider on DigitiseScreen injects a rotation of plus-or-minus 10 degrees in
+0.1 degree detents, applied with Imgproc.warpAffine and displayed.
+
+This is not a viewer control. It is how ground truth gets onto the device.
+A bundled fixture has a known grid pitch, so the grid estimator can be
+scored against it on the phone; but a fixture's true SKEW is only ever
+zero, so there is nothing for a skew estimator to be right or wrong about
+until a known angle is put in deliberately. The slider is that, and stage
+12.4 reads the angle back out.
+
+The range is plus-or-minus 10 degrees because that is the Python's
+COARSE_HALF_RANGE_DEG: the slider covers the estimator's stated operating
+range and stops at its edge. The detent is 0.1 degrees because that is the
+residual the reconstruction can absorb -- 1 degree of uncorrected rotation
+takes PCC from 0.981 to 0.734 -- so a finer control would be below what the
+rest of the pipeline can distinguish.
+
+ImageWarp.kt mirrors deskew.rotation_matrix and deskew.rotate_image, and
+keeps the Python's three departures from OpenCV's defaults, none of which
+are cosmetic: expand the canvas rather than crop the corners (cropping
+removes trace from a strip that runs to both ends, and the digitiser then
+scores a shorter waveform without saying so); fill the border white rather
+than black (the grid response keys on red saturation, for which white is
+silent and a black margin would contribute a hard straight edge to exactly
+the statistic the angle search maximises); and interpolate with Lanczos
+rather than bilinear (measured in results/deskew/interp.csv -- bilinear,
+the OpenCV default, is the worst of four on every axis).
+
+Two things that are about the device rather than the algorithm:
+
+collectLatest, not collect. A slider drag emits a value per frame and a
+Lanczos warp of an 8 MP image takes far longer than a frame, so plain
+collection would queue dozens of warps and the image would keep moving for
+seconds after the finger stopped. Cancelling the previous collection keeps
+at most one warp in flight.
+
+Full-resolution bitmaps are never drawn. The 300 dpi fixture is 33.7 MB as
+ARGB_8888, and an original plus a rotated plus (in 12.4) a corrected copy
+is over 100 MB against a per-app heap of roughly 200 MB on a 3 GB device.
+Processing happens on Mats, which are native allocations the Java heap does
+not see; only a 1080 px preview reaches the screen. Mats are released in
+finally blocks, because the garbage collector does not feel native pressure
+and will not free them in time under repeated use.
+
+At zero degrees no warp is applied at all -- the original is returned
+unchanged rather than warped by zero, since every interpolation is a
+low-pass filter on the grid detail the later stages measure.
+
+NOT VERIFIED: that any of this behaves on hardware. Compile only.
