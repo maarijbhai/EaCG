@@ -1,0 +1,8 @@
+source,kind,true_px_per_mm,reference_profile_max_dev,kotlin_green_movavg_0.25,kotlin_error_pct,kotlin_n_peaks,kotlin_window_max,python_redness_mean_0.20,python_error_pct,python_n_peaks
+gt_norm_150dpi,ecg-image-kit,5.90551,0.0,nan,nan,1,0.8995,29.2504,395.31,19
+gt_mi_200dpi,ecg-image-kit,7.87402,0.0,nan,nan,1,0.713,39.2599,398.6,13
+gt_sttc_300dpi,ecg-image-kit,11.81102,0.0,nan,nan,0,0.9261,41.3246,249.88,14
+synth_6px_per_mm,synth,6.0,0.0,6.0,-0.0,9,0.9755,6.0,-0.0,79
+synth_8px_per_mm,synth,8.0,0.0,8.0,0.0,7,0.977,8.0,-0.0,59
+synth_12px_per_mm,synth,12.0,0.0,12.0001,0.0,4,0.8337,12.0,0.0,39
+synth_16px_per_mm,synth,16.0,0.0,16.0001,0.0,3,0.8342,16.0,0.0,29

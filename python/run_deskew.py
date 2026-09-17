@@ -20,6 +20,10 @@ Experiments::
     failure    where it breaks: angle, blur, JPEG, faint grid, partial grid
     cost       wall-clock, against estimate_grid_pitch as the reference stage
     guards     B1 calibration guards, and confidence vs spacing_cv
+    finescale  fine-pass working resolution against accuracy and wall clock
+    finerobust the resolution choice re-run over the degradation battery
+    finee2e    the same sweep carried through to the recovered waveform
+    levers     other ways to buy the fine pass back: range, step, crop
 
 Usage::
 
@@ -68,6 +72,21 @@ FIXTURES = {
 ANGLE_SWEEP = (0.0, 0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 5.0, 8.0,
                -0.25, -0.75, -1.5, -3.0, -5.0, -8.0)
 
+#: Fine-pass working resolutions swept, as the longest image side in pixels.
+#: `None` is full resolution -- the original behaviour and the thing being
+#: argued against. 900 is the coarse pass's own working size, i.e. the floor
+#: below which the fine pass would be measuring a blurrier image than the
+#: pass that already localised the angle.
+FINE_DIM_SWEEP = (900, 1100, 1400, 1800, 2400, 3300, None)
+
+#: Residual angular error the pipeline can absorb without a measurable
+#: effect on the recovered waveform. Measured here, 1 degree of uncorrected
+#: rotation takes PCC from 0.981 to 0.734; 0.1 degrees is an order of
+#: magnitude inside that and is the accuracy the fine pass actually has to
+#: deliver. The shipped implementation delivers 0.004, which is 25x more
+#: than is needed and is paid for at full resolution.
+DAMAGE_THRESHOLD_DEG = 0.1
+
 
 def git_commit() -> tuple[str, bool]:
     """Current commit and whether the tree is dirty."""
@@ -83,6 +102,29 @@ def git_commit() -> tuple[str, bool]:
         return "unknown", True
 
 
+def module_defaults() -> dict:
+    """The tuning constants a result depends on but no CLI flag records.
+
+    Without these a sidecar cannot answer the only question that matters
+    six months from now -- which configuration produced this row. The
+    deskew sweeps in particular vary one of these while the others sit at
+    whatever the module happened to hold on the day.
+    """
+    return {
+        "deskew.COARSE_HALF_RANGE_DEG": dsk.COARSE_HALF_RANGE_DEG,
+        "deskew.COARSE_STEP_DEG": dsk.COARSE_STEP_DEG,
+        "deskew.COARSE_MAX_DIM": dsk.COARSE_MAX_DIM,
+        "deskew.FINE_HALF_RANGE_DEG": dsk.FINE_HALF_RANGE_DEG,
+        "deskew.FINE_STEP_DEG": dsk.FINE_STEP_DEG,
+        "deskew.FINE_MAX_DIM": dsk.FINE_MAX_DIM,
+        "deskew.DEFAULT_INTERPOLATION": dsk.DEFAULT_INTERPOLATION,
+        "digitise.DEFAULT_PEAK_FRACTION": dig.DEFAULT_PEAK_FRACTION,
+        "digitise.MAX_ANISOTROPY": dig.MAX_ANISOTROPY,
+        "digitise.MAX_SPACING_CV": dig.MAX_SPACING_CV,
+        "digitise.PAPER_SPEED_RANGE_MM_S": list(dig.PAPER_SPEED_RANGE_MM_S),
+    }
+
+
 def provenance(experiment: str, params: dict) -> dict:
     sha, dirty = git_commit()
     return {
@@ -91,6 +133,7 @@ def provenance(experiment: str, params: dict) -> dict:
         "git_commit": sha,
         "git_dirty": dirty,
         "params": params,
+        "module_defaults": module_defaults(),
         "versions": {
             "python": platform.python_version(),
             "numpy": np.__version__,
@@ -294,7 +337,12 @@ def exp_endtoend(args) -> list[dict]:
                 "px_per_mm_y": round(res.grid.px_per_mm_y, 4),
                 "spacing_cv": round(res.grid.spacing_cv, 4),
                 "confidence": round(res.grid.confidence, 4),
-                "calibration_ok": bool(res.calibration.ok) if res.calibration else None,
+                # `is not None`, not truthiness: CalibrationCheck.__bool__
+                # returns `ok`, so `if res.calibration` is false for exactly
+                # the rejected estimates this column exists to record, and
+                # wrote them to the CSV as blank rather than as False.
+                "calibration_ok": (bool(res.calibration.ok)
+                                   if res.calibration is not None else None),
             })
             return row
 
@@ -456,37 +504,54 @@ def exp_failure(args) -> list[dict]:
     return rows
 
 
+#: The deskew configuration as it stood before 2026-09-17: fine pass at full
+#: resolution, response taken at full resolution with it, +/-0.75 degrees.
+#: Timed alongside the current default in `exp_cost` rather than compared
+#: against last session's CSV, because wall clock is the one measurement in
+#: this repository that is not reproducible across machine states -- the same
+#: sweep measured 988 ms on a contended host and 363 ms on a quiet one. A
+#: speedup quoted across two runs would be measuring the load.
+LEGACY_CONFIG = dict(fine_max_dim=None, fine_half_range_deg=0.75)
+
+
 def exp_cost(args) -> list[dict]:
-    """Wall clock, against estimate_grid_pitch as the reference stage."""
+    """Wall clock, before against after, and against the reference stage.
+
+    Every timing in a row comes from one process in one load state, so the
+    ratios are comparable even where the absolute numbers are not.
+    """
     rows = []
+
+    def med(fn, reps=5):
+        ts = []
+        for _ in range(reps):
+            t0 = time.perf_counter()
+            fn()
+            ts.append((time.perf_counter() - t0) * 1000)
+        return float(np.median(ts))
+
     for name, (path, true_px) in FIXTURES.items():
         img = cv2.imread(str(path), cv2.IMREAD_COLOR)
         for angle in (0.0, 3.0):
             rot = dsk.rotate_image(img, angle, interpolation=args.sim_interp)
-            reps = 3
-            sk = []
-            for _ in range(reps):
-                t0 = time.perf_counter()
-                dsk.estimate_skew(rot, measure=args.measure)
-                sk.append((time.perf_counter() - t0) * 1000)
-            gp = []
-            for _ in range(reps):
-                t0 = time.perf_counter()
-                dig.estimate_grid_pitch(rot)
-                gp.append((time.perf_counter() - t0) * 1000)
-            wp = []
-            for _ in range(reps):
-                t0 = time.perf_counter()
-                dsk.rotate_image(rot, -angle, interpolation=args.interp)
-                wp.append((time.perf_counter() - t0) * 1000)
+            before = med(lambda: dsk.estimate_skew(
+                rot, measure=args.measure, **LEGACY_CONFIG))
+            after = med(lambda: dsk.estimate_skew(rot, measure=args.measure))
+            pitch = med(lambda: dig.estimate_grid_pitch(rot))
+            warp = med(lambda: dsk.rotate_image(
+                rot, -angle, interpolation=args.interp))
             rows.append({
                 "fixture": name, "megapixels": round(img.size / 3 / 1e6, 2),
                 "applied_deg": angle,
-                "estimate_skew_ms": round(float(np.median(sk)), 1),
-                "estimate_grid_pitch_ms": round(float(np.median(gp)), 1),
-                "single_warp_ms": round(float(np.median(wp)), 1),
-                "ratio_skew_over_pitch": round(
-                    float(np.median(sk)) / float(np.median(gp)), 2),
+                "estimate_skew_ms": round(after, 1),
+                "estimate_skew_legacy_ms": round(before, 1),
+                "speedup": round(before / after, 2) if after else float("nan"),
+                "estimate_grid_pitch_ms": round(pitch, 1),
+                "single_warp_ms": round(warp, 1),
+                "ratio_skew_over_pitch": round(after / pitch, 2)
+                if pitch else float("nan"),
+                "ratio_legacy_over_pitch": round(before / pitch, 2)
+                if pitch else float("nan"),
             })
     return rows
 
@@ -563,6 +628,300 @@ def exp_guards(args) -> list[dict]:
     return rows
 
 
+def _fine_pass(response, coarse_angle, measure, half_range, step,
+               max_dim=None, crop_frac=1.0):
+    """Run the fine pass alone on `response`, and time it.
+
+    Split out of `estimate_skew` so that the levers -- working resolution,
+    angular range, step, and restricting the projection to a subregion --
+    can be varied against each other without the coarse pass, which is
+    common to all of them, diluting the measurement.
+    """
+    t0 = time.perf_counter()
+    work = response
+    if crop_frac < 1.0:
+        h, w = work.shape[:2]
+        ch, cw = int(h * crop_frac), int(w * crop_frac)
+        y0, x0 = (h - ch) // 2, (w - cw) // 2
+        work = np.ascontiguousarray(work[y0:y0 + ch, x0:x0 + cw])
+    work, _ = dsk._reduce(work, max_dim)
+
+    angles = np.arange(coarse_angle - half_range,
+                       coarse_angle + half_range + 0.5 * step, step)
+    lh, lv = dsk._core_lengths(work.shape, abs(coarse_angle) + half_range)
+    fh, fv = dsk._sweep(work, angles, measure, lh, lv)
+    angle = dsk._parabolic_peak(angles, fh + fv)
+    ms = (time.perf_counter() - t0) * 1000.0
+    return angle, ms, len(angles), work.shape[:2]
+
+
+def exp_finescale(args) -> list[dict]:
+    """Fine-pass working resolution against angle recovery and wall clock.
+
+    The claim under test is that the pipeline has roughly 25x more angular
+    accuracy than it needs and is paying full resolution for it. One row
+    per fixture, resolution and true angle; the aggregation over the angle
+    sweep is done in the report rather than here, so that the raw
+    measurement stays in the CSV.
+    """
+    rows = []
+    for name, (path, true_px) in FIXTURES.items():
+        img = cv2.imread(str(path), cv2.IMREAD_COLOR)
+        if img is None:
+            continue
+        mp = img.size / 3 / 1e6
+        for fine_dim in FINE_DIM_SWEEP:
+            for truth in ANGLE_SWEEP:
+                rot = dsk.rotate_image(img, truth, interpolation=args.sim_interp)
+                est = dsk.estimate_skew(rot, measure=args.measure,
+                                        fine_max_dim=fine_dim)
+                rows.append({
+                    "fixture": name,
+                    "megapixels": round(mp, 2),
+                    "fine_max_dim": fine_dim if fine_dim else 0,
+                    "fine_rows": est["fine_shape"][0],
+                    "fine_cols": est["fine_shape"][1],
+                    "fine_scale": round(est["fine_scale"], 4),
+                    "true_angle_deg": truth,
+                    "recovered_deg": round(est["angle_deg"], 5),
+                    "abs_error_deg": round(abs(est["angle_deg"] - truth), 5),
+                    "margin": round(est["margin"], 2),
+                    "axis_disagreement_deg": round(est["axis_disagreement_deg"], 5),
+                    "coarse_ms": round(est["coarse_ms"], 1),
+                    "fine_ms": round(est["fine_ms"], 1),
+                    "margin_ms": round(est["margin_ms"], 1),
+                    "total_ms": round(est["elapsed_ms"], 1),
+                })
+    return rows
+
+
+def exp_finerobust(args) -> list[dict]:
+    """The resolution choice, re-run over the `failure` degradation battery.
+
+    `finescale` sweeps resolution on clean fixtures, where every setting
+    clears the 0.1 degree the waveform can detect. That is not enough to
+    choose one: a reduced fine pass is a low-pass filter applied to the
+    very grid detail the objective measures, so the setting has to be
+    defended where the grid is *already* degraded -- blurred, JPEG-crushed,
+    desaturated, or covering only part of the frame -- and not only where
+    it is pristine.
+    """
+    rows = []
+    img = cv2.imread(str(FIXTURES["gt_mi_200dpi"][0]), cv2.IMREAD_COLOR)
+    theta = 2.0
+    rot = dsk.rotate_image(img, theta, interpolation=args.sim_interp)
+
+    conditions = [("clean", rot)]
+    for sigma in (1.0, 2.0, 3.0, 5.0, 8.0):
+        k = int(2 * round(3 * sigma) + 1)
+        conditions.append((f"blur_sigma_{sigma}",
+                           cv2.GaussianBlur(rot, (k, k), sigma)))
+    for q in (40, 20, 10, 5):
+        ok, buf = cv2.imencode(".jpg", rot, [int(cv2.IMWRITE_JPEG_QUALITY), q])
+        conditions.append((f"jpeg_q{q}", cv2.imdecode(buf, cv2.IMREAD_COLOR)))
+    grey = cv2.cvtColor(cv2.cvtColor(rot, cv2.COLOR_BGR2GRAY),
+                        cv2.COLOR_GRAY2BGR)
+    for frac in (0.5, 0.25, 0.1):
+        conditions.append((f"grid_saturation_{frac}",
+                           cv2.addWeighted(rot, frac, grey, 1 - frac, 0)))
+    for frac in (0.5, 0.3, 0.15):
+        partial = np.full_like(rot, 255)
+        h, w = rot.shape[:2]
+        ch, cw = int(h * frac), int(w * frac)
+        y0, x0 = (h - ch) // 2, (w - cw) // 2
+        partial[y0:y0 + ch, x0:x0 + cw] = rot[y0:y0 + ch, x0:x0 + cw]
+        conditions.append((f"grid_coverage_{frac}", partial))
+
+    for name, im in conditions:
+        for fine_dim in args.e2e_fine_dims:
+            fd = None if fine_dim == 0 else fine_dim
+            try:
+                est = dsk.estimate_skew(im, measure=args.measure,
+                                        fine_max_dim=fd)
+                rows.append({
+                    "condition": name, "fine_max_dim": fine_dim,
+                    "true_angle_deg": theta,
+                    "recovered_deg": round(est["angle_deg"], 5),
+                    "abs_error_deg": round(abs(est["angle_deg"] - theta), 5),
+                    "over_damage_threshold": bool(
+                        abs(est["angle_deg"] - theta) > DAMAGE_THRESHOLD_DEG),
+                    "margin": round(est["margin"], 2),
+                    "axis_disagreement_deg": round(
+                        est["axis_disagreement_deg"], 5),
+                    "total_ms": round(est["elapsed_ms"], 1),
+                    "error": "",
+                })
+            except Exception as exc:
+                rows.append({"condition": name, "fine_max_dim": fine_dim,
+                             "true_angle_deg": theta,
+                             "error": f"{type(exc).__name__}: {exc}"})
+    return rows
+
+
+def exp_finee2e(args) -> list[dict]:
+    """The resolution sweep carried through to the recovered waveform.
+
+    Angular accuracy is a proxy. What the thesis reports is the waveform,
+    so the resolution has to be defended on SNR / RMSE / PCC / gain and not
+    on degrees alone. Two render scales, because the fine pass is the only
+    stage whose cost is superlinear in pixels and an 8 px/mm strip is
+    smaller than anything a phone camera produces.
+    """
+    rows = []
+    records = load_records(args.n, args.rate, args.root)
+    lead_i = ptbxl.LEAD_NAMES.index(args.lead)
+
+    for px_per_mm in args.e2e_px_per_mm:
+        for ecg_id, sig, meta in records:
+            s = sig[:, lead_i]
+            image, _ = strip_for(s, meta.fs, px_per_mm)
+            duration = len(s) / meta.fs
+            mp = image.size / 3 / 1e6
+
+            for theta in args.angles:
+                rot = dsk.rotate_image(image, theta,
+                                       interpolation=args.sim_interp)
+                for fine_dim in args.e2e_fine_dims:
+                    fd = None if fine_dim == 0 else fine_dim
+                    t0 = time.perf_counter()
+                    est = dsk.estimate_skew(rot, measure=args.measure,
+                                            fine_max_dim=fd)
+                    skew_ms = (time.perf_counter() - t0) * 1000.0
+                    corrected = dsk.rotate_image(
+                        rot, -est["angle_deg"], interpolation=args.interp)
+                    res, err = safe_digitise(corrected, meta.fs,
+                                             expected_duration_s=duration)
+                    row = {
+                        "ecg_id": ecg_id, "lead": args.lead,
+                        "px_per_mm": px_per_mm,
+                        "megapixels": round(mp, 2),
+                        "applied_deg": theta,
+                        "fine_max_dim": fine_dim,
+                        "recovered_deg": round(est["angle_deg"], 5),
+                        "abs_error_deg": round(abs(est["angle_deg"] - theta), 5),
+                        "skew_ms": round(skew_ms, 1),
+                        "coarse_ms": round(est["coarse_ms"], 1),
+                        "fine_ms": round(est["fine_ms"], 1),
+                        "error": err,
+                    }
+                    if res is None:
+                        row.update(dict.fromkeys(
+                            ("snr_db", "shifted_snr_db", "rmse_mv", "pcc",
+                             "gain_ratio", "px_per_mm_x", "px_per_mm_y"),
+                            float("nan")))
+                    else:
+                        m = evaluate.evaluate_all(s, res.signal_mv, fs=meta.fs)
+                        row.update({
+                            "snr_db": round(m.snr_db, 3),
+                            "shifted_snr_db": round(m.shifted_snr_db, 3),
+                            "rmse_mv": round(m.rmse_mv, 5),
+                            "pcc": round(m.pcc, 4),
+                            "gain_ratio": round(m.gain_ratio, 4),
+                            "px_per_mm_x": round(res.grid.px_per_mm_x, 4),
+                            "px_per_mm_y": round(res.grid.px_per_mm_y, 4),
+                        })
+                    rows.append(row)
+    return rows
+
+
+def exp_levers(args) -> list[dict]:
+    """Other ways to buy the fine pass back, measured rather than assumed.
+
+    Four, all of them plausible on paper:
+
+    * **narrower angular range** -- the coarse pass has already localised
+      the angle to within half a step, so the fine sweep's +/-0.75 degrees
+      is mostly margin;
+    * **coarser step with parabolic refinement** -- the parabola fit is
+      sub-step anyway, so sampling it more thinly may cost nothing;
+    * **a subregion instead of the whole frame** -- the grid covers the
+      page, so a crop carries the same periodicity at full resolution;
+    * **early termination** -- the three points that define the parabola
+      are the only ones the answer depends on, so the rest of the sweep is
+      confirmation. Its minimum-cost form is exactly the 3-point sweep
+      (half_range == step), which is what is measured here.
+
+    The crop rows are matched against downsample rows of the **same pixel
+    count**, so the comparison is at equal cost: for the same budget, is it
+    better to look at all of the paper coarsely or at some of it finely?
+    """
+    rows = []
+    for name, (path, true_px) in FIXTURES.items():
+        img = cv2.imread(str(path), cv2.IMREAD_COLOR)
+        if img is None:
+            continue
+        longest = max(img.shape[:2])
+        for truth in ANGLE_SWEEP:
+            rot = dsk.rotate_image(img, truth, interpolation=args.sim_interp)
+            response = np.ascontiguousarray(dsk.redness(rot), dtype=np.float64)
+
+            # One coarse pass, shared by every configuration below, so that
+            # what is varied is the fine pass alone.
+            coarse_resp, _ = dsk._reduce(response, dsk.COARSE_MAX_DIM)
+            ca = np.arange(-dsk.COARSE_HALF_RANGE_DEG,
+                           dsk.COARSE_HALF_RANGE_DEG + 0.5 * dsk.COARSE_STEP_DEG,
+                           dsk.COARSE_STEP_DEG)
+            lh, lv = dsk._core_lengths(coarse_resp.shape,
+                                       dsk.COARSE_HALF_RANGE_DEG)
+            h, v = dsk._sweep(coarse_resp, ca, args.measure, lh, lv)
+            coarse_angle = float(ca[int(np.argmax(h + v))])
+
+            def add(lever, level, **kw):
+                angle, ms, n, shape = _fine_pass(
+                    response, coarse_angle, args.measure, **kw)
+                rows.append({
+                    "fixture": name, "lever": lever, "level": level,
+                    "true_angle_deg": truth,
+                    "half_range_deg": kw.get("half_range"),
+                    "step_deg": kw.get("step"),
+                    "fine_max_dim": kw.get("max_dim") or 0,
+                    "crop_frac": kw.get("crop_frac", 1.0),
+                    "n_fine_angles": n,
+                    "fine_px": int(shape[0]) * int(shape[1]),
+                    "recovered_deg": round(angle, 5),
+                    "abs_error_deg": round(abs(angle - truth), 5),
+                    "fine_ms": round(ms, 1),
+                })
+
+            # Baseline pinned to the pre-2026-09-17 configuration -- full
+            # resolution, +/-0.75 degrees, 0.05 degree step -- rather than to
+            # whatever the module defaults currently hold, so that every
+            # lever is measured against a fixed reference and the table does
+            # not silently re-base itself when a default changes.
+            base = dict(half_range=0.75, step=0.05, max_dim=None)
+            add("baseline", "full", **base)
+
+            # 1. angular range
+            for hr in (0.75, 0.5, 0.35, 0.3, 0.25):
+                add("half_range", hr, half_range=hr, step=0.05, max_dim=None)
+
+            # 2. step, with the parabola doing the sub-step work
+            for st in (0.1, 0.15, 0.25, 0.375, 0.75):
+                add("step", st, half_range=0.75, step=st, max_dim=None)
+
+            # 3. crop vs downsample, at matched pixel count
+            for frac in (0.7, 0.5, 0.35):
+                add("crop", frac, half_range=0.75, step=0.05,
+                    max_dim=None, crop_frac=frac)
+                add("downsample_matched", frac, half_range=0.75, step=0.05,
+                    max_dim=int(longest * frac))
+
+            # 4. early termination in its minimum form: the three points the
+            #    parabola is fitted to, and nothing else.
+            add("three_point", 0.25, half_range=0.25, step=0.25, max_dim=None)
+            add("three_point", 0.375, half_range=0.375, step=0.375, max_dim=None)
+
+            # 5. working resolution, in this table rather than only in
+            #    `finescale`, so that the lever actually adopted is compared
+            #    against the rejected ones at the same baseline and in the
+            #    same process. Without this row the comparison is across two
+            #    experiments with different timing conditions, which is the
+            #    mistake this repository already made once.
+            for md in (1800, 1400, 1100, 900):
+                add("resolution", md, half_range=0.75, step=0.05, max_dim=md)
+    return rows
+
+
 EXPERIMENTS = {
     "angle": exp_angle,
     "measures": exp_measures,
@@ -571,6 +930,10 @@ EXPERIMENTS = {
     "failure": exp_failure,
     "cost": exp_cost,
     "guards": exp_guards,
+    "finescale": exp_finescale,
+    "finerobust": exp_finerobust,
+    "finee2e": exp_finee2e,
+    "levers": exp_levers,
 }
 
 
@@ -585,6 +948,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--lead", default="II")
     p.add_argument("--px-per-mm", type=float, default=8.0)
     p.add_argument("--angles", type=float, nargs="+", default=[1.0, 3.0])
+    p.add_argument("--e2e-px-per-mm", type=float, nargs="+",
+                   default=[8.0, 16.0],
+                   help="render scales for finee2e; 16 px/mm puts the strip "
+                        "in the megapixel range a phone camera produces")
+    p.add_argument("--e2e-fine-dims", type=int, nargs="+",
+                   default=[900, 1100, 1400, 1800, 0],
+                   help="fine-pass working resolutions for finee2e; "
+                        "0 means full resolution")
     p.add_argument("--measure", default="ssd", choices=dsk.MEASURES)
     p.add_argument("--interp", default=dsk.DEFAULT_INTERPOLATION,
                    choices=list(dsk.INTERPOLATIONS),

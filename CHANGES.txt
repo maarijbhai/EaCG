@@ -1044,3 +1044,444 @@ SNR 5.57 / PCC 0.9272 to SNR 7.47 / PCC 0.9775.
 Figures land in out/demo/ and are regenerable, so they are not committed.
 
 ================================================================================
+
+================================================================================
+CHANGES - ECG-App
+Session of 2026-09-17
+================================================================================
+
+Two pieces of work, in order: make deskew affordable on the target device,
+and reconcile the grid pitch threshold between the Python and the Kotlin.
+
+Added:    python/run_gridchannel.py,
+          results/grid/{contrast,threshold,kotlin,robust}.{csv,json},
+          results/deskew/{finescale,finerobust,finee2e,levers}.{csv,json}
+Modified: python/ecgproto/deskew.py, python/ecgproto/digitise.py,
+          python/run_deskew.py, python/demo_kit_pipeline.py,
+          python/see_digitise.py, CLAUDE.md, this changelog.
+Regenerated under the new defaults, all of them:
+          results/deskew/{angle,measures,endtoend,interp,failure,cost,
+          guards}.{csv,json}
+
+Host for every timing: Intel Core i5-12500H, Windows 11, Python 3.13.5,
+NumPy 2.5.2, SciPy 1.16.2, OpenCV 5.0.0. Timings are medians of 3 or 5.
+
+ONE METHODOLOGICAL NOTE FIRST, because it changed how the rest was
+measured. Wall clock is the only quantity in this repository that is not
+reproducible across machine states: the same resolution sweep measured
+988 ms on a contended host and 363 ms on a quiet one, a factor of 2.7 that
+has nothing to do with any code. Accuracy numbers reproduced to five
+decimal places across the same two runs. So every before-and-after timing
+below is measured in ONE process, alternating the two configurations --
+exp_cost now times the pre-change configuration itself via LEGACY_CONFIG,
+rather than comparing against last session's committed CSV. Where a
+speedup is quoted, both halves of it come from the same minute.
+
+
+--------------------------------------------------------------------------------
+11.1 DESKEW WAS UNAFFORDABLE, AND THE ACCURACY IT PAID FOR WAS NOT NEEDED
+--------------------------------------------------------------------------------
+
+Measured last session: angle recovery to 0.004 degrees worst case, holding
+out to plus-or-minus 44 degrees, through blur at sigma 8 and JPEG quality
+5. Also 195-347 ms at 2.10 MP, 372-540 ms at 3.74 MP and 1691-1941 ms at
+8.41 MP -- 7 to 14 times estimate_grid_pitch, and superlinear in pixels.
+
+The argument that resolves this is that the second set of numbers buys the
+first, and the first was never required. One degree of uncorrected rotation
+takes PCC from 0.981 to 0.734, so the residual the waveform can absorb is
+of order 0.1 degrees. The implementation was delivering 25 times that.
+
+results/deskew/finescale.csv sweeps the fine pass working resolution over
+the three fixtures and the 17-angle sweep, 357 rows, pooled:
+
+    fine_max_dim   worst err   median err   coarse   fine   total
+           900      0.0408      0.0010       53 ms   16 ms    86 ms
+          1100      0.0280      0.0003       54      25      103
+          1400      0.0199      0.0002       55      46      134
+          1800      0.0043      0.0001       54      88      193
+          full      0.0043      0.0000       56     234      363
+
+Every setting clears 0.1 degrees, so there is no accuracy knee to find --
+there is a requirement line, and all of them are under it. The choice is
+therefore the cheapest with honest margin, not the most accurate. 900 is
+worst-case 0.041 degrees, a factor of 2.4 inside the requirement. (The
+"full" row here is already cheaper than the shipped-before configuration,
+because this sweep varies resolution with the response lever below already
+applied. The whole-configuration comparison is in the cost table.)
+
+results/deskew/finerobust.csv re-runs the choice over the degradation
+battery, because a reduced fine pass is itself a low-pass filter applied to
+the grid detail the objective measures, and a setting defended only on
+clean images is not defended. Worst error at 900 px across blur to sigma 8,
+JPEG down to quality 5, grid saturation to 10% and grid coverage to 15%:
+0.021 degrees. Accuracy is not monotone in resolution under degradation --
+1800 px scores 0.088 degrees on the 15%-coverage case, worse than 900 does
+-- which is a further argument against buying resolution on principle.
+
+results/deskew/finee2e.csv carries the sweep through to the waveform, since
+angular accuracy is a proxy and the reconstruction is what gets reported.
+10 records, 1 and 3 degrees, two render scales:
+
+  1.16 MP (8 px/mm)          4.66 MP (16 px/mm)
+    dim   SNR dB    PCC    ms      dim   SNR dB    PCC    ms
+    900   8.5957  0.9608   87      900  11.0068  0.9881   88
+   1100   8.5971  0.9608   95     1100  11.0600  0.9887  133
+   1400   8.5992  0.9608  157     1400  11.1221  0.9898  156
+   1800   8.5898  0.9608  195     1800  11.0993  0.9897  198
+   full   8.5986  0.9608  218     full  11.0823  0.9894  752
+
+At 8 px/mm PCC is identical to four decimal places at every resolution. At
+4.66 MP the whole span of SNR is 0.12 dB and of PCC is 0.0017 -- and 1400
+scores *higher* than full resolution, which is the size of the noise floor
+on this measurement. What is not noise is the last column: 88 ms against
+752 ms, a factor of 8.5.
+
+A SECOND LEVER, found while reading the timing breakdown and worth more
+than expected. At a 900 px fine pass the sweeps stopped being the dominant
+cost and redness() became it: 181 ms on the 8.41 MP fixture, against 23 ms
+to resize the image to 900 px first and take the response there. The
+response is now taken once, on an image already reduced to the largest size
+any pass will use. The two orders do not commute -- redness clips at zero,
+so averaging before and after the clip differ -- but they agree on the
+recovered angle to better than 1e-4 degrees over the fixtures and the angle
+sweep. Note for anyone passing response_fn: its kernels are now sized in
+pixels of the reduced image, so a fixed-radius filter covers more
+paper-millimetres than it did.
+
+RESULT, results/deskew/cost.csv, both configurations timed in one process:
+
+    fixture           MP    applied   before    after   speedup
+    gt_norm_150dpi   2.10    0 deg    192.2 ms   75.7 ms   2.54x
+                             3 deg    334.4      88.2      3.79x
+    gt_mi_200dpi     3.74    0 deg    357.6      74.0      4.83x
+                             3 deg    522.9      86.5      6.05x
+    gt_sttc_300dpi   8.41    0 deg   1620.6      77.8     20.82x
+                             3 deg   1771.0      89.1     19.87x
+
+The legacy column reproduces last session's 195-1941 ms, which is the check
+that the host is in a comparable state.
+
+The structural change matters more than the factor. Cost is now flat in
+input size -- 74 to 89 ms across a fourfold range of megapixels -- because
+everything after the first resize runs at a fixed 900 px. Against
+estimate_grid_pitch, the reference stage, deskew went from 5.7-14.7x to
+0.68-2.90x, and on the largest fixture it is now CHEAPER than the grid
+estimation it feeds. Working set drops with it, from 42/75/168 MB of float
+buffers to a constant 12.5 MB, which on a 3 GB phone matters more than the
+milliseconds.
+
+COST OF THE CHANGE, on the waveform, same records, same everything else:
+PCC 0.96234 -> 0.96231 at 1 degree and 0.96250 -> 0.96248 at 3 degrees, SNR
+-0.0023 dB. The unrotated and roundtrip_control conditions, which never
+call estimate_skew, are bit-identical before and after -- delta exactly 0.0
+on every metric -- which is the control that says the change touched only
+what it was meant to.
+
+
+--------------------------------------------------------------------------------
+11.2 THE OTHER LEVERS. ONE HELPED, THREE DID NOT
+--------------------------------------------------------------------------------
+
+results/deskew/levers.csv, 1173 rows. The fine pass is measured in
+isolation with the coarse pass held fixed, every lever is referenced to the
+same pinned baseline -- full resolution, plus-or-minus 0.75 degrees, 0.05
+degree step -- and resolution is included as a row so that the lever
+actually adopted is compared against the rejected ones in the same table
+and the same process. Sorted by cost; the requirement is 0.1 degrees:
+
+    lever                  n_ang   worst err   median err   fine ms
+    downsample_matched 0.35  31     0.0748      0.0019       19.3
+    crop 0.35                31     0.0474      0.0022       20.1
+    resolution 900           31     0.0408      0.0010       28.4
+    step 0.75                 3     1.0000      0.0000       33.0
+    three_point 0.375         3     0.1250      0.0000       33.2
+    three_point 0.25          3     0.0755      0.0000       34.4
+    downsample_matched 0.5   31     0.0259      0.0004       40.3
+    crop 0.5                 31     0.0312      0.0007       43.9
+    resolution 1100          31     0.0280      0.0003       51.4
+    step 0.375                5     0.1079      0.0000       56.4
+    step 0.25                 7     0.0754      0.0000       76.0
+    resolution 1400          31     0.0201      0.0002       89.3
+    downsample_matched 0.7   31     0.0277      0.0001      109.5
+    crop 0.7                 31     0.0390      0.0002      116.0
+    step 0.15                11     0.0403      0.0000      121.8
+    half_range 0.25          11     0.0043      0.0000      123.5
+    half_range 0.3           13     0.0043      0.0000      145.2
+    resolution 1800          31     0.0043      0.0001      152.9
+    half_range 0.35          15     0.0043      0.0000      165.3
+    step 0.1                 16     0.0242      0.0002      181.3
+    half_range 0.5           21     0.0043      0.0000      229.9
+    baseline                 31     0.0043      0.0000      347.2
+    half_range 0.75          31     0.0043      0.0000      354.5
+
+NARROWING THE ANGULAR RANGE -- helped, and is applied. The coarse pass
+samples every 0.5 degrees, so its answer is within 0.25 of the truth
+provided it picks the nearest sample. Over 67 cases -- three fixtures, the
+17-angle sweep, and the whole degradation battery -- it always does: worst
+|coarse - truth| observed is exactly 0.2500, never more than half a step.
+FINE_HALF_RANGE_DEG is cut from 0.75 to 0.5, one full coarse step of slack
+rather than one and a half: a third off the fine pass for a worst-case
+error of 0.00433 against 0.00428. It is NOT cut to 0.25, which the
+measurement would allow, because a coarse pass that ever did miss by a step
+would put the true peak outside the fine window and fail silently and
+large, and the remaining saving is 20 ms of a stage that now costs 85.
+
+COARSENING THE FINE STEP -- did not help. The parabola fit is sub-step, so
+sampling it more thinly looks free and is not. Median error stays at 1e-5
+throughout; it is the worst case that goes, and step 0.375 already breaches
+the requirement at 0.108 degrees. Compare like for like in the table above:
+step 0.25 costs 76.0 ms for a worst case of 0.0754, where resolution 900
+costs 28.4 ms for 0.0408. Less than half the time and half the error.
+
+EARLY TERMINATION -- did not help. Its minimum-cost form is exactly the
+three points the parabola is fitted to, and it is in the table: 34.4 ms for
+0.0755 degrees, against 28.4 ms for 0.0408 from resolution alone. Cheaper
+and more accurate on the other axis, so there is nothing left for early
+termination to buy. Widening the bracket to make the three points cover
+more angle makes it worse, not better: at half_range 0.375 the worst case
+is 0.125 degrees, outside the requirement.
+
+RESTRICTING THE PROJECTION TO A SUBREGION -- did not help, and is the one
+that looked most promising. Compared against downsampling the whole frame
+to the same pixel count, so the comparison is at equal cost, it wins at the
+smallest budget (0.0474 against 0.0748) and loses at the two larger ones
+(0.0312 vs 0.0259, 0.0390 vs 0.0277). Its MEDIAN error is roughly twice as
+high at every budget, which says the inconsistency is real and not one
+unlucky fixture. Cropping trades lever arm for resolution and the objective
+wants both; there is no free side to that trade, and adding a parameter to
+buy an inconsistent 20% was not worth it.
+
+
+--------------------------------------------------------------------------------
+11.3 PROJECTION TO THE TARGET DEVICE
+--------------------------------------------------------------------------------
+
+Assumptions, stated because the number is only as good as they are. Host is
+an i5-12500H P-core, roughly 4.0-4.5 GHz under this load. Target is a
+Galaxy A30s, Exynos 7904: two Cortex-A73 at 1.8 GHz, six A53 at 1.6 GHz,
+3 GB RAM, passively cooled. Clock ratio about 2.4x, IPC ratio for this kind
+of strided floating-point reduction about 2.5-3x, so 6-8x per core before
+thermal effects; 8-12x is the honest band once sustained load on a phone is
+allowed for. The work is single-threaded in both places, and the Kotlin
+port will not have NumPy's reduceat, so the band is a floor rather than a
+centre estimate.
+
+    before, 8.41 MP:   1621-1771 ms  ->  13-21 s on device
+    after,  any size:     74-89 ms   ->  0.6-1.1 s on device
+
+So: plausibly at or under a second, which is the question that was asked,
+and no longer a stage that cannot run at all. It is not COMFORTABLY under a
+second, and the honest statement for the thesis is "around a second on the
+target device, pending measurement on the device".
+
+Headroom identified and NOT taken, because it is a change to the coarse
+pass and the coarse pass is what sets the capture range. COARSE_MAX_DIM
+900 -> 700 takes the total from 82-85 ms to 51-55 ms on all three fixtures
+with worst error 0.0012 degrees; 600 and 450 keep going, to 39-43 and 25-31
+ms, at 0.028 and 0.0035 degrees. The coarse pass is now about 60% of what
+is left, so this is where the next factor of two is if the device
+measurement demands one.
+
+
+--------------------------------------------------------------------------------
+11.4 THE GRID PITCH THRESHOLD: THE CHANNEL HYPOTHESIS IS WRONG
+--------------------------------------------------------------------------------
+
+The premise going in was that GridEstimator.kt reads the GREEN channel and
+gets the right pitch on the ecg-image-kit fixtures where the Python's
+redness response gets a fivefold error, and that green must therefore
+preserve a better minor-to-major contrast ratio. Both halves of that are
+false, and the measurement is in results/grid/.
+
+FIRST. The Kotlin does not get them right. Running its rule unmodified --
+grid_reference.py is its line-for-line twin, and the vectorised projection
+used here matches its own pixel loop to 0.0 exactly -- it returns NaN on all
+three fixtures, finding 0 or 1 peaks where it requires 3. It gets the
+synthetic renders right, exactly as the Python does. The two
+implementations do not disagree; they fail on the same images, and the only
+difference is that the Kotlin fails loudly and the Python returns 39.26
+px/mm against a true 7.874 with every internal diagnostic healthy.
+
+SECOND. The two thresholds were never comparable, and neither is a fraction
+of anything about the grid. The Python thresholds at
+peak_fraction * ac[:hi].max(), and because the autocorrelation is
+normalised by its zero lag that maximum is always exactly 1.0 -- so 0.20 was
+an absolute 0.20. The Kotlin thresholds at 0.25 * max(acf[3:60]), and that
+window maximum measures 0.71-0.95 on these images, so its cut lands at
+0.178-0.238. The same place. Two knobs that look different, spelled
+differently, doing the same thing.
+
+THIRD. Green is the WORST of the four channels tested, not the best.
+results/grid/contrast.csv, the largest threshold at which all four minor
+peaks below the first major one survive:
+
+    source              blue    redness   green    luma
+    gt_norm_150dpi     0.1228   0.1173   0.1030   0.0998
+    gt_mi_200dpi       0.1229   0.1111   0.1018   0.1007
+    gt_sttc_300dpi     0.1805   0.1681   0.1546   0.1524
+    synth 6-16 px/mm   0.78-0.83   same     same    same
+
+The reason is in the ink. ecg-image-kit draws minor rules at BGR
+(219,223,254) and major rules at (0,0,255), so 255-B gives the minors
+36/255 of the majors' response and 255-G gives 32/255. Blue's edge is 12%
+and it is an artefact of one generator's palette. The moving-average
+detrend the Kotlin applies moves the number by about 7% and changes nothing
+qualitative.
+
+SO, TO THE QUESTION AS POSED -- does the channel choice remove the need for
+a low threshold, or merely shift where it sits? Neither, quite. It shifts
+it, by about 20% between the best and worst channel, and it shifts green in
+the wrong direction. What decides the outcome is something larger than the
+channel: the kit's minor rules are roughly seven times fainter than its
+majors and this repository's synthetic renders draw them at near-equal
+weight, so the required threshold differs by a factor of EIGHT between
+image sources where it differs by 20% between channels. That is CLAUDE.md
+limitation 6's "synthetic images flatter the pipeline", quantified.
+
+
+--------------------------------------------------------------------------------
+11.5 RECOMMENDED CONFIGURATION, AND THE BEFORE-AND-AFTER IT REQUIRED
+--------------------------------------------------------------------------------
+
+Recommendation: keep the REDNESS response, and lower peak_fraction from
+0.20 to 0.05. Same in both ports.
+
+Redness rather than blue, despite blue measuring marginally better, because
+blue's advantage is 12% and specific to one generator's ink, while redness
+has an independent structural reason -- it is near-silent on the neutral
+trace, so the profile it produces is grid and not grid-plus-waveform -- and
+because at the resolution floor redness recovers a 3.0 px/mm render where
+blue returns NaN.
+
+0.05 rather than 0.03 or 0.10, from results/grid/robust.csv: it is the
+highest threshold at which every channel tested recovers every clean source
+correctly, it sits a factor of two below the lowest value any fixture
+requires (0.1007), and 0.01 returns the same pitch to four decimal places,
+so there is nothing below it worth having. It also fails better at the
+resolution floor: a 2.5 px/mm render returns a confident 197-300% error at
+0.10-0.20 and NaN at 0.05.
+
+WHAT NO THRESHOLD FIXES, and it should be said before the gains. On the kit
+fixtures the 1 mm rules do not survive blur past sigma 1 or JPEG below
+quality 20 at all: at sigma 3 no channel and no threshold recovers the
+pitch, because the information is no longer in the image. Lowering the
+threshold buys the clean case and buys nothing beyond it.
+
+This is a change to peak selection in the control condition, so, as
+required, before and after on every existing result.
+
+GAINED -- results/deskew/guards.csv, the clean 200 dpi fixture:
+
+                       peak_fraction 0.20   peak_fraction 0.05
+    px/mm recovered          39.2599              7.9021
+    error vs true             +398.6%              +0.4%
+    implied paper speed       5.6 mm/s            27.8 mm/s
+    check_calibration         REJECTED            ACCEPTED
+
+and results/deskew/interp.csv, unrotated fixture pitch, all three:
+39.301 -> 7.914 (+0.5%), 29.378 -> 5.950 (+0.7%), 50.186 -> 11.823 (+0.1%).
+The fixtures calibrate correctly for the first time. Confirmed on a real
+ecg-image-kit printout rather than only the bundled fixtures:
+demo_kit_pipeline.py on gt_300dpi 00009_hr now recovers 11.8374 px/mm
+(+0.22%) at the default where it previously needed peak_fraction=0.03
+passed by hand, SNR 7.48 dB / PCC 0.9775 / gain 0.944.
+
+UNCHANGED -- results/deskew/endtoend.csv, 12 records, every condition that
+produced a result at 0.20: max per-record delta PCC exactly 0.0, delta gain
+1e-4, delta SNR 0.001 dB, px_per_mm_x identical. angle.csv and
+measures.csv are bit-identical (deskew does not call estimate_grid_pitch).
+Synthetic renders from 3.0 to 16.0 px/mm return the same pitch to four
+decimal places at every threshold from 0.01 to 0.20.
+
+LOST, and this is a real cost. At 0.20 a one-degree rotation made grid
+estimation fail outright and digitise() refused -- CLAUDE.md limitation 7's
+"12/12 records". At 0.05 it succeeds, returns a waveform at PCC 0.49-0.77,
+and check_calibration accepts 10 of those 12 because the pitch really is
+right; the other 2 are caught on anisotropy, their y-axis having locked
+onto a harmonic. Rotation was never a tolerable input and deskew runs first
+by design, but the accidental safety net that used to sit at grid
+estimation is gone, and a rotated frame now fails on PCC downstream instead
+of on calibration here.
+
+NOT DONE, deliberately. The peak SELECTION RULE is unchanged. The case for
+changing it is strong and is recorded here rather than acted on: no fixed
+height threshold can be right for both image families when the required
+value differs eightfold between them, and a rule that tested a candidate
+fundamental against its own harmonics -- rather than against an absolute
+height -- would not have this failure mode at all. That is a different
+algorithm and needs its own before-and-after.
+
+FOR THE KOTLIN PORT, which was not modified, three changes are required to
+match:
+  1. read the redness response, r - 0.5*(g + b) clipped at zero, not
+     255 - green;
+  2. threshold at an absolute 0.05 of the zero-lag-normalised
+     autocorrelation, dropping the 0.25 * windowMax rule entirely, since
+     the Python's threshold is absolute and matching it means being
+     absolute;
+  3. raise MAX_PX_PER_MM, currently 40, and with it the lag search window,
+     currently min(60, n-2). At 300 dpi the 5 mm rule sits at 59.06 px and
+     is at the very edge of that window; the Python searches to 480.
+The moving-average detrend can stay or go -- it moves the numbers by about
+7% and nothing qualitative depends on it -- but whichever is chosen must be
+chosen in both, and grid_reference.py must be updated with it so that the
+twin stays a twin.
+
+
+--------------------------------------------------------------------------------
+11.6 TWO LATENT BUGS FOUND WHILE MEASURING, BOTH FIXED, NEITHER CHANGING
+     ANY EXISTING NUMBER
+--------------------------------------------------------------------------------
+
+FIRST, digitise._pitch_1d raised IndexError as soon as the threshold went
+low enough to admit an autocorrelation peak below the minimum lag:
+
+    peaks, props = sps.find_peaks(...)
+    peaks = peaks[peaks >= min_pitch_px]          # peaks rebound here
+    ...
+    heights = props["peak_heights"][peaks >= min_pitch_px]   # wrong length
+
+After the rebinding the mask is all-true and of the FILTERED length, and
+indexing the unfiltered props with it raises. It could never fire at the
+0.20 default -- a peak below lag 3 would need a normalised autocorrelation
+above 0.20 at lag 1 or 2 -- so it sat latent until the threshold sweep. The
+mask is now held. It affects the `confidence` field only; `pitch` is
+computed from `peaks` and cannot change. Verified: guards.csv, failure.csv,
+interp.csv and endtoend.csv are byte-identical across the fix.
+
+SECOND, run_deskew.py recorded calibration outcomes as
+
+    bool(res.calibration.ok) if res.calibration else None
+
+and CalibrationCheck defines __bool__ as its own `ok`. So `if
+res.calibration` is false for exactly the rejected estimates the column
+exists to record, and every rejection was written to the CSV as blank
+rather than as False. Now `is not None`. The previously-committed
+endtoend.csv under-reported calibration failures for this reason.
+
+Also, not a bug but a provenance gap: the JSON sidecars recorded CLI
+arguments and library versions but not the module constants a result
+actually depends on, so a sweep that varies FINE_MAX_DIM while
+FINE_HALF_RANGE_DEG sits at whatever the module held that day could not be
+reconstructed from its own sidecar. provenance() now emits a
+module_defaults block with the seven deskew and four digitise constants.
+
+
+--------------------------------------------------------------------------------
+11.7 WHAT THIS SESSION DID NOT DO
+--------------------------------------------------------------------------------
+
+No lead segmentation. No ML. GridEstimator.kt not modified -- section 11.5
+states what it needs and why, but the Android side is untouched and the two
+ports are, as of this commit, still divergent. COARSE_MAX_DIM not reduced
+despite the headroom being measured. The peak selection rule not changed
+despite the argument for it. No measurement on the target device; every
+number here is desktop, and the device projection in 11.3 is arithmetic on
+a scaling assumption, not an observation.
+
+Also removed: the "TASK: Audit and report" block that had been appended to
+CLAUDE.md. It was a completed task's prompt sitting in a file that is read
+as standing project instructions, and one of its lines was "Do not modify
+any code", which would misdirect every future session. It is in git history
+at 970672c if it is wanted back.

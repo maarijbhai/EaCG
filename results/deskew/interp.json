@@ -1,7 +1,7 @@
 {
   "experiment": "interp",
-  "utc": "2026-09-15T22:23:23+00:00",
-  "git_commit": "44503a2d9a3da2a4dc4182e2e6d0c580d31a5839",
+  "utc": "2026-09-17T08:49:43+00:00",
+  "git_commit": "970672c8d8f11b5d71f6ad4f787b933fa91d29d1",
   "git_dirty": true,
   "params": {
     "root": "C:\\dev\\ECG-App\\data\\ptb-xl\\1.0.3",
@@ -14,8 +14,19 @@
       1.0,
       3.0
     ],
+    "e2e_px_per_mm": [
+      8.0,
+      16.0
+    ],
+    "e2e_fine_dims": [
+      900,
+      1100,
+      1400,
+      1800,
+      0
+    ],
     "measure": "ssd",
-    "interp": "nearest",
+    "interp": "lanczos",
     "sim_interp": "lanczos"
   },
   "versions": {

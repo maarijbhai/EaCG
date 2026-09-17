@@ -1,0 +1,56 @@
+{
+  "experiment": "finescale",
+  "utc": "2026-09-17T09:00:10+00:00",
+  "git_commit": "970672c8d8f11b5d71f6ad4f787b933fa91d29d1",
+  "git_dirty": true,
+  "params": {
+    "root": "C:\\dev\\ECG-App\\data\\ptb-xl\\1.0.3",
+    "n": 10,
+    "n_interp": 4,
+    "rate": 100,
+    "lead": "II",
+    "px_per_mm": 8.0,
+    "angles": [
+      1.0,
+      3.0
+    ],
+    "e2e_px_per_mm": [
+      8.0,
+      16.0
+    ],
+    "e2e_fine_dims": [
+      900,
+      1100,
+      1400,
+      1800,
+      0
+    ],
+    "measure": "ssd",
+    "interp": "lanczos",
+    "sim_interp": "lanczos"
+  },
+  "module_defaults": {
+    "deskew.COARSE_HALF_RANGE_DEG": 10.0,
+    "deskew.COARSE_STEP_DEG": 0.5,
+    "deskew.COARSE_MAX_DIM": 900,
+    "deskew.FINE_HALF_RANGE_DEG": 0.5,
+    "deskew.FINE_STEP_DEG": 0.05,
+    "deskew.FINE_MAX_DIM": 900,
+    "deskew.DEFAULT_INTERPOLATION": "lanczos",
+    "digitise.DEFAULT_PEAK_FRACTION": 0.05,
+    "digitise.MAX_ANISOTROPY": 0.15,
+    "digitise.MAX_SPACING_CV": 0.25,
+    "digitise.PAPER_SPEED_RANGE_MM_S": [
+      15.0,
+      60.0
+    ]
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "scipy": "1.16.2",
+    "opencv": "5.0.0",
+    "platform": "Windows-11-10.0.26100-SP0"
+  },
+  "n_rows": 357
+}

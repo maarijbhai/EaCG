@@ -13,8 +13,12 @@ models, and the open question is whether that pipeline survives
 compression onto consumer mobile hardware, and at what cost in latency,
 memory and reconstruction fidelity.
 
-**Status: early.** The Python prototype exists and runs. The Android app
-has not been started.
+**Status: early.** The Python prototype exists and runs: rendering,
+deskew, grid estimation, classical digitisation and the reconstruction
+metrics, with committed measurements under `results/`. Lead segmentation
+does not exist, and nothing has been measured on a physical device. The
+Android app loads images and has one ported stage (`GridEstimator.kt`),
+which is currently divergent from the Python — see limitation 6.
 
 ## Repository layout
 
@@ -33,6 +37,7 @@ ECG-App/
 │   ├── run_baseline.py   experiment on synthetic signals
 │   ├── run_ptbxl.py      experiment on real PTB-XL records
 │   ├── run_deskew.py     deskew measurement suite -> results/deskew/
+│   ├── run_gridchannel.py  grid channel/threshold suite -> results/grid/
 │   ├── make_print_target.py  print a lead at true physical scale
 │   ├── score_photo.py    score a photograph of that print
 │   └── verify_ptbxl.py   dataset download integrity check
@@ -112,25 +117,56 @@ scope boundaries.
 5. **`synth.synthetic_ecg` is a sum of Gaussians**, not a physiological
    model. It is a test fixture only, used when PTB-XL is unavailable.
 
-6. **`estimate_grid_pitch` reports the 5 mm rule, not the 1 mm rule, on
-   the ecg-image-kit fixtures.** Measured 2026-09-16: it returns 39.26
-   px/mm against a true 7.874, a 5x error, on all three reference
-   printouts. The minor rules *are* resolved — autocorrelation peaks exist
-   at lags 8, 16, 24 — but they stand at 0.11–0.19 against 0.87 for the
-   5 mm peaks, so `peak_fraction=0.20` filters most of them out and the
-   median spacing collapses onto the majors. This never appeared on
-   `synth` renders, whose minor and major rules have similar contrast, and
-   it is the strongest evidence so far that synthetic images flatter the
-   pipeline. Nothing inside the autocorrelation can detect it (both
-   `spacing_cv` and a major/minor height ratio were tried and fail);
-   `digitise.check_calibration`'s paper-speed test catches it, and needs
-   `expected_duration_s` to do so. Fixing the selection itself is
-   deliberately left open — see `results/deskew/guards.csv`.
+6. **The required autocorrelation threshold differs eightfold between
+   image sources, and no fixed one is right for both.** ecg-image-kit
+   draws the 1 mm rules about seven times lighter than the 5 mm ones, so
+   their autocorrelation peaks stand at 0.11–0.19 against 0.72–0.95 for
+   the majors; `synth` renders put both families at 0.78–0.83. Measured
+   2026-09-17 across four channel responses and both sources — see
+   `results/grid/`. `peak_fraction` was lowered from 0.20 to 0.05 as a
+   result, which fixes the fixtures (39.26 → 7.90 px/mm against a true
+   7.874, and `check_calibration` now accepts them) and changes nothing on
+   the synthetic renders. This is a *parameter* change; the selection rule
+   itself is deliberately unchanged, and the case for replacing it with a
+   harmonic test rather than a height threshold is made in CHANGES.txt
+   §11.5 and not acted on.
 
-7. **Deskew must run before grid estimation.** At 1 and 3 degrees,
-   digitisation of a rendered strip fails outright in 12/12 records
-   (`estimate_grid_pitch` returns NaN). Deskew recovers it to within ~1%
-   of the unrotated PCC. Rotation is not a tolerable input condition.
+   Two things the earlier reading of this got wrong, both now measured.
+   The green channel does not help — it is the *worst* of blue, redness,
+   green and luma, because ecg-image-kit's minor-rule ink is (219,223,254)
+   in BGR and green sees less of it than blue does. And `GridEstimator.kt`
+   never recovered these fixtures either: run unmodified it returns NaN on
+   all three, because its `0.25 * max(acf[3:60])` cut lands at 0.178–0.238
+   — the same place as the Python's 0.20. The two ports agreed all along;
+   only their failure modes differed.
+
+   **The Kotlin port is currently divergent** and must change to match:
+   redness not green, an absolute 0.05 threshold not `0.25 * windowMax`,
+   and a lag window wider than its present `min(60, n-2)` (at 300 dpi the
+   5 mm rule sits at 59.06 px, right at the edge).
+
+7. **Deskew must run before grid estimation.** Deskew recovers a rotated
+   strip to within ~1% of the unrotated PCC; rotation is not a tolerable
+   input condition. Note that the *symptom* changed on 2026-09-17: at
+   `peak_fraction=0.20` a 1 degree rotation made grid estimation fail
+   outright in 12/12 records, so `digitise` refused. At 0.05 it succeeds
+   and returns a waveform at PCC 0.49–0.77, and `check_calibration`
+   accepts 10 of the 12 because the pitch really is right (the other 2 are
+   caught on anisotropy). The accidental safety net is gone; a rotated
+   frame now fails on PCC downstream rather than on calibration.
+
+8. **Deskew's fine pass runs at 900 px, not full resolution, on purpose.**
+   Full resolution cost 1.7–1.9 s at 8.41 MP and was superlinear in
+   pixels. It bought 0.004 degrees of angle recovery where ~0.1 is what
+   the waveform can detect — 1 degree of residual rotation costs 0.25 of
+   PCC, 0.04 costs nothing measurable. At 900 px the stage is 74–89 ms
+   *regardless of input size*, worst-case error 0.041 degrees, and
+   end-to-end PCC moves by 0.00003. See `results/deskew/finescale.csv`,
+   `finerobust.csv`, `finee2e.csv` and `levers.csv`, and CHANGES.txt §11.1
+   to §11.3. Of the other levers tried, only narrowing the fine angular
+   range helped; a coarser step, early termination and restricting the
+   projection to a subregion all cost more accuracy than resolution does
+   for the same time.
 
 ## Technical decisions already made
 
@@ -167,47 +203,3 @@ scope boundaries.
   produced a confident, wrong conclusion. Simulation parameters and
   parameters under test need separate flags.
 
----
-
-# TASK: Audit and report
-
-Please read every file under `python/` and produce a written report.
-Do not modify any code. The report will be handed to a collaborator who
-does not have access to this repository, so it must stand alone.
-
-Cover the following:
-
-**1. Module inventory.** For each file: its purpose, its public
-functions/classes with signatures, and what it depends on. Note anything
-that is dead code or unused.
-
-**2. Data flow.** Trace the path from a PTB-XL record on disk through to
-a metric value. Name the exact functions called in order and the shape
-and units of the data at each hand-off.
-
-**3. Correctness review.** Identify actual bugs, as distinct from the
-documented limitations listed above. Pay particular attention to:
-   - unit handling (ADC counts vs millivolts vs pixels)
-   - the sign convention in the pixel-to-millivolt conversion
-     (image y grows downward)
-   - `estimate_grid_pitch` — it previously locked onto a harmonic of the
-     true grid frequency; assess whether the autocorrelation version is
-     robust, and under what conditions it would fail
-   - baseline estimation in `digitise()` (currently the median trace
-     position — is that sound for a lead with large deflections?)
-   - resampling in `evaluate.align_length` — does comparing signals of
-     different lengths by resampling introduce bias?
-
-**4. Missing pieces.** What must exist before this can (a) read a real
-3x4 printout, and (b) run on Android. Be specific about which functions
-would need to change.
-
-**5. Test coverage.** There are currently no tests. Propose a minimal set
-that would catch regressions in the numeric path — name the specific
-properties worth asserting.
-
-**6. Anything that looks wrong to you** that is not covered above.
-
-Output as markdown with headed sections. Include short code excerpts
-where they clarify a point, but do not reproduce whole files. Be direct
-about problems; a list of everything that is fine is not useful.

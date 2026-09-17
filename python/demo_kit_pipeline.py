@@ -54,12 +54,19 @@ from ecgproto import evaluate
 REPO = Path(__file__).resolve().parents[1]
 
 #: Peak-selection threshold for `estimate_grid_pitch` on kit printouts.
-#: The default 0.20 returns the 5 mm rule as though it were the 1 mm rule
-#: on every one of these images -- the minor rules are resolved but sit at
-#: 0.11-0.19 of the autocorrelation maximum against 0.87 for the majors, so
-#: the default filters them out. Measured on this image: 0.20 gives 39.26
-#: px/mm, 0.03 gives 7.90 against a true 7.874. See CLAUDE.md limitation 6.
-KIT_PEAK_FRACTION = 0.03
+#: The old default of 0.20 returned the 5 mm rule as though it were the
+#: 1 mm rule on every one of these images -- the minor rules are resolved
+#: but sit at 0.11-0.19 of the autocorrelation maximum against 0.72-0.95
+#: for the majors, so it filtered them out. Measured on this image: 0.20
+#: gives 41.30 px/mm, 0.03 gives 11.83 and 0.05 gives 11.84, against a
+#: true 11.811.
+#:
+#: Now simply the shipped default, so that what this script demonstrates is
+#: the pipeline as it stands rather than a locally tuned variant. Kept as a
+#: named constant, and still exposed as --peak-fraction, because the
+#: before-and-after against 0.20 is the point of step [4].
+#: See CLAUDE.md limitation 6 and CHANGES.txt section 11.5.
+KIT_PEAK_FRACTION = dig.DEFAULT_PEAK_FRACTION
 
 #: Vertical padding around the lead box, in millimetres of paper. The box is
 #: tight to the ink, and the tracer needs grid either side of the trace for
@@ -187,12 +194,15 @@ def main(argv: list[str] | None = None) -> int:
     # together -- but reporting the error against the unscaled figure would
     # show a spurious +100%.
     true_px_scaled = true_px_per_mm * args.upscale
-    bad = dig.estimate_grid_pitch(crop)
+    # 0.20 pinned, not left to the default: the default is 0.05 since
+    # 2026-09-17 and this call exists to show what the old one did.
+    bad = dig.estimate_grid_pitch(crop, peak_fraction=0.20)
     bad_chk = dig.check_calibration(
         bad, image_width_px=crop.shape[1],
         expected_duration_s=len(pts) / fs,
     )
-    print(f"[4] grid pitch @ peak_fraction=0.20 -> {bad.px_per_mm:.4f} px/mm "
+    print(f"[4] grid pitch @ peak_fraction=0.20 (the old default) -> "
+          f"{bad.px_per_mm:.4f} px/mm "
           f"({(bad.px_per_mm / true_px_scaled - 1) * 100:+.1f}% vs true) "
           f"-> calibration {'OK' if bad_chk.ok else 'REJECTED'}")
     for r in bad_chk.reasons:

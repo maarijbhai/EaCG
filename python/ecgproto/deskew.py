@@ -40,6 +40,19 @@ costs one pass over the image per angle with no interpolation at all. At
 `estimate_grid_pitch` already takes -- so the two stages measure the same
 quantity and this module is the angled generalisation of it.
 
+**Both passes run on a reduced copy, and that is the whole cost story.**
+The objective is a projection, so its cost is linear in pixels per angle
+and the sweep multiplies that by a few dozen; at full resolution the stage
+cost 192 ms at 2.10 MP and 1771 ms at 8.41 MP, six to fifteen times
+`estimate_grid_pitch` and superlinear in the image. But the angle is
+scale-invariant, and the accuracy the reduced image gives away was accuracy
+nothing downstream could use: one degree of residual rotation costs 0.25 of
+PCC, so the requirement is of order 0.1 degrees, and a full-resolution fine
+pass delivered 0.004. Working at 900 px delivers 0.041 -- still a factor of
+2.4 inside the requirement -- for 74 to 89 ms *regardless of input size*.
+The stage that was superlinear in pixels is now flat in them, and on the
+8.41 MP fixture it is cheaper than the grid estimation it feeds.
+
 **The rotation is applied exactly once.** Every interpolation attenuates
 the grid, so a pipeline that deskews and later rectifies perspective must
 compose the two transforms and warp once. `estimate_skew` returns the angle
@@ -110,9 +123,26 @@ COARSE_HALF_RANGE_DEG = 10.0
 #: several degrees wide at the scales used here.
 COARSE_STEP_DEG = 0.5
 
-#: Fine sweep half-range about the coarse optimum. One and a half coarse
-#: steps, so the true peak cannot fall outside it.
-FINE_HALF_RANGE_DEG = 0.75
+#: Fine sweep half-range about the coarse optimum. **One** coarse step, so
+#: the true peak cannot fall outside it with a full step to spare.
+#:
+#: The coarse pass samples every 0.5 degrees, so the nearest sampled angle
+#: is at most 0.25 degrees from the truth and a half-range of 0.25 would be
+#: exactly sufficient *if* the coarse argmax is always that nearest sample.
+#: Measured over the three fixtures, the 17-angle sweep and the whole
+#: degradation battery -- 67 cases, including blur to sigma 8, JPEG quality
+#: 5, grid saturation down to 10% and grid coverage down to 15% -- it always
+#: is: the worst |coarse - truth| observed is 0.2500 degrees, never more
+#: than half a step. The range is nevertheless kept at a full step rather
+#: than cut to the observed bound, because a coarse pass that ever did miss
+#: by a step would put the true peak outside the fine window and the failure
+#: would be silent and large, whereas the saving is a third of a pass that
+#: is no longer the expensive one.
+#:
+#: Narrowing from 1.5 steps to 1 costs nothing measurable: over the fixtures
+#: and the angle sweep the worst-case recovery error is 0.00433 degrees at a
+#: half-range of 0.5 against 0.00428 at 0.75 (`results/deskew/levers.csv`).
+FINE_HALF_RANGE_DEG = 0.5
 
 #: Fine step. 0.05 degrees is already below the accuracy the measurements
 #: show is achievable, and parabolic interpolation of the objective refines
@@ -125,6 +155,54 @@ FINE_STEP_DEG = 0.05
 #: needs to find the right half-degree, and the 5 mm rules survive far more
 #: aggressive reduction than the 1 mm ones do.
 COARSE_MAX_DIM = 900
+
+#: Longest image dimension used for the fine pass. `None` means full
+#: resolution, which is what this stage originally did and what made it
+#: unaffordable: 195-347 ms at 2.10 MP, 372-540 ms at 3.74 MP and
+#: 1691-1941 ms at 8.41 MP, seven to fourteen times `estimate_grid_pitch`
+#: and superlinear in pixels. On the target device -- a Galaxy A30s, Exynos
+#: 7904 -- that is seconds per frame for a stage that is not the point of
+#: the pipeline.
+#:
+#: **The argument for reducing it is that the accuracy it bought was not
+#: needed.** Measured here, 1 degree of uncorrected rotation takes PCC from
+#: 0.981 to 0.734, so the residual the waveform can absorb is of order 0.1
+#: degrees. The full-resolution fine pass delivers 0.004 -- twenty-five
+#: times more than the requirement, at four to nineteen times the cost.
+#:
+#: `results/deskew/finescale.csv`, pooled over the three fixtures and the
+#: 17-angle sweep:
+#:
+#:     fine_max_dim   worst error   median error   median total
+#:            900       0.0408 deg     0.0010 deg       86 ms
+#:           1100       0.0280           0.0003        103
+#:           1400       0.0199           0.0002        134
+#:           1800       0.0043           0.0001        193
+#:           full       0.0043           0.0000        363
+#:
+#: Every setting clears 0.1 degrees, so the choice is the cheapest one with
+#: honest margin rather than the most accurate. 900 is worst-case 0.041
+#: degrees, a factor of 2.4 inside the requirement, and it holds there under
+#: the whole degradation battery (`finerobust.csv`: worst 0.021 degrees over
+#: blur, JPEG, desaturation and partial coverage). End to end the difference
+#: is not visible at all -- on 4.66 MP renders, PCC 0.9881 against 0.9894 and
+#: SNR 11.01 dB against 11.08 dB, for 88 ms against 752 ms.
+#:
+#: Against the configuration this replaced, timed in the same process
+#: (`cost.csv`): 2.5-3.8x at 2.10 MP, 4.8-6.1x at 3.74 MP, 19.9-20.8x at
+#: 8.41 MP. The factor matters less than the shape -- the stage now costs
+#: 74-89 ms across a fourfold range of megapixels, because everything after
+#: the first resize runs at a fixed size.
+#:
+#: 900 is also `COARSE_MAX_DIM`, which means the whole estimate runs on one
+#: reduced response and the fine pass refines the *sampling* of the same
+#: objective the coarse pass computed, rather than recomputing it on better
+#: data. Note what this implies and what the measurements confirm: on the
+#: 300 dpi fixture, reducing 3623 px to 900 puts the 1 mm rules at 2.9 px
+#: and below the resolution at which they separate, so the objective is
+#: riding on the 5 mm rules alone -- and still recovers the angle to 0.022
+#: degrees. Deskew does not need the minor grid; `estimate_grid_pitch` does.
+FINE_MAX_DIM = 900
 
 
 @dataclass(frozen=True)
@@ -316,6 +394,28 @@ def _parabolic_peak(angles: np.ndarray, values: np.ndarray) -> float:
     return float(angles[k] + 0.5 * step * (y0 - y2) / denom)
 
 
+def _reduce(response: np.ndarray, max_dim: int | None) -> tuple[np.ndarray, float]:
+    """Area-decimate `response` so its longest side is at most `max_dim`.
+
+    The scale factor is returned only for reporting: skew angle is
+    scale-invariant, so the reduction costs resolution of the grid but
+    nothing in the geometry. INTER_AREA rather than a cheaper sampler
+    because it averages over the pixels it discards; point-sampling a 1 mm
+    comb below its Nyquist limit aliases the rules into a beat pattern,
+    which the sharpness objective would happily maximise at the wrong angle.
+    """
+    if not max_dim:
+        return response, 1.0
+    longest = max(response.shape[:2])
+    if longest <= max_dim:
+        return response, 1.0
+    scale = max_dim / longest
+    reduced = cv2.resize(
+        response, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA
+    )
+    return np.ascontiguousarray(reduced), scale
+
+
 def estimate_skew(
     image: np.ndarray,
     measure: str = "ssd",
@@ -324,6 +424,7 @@ def estimate_skew(
     fine_half_range_deg: float = FINE_HALF_RANGE_DEG,
     fine_step_deg: float = FINE_STEP_DEG,
     coarse_max_dim: int = COARSE_MAX_DIM,
+    fine_max_dim: int | None = FINE_MAX_DIM,
     response_fn=redness,
 ) -> dict:
     """Recover the in-plane skew angle **without modifying the image**.
@@ -339,7 +440,24 @@ def estimate_skew(
         raise ValueError(f"measure must be one of {MEASURES}, got {measure!r}")
 
     started = time.perf_counter()
-    response = np.ascontiguousarray(response_fn(image), dtype=np.float64)
+
+    # The response is taken once, on an image already reduced to the largest
+    # size any pass will actually use. Taking it at full resolution and
+    # reducing afterwards is the same arithmetic in the worse order: on the
+    # 8.41 MP fixture `redness` alone costs 181 ms against 23 ms for a
+    # resize-then-respond, which at a 900 px working size is more than the
+    # coarse and fine sweeps put together. The two orders do not commute --
+    # `redness` clips at zero, so averaging pixels before and after the clip
+    # differ -- but measured over the fixtures and the angle sweep they
+    # agree on the recovered angle to better than 1e-4 degrees, which is
+    # three orders of magnitude inside what the waveform can detect.
+    #
+    # A caller supplying `response_fn` should know that its kernels are now
+    # sized in pixels of the *reduced* image, so a fixed-radius filter
+    # covers more paper-millimetres than it would have at full resolution.
+    work_dim = None if fine_max_dim is None else max(coarse_max_dim, fine_max_dim)
+    work_image, image_scale = _reduce(image, work_dim)
+    response = np.ascontiguousarray(response_fn(work_image), dtype=np.float64)
     if not np.any(response):
         raise ValueError(
             "grid response is identically zero: nothing to align. The default "
@@ -348,16 +466,10 @@ def estimate_skew(
         )
 
     # --- coarse pass, on a reduced copy -------------------------------------
-    scale = 1.0
-    coarse_resp = response
-    longest = max(response.shape)
-    if coarse_max_dim and longest > coarse_max_dim:
-        scale = coarse_max_dim / longest
-        coarse_resp = cv2.resize(
-            response, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA
-        )
     # Angle is scale-invariant, so the reduction costs resolution of the
     # grid but not correctness of the geometry.
+    t_coarse = time.perf_counter()
+    coarse_resp, scale = _reduce(response, coarse_max_dim)
     coarse_angles = np.arange(
         -coarse_half_range_deg,
         coarse_half_range_deg + 0.5 * coarse_step_deg,
@@ -367,20 +479,24 @@ def estimate_skew(
     ch, cvv = _sweep(coarse_resp, coarse_angles, measure, lh, lv)
     coarse_total = ch + cvv
     coarse_angle = float(coarse_angles[int(np.argmax(coarse_total))])
+    coarse_ms = (time.perf_counter() - t_coarse) * 1000.0
 
-    # --- fine pass, at full resolution --------------------------------------
+    # --- fine pass, on a copy reduced to `fine_max_dim` ----------------------
+    t_fine = time.perf_counter()
+    fine_resp, fine_scale = _reduce(response, fine_max_dim)
     fine_angles = np.arange(
         coarse_angle - fine_half_range_deg,
         coarse_angle + fine_half_range_deg + 0.5 * fine_step_deg,
         fine_step_deg,
     )
-    lh, lv = _core_lengths(response.shape, abs(coarse_angle) + fine_half_range_deg)
-    fh, fv = _sweep(response, fine_angles, measure, lh, lv)
+    lh, lv = _core_lengths(fine_resp.shape, abs(coarse_angle) + fine_half_range_deg)
+    fh, fv = _sweep(fine_resp, fine_angles, measure, lh, lv)
     fine_total = fh + fv
 
     angle = _parabolic_peak(fine_angles, fine_total)
     angle_h = _parabolic_peak(fine_angles, fh)
     angle_v = _parabolic_peak(fine_angles, fv)
+    fine_ms = (time.perf_counter() - t_fine) * 1000.0
 
     # Confidence as peak prominence: the objective at the optimum against
     # the objective a degree away on each side. A real lattice gives a sharp
@@ -388,14 +504,22 @@ def estimate_skew(
     # near 1.0. Both probes and the optimum are evaluated with core lengths
     # sized to admit the full +/-1 degree, because a ratio taken between two
     # different croppings would measure the cropping.
-    mh, mv = _core_lengths(response.shape, abs(angle) + 1.0)
-    at_peak = sum(_objective(response, angle, measure, mh, mv))
+    #
+    # Evaluated on the *fine* working image rather than the full-resolution
+    # one. Three full-resolution objectives cost about a tenth of the whole
+    # estimate, and margin is a two-orders-of-magnitude discriminator -- tens
+    # to thousands on a real lattice against ~1 on a featureless frame -- so
+    # it does not need the resolution the angle does.
+    t_margin = time.perf_counter()
+    mh, mv = _core_lengths(fine_resp.shape, abs(angle) + 1.0)
+    at_peak = sum(_objective(fine_resp, angle, measure, mh, mv))
     off = max(
-        sum(_objective(response, angle + 1.0, measure, mh, mv)),
-        sum(_objective(response, angle - 1.0, measure, mh, mv)),
+        sum(_objective(fine_resp, angle + 1.0, measure, mh, mv)),
+        sum(_objective(fine_resp, angle - 1.0, measure, mh, mv)),
     )
     peak = float(np.max(fine_total))
     margin = float(at_peak / off) if off > 0 else float("inf")
+    margin_ms = (time.perf_counter() - t_margin) * 1000.0
 
     elapsed_ms = (time.perf_counter() - started) * 1000.0
     return {
@@ -407,9 +531,16 @@ def estimate_skew(
         "angle_v_deg": angle_v,
         "axis_disagreement_deg": abs(angle_h - angle_v),
         "coarse_angle_deg": coarse_angle,
-        "n_evaluations": int(len(coarse_angles) + len(fine_angles) + 1),
+        "n_evaluations": int(len(coarse_angles) + len(fine_angles) + 3),
         "elapsed_ms": elapsed_ms,
-        "coarse_scale": scale,
+        "coarse_ms": coarse_ms,
+        "fine_ms": fine_ms,
+        "margin_ms": margin_ms,
+        "coarse_scale": scale * image_scale,
+        "fine_scale": fine_scale * image_scale,
+        "image_scale": image_scale,
+        "coarse_shape": tuple(coarse_resp.shape[:2]),
+        "fine_shape": tuple(fine_resp.shape[:2]),
         "coarse_angles": coarse_angles,
         "coarse_objective": coarse_total,
         "fine_angles": fine_angles,

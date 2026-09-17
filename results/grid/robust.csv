@@ -1,0 +1,697 @@
+source,condition,kind,true_px_per_mm,minor_resolvable,response,peak_fraction,px_per_mm_x,error_pct,correct,anisotropy,spacing_cv,implied_mm_per_s,calibration_ok,reasons
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,redness,0.2,29.2504,395.31,False,0.0087,0.2885,5.64,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,redness,0.15,5.9736,1.15,True,1.3265,1.4043,27.62,False,"anisotropy 1.327 exceeds 0.150 (x=5.974, y=29.507 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,redness,0.1,5.9611,0.94,True,1.3226,0.7353,27.68,False,"anisotropy 1.323 exceeds 0.150 (x=5.961, y=29.237 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,redness,0.05,5.9381,0.55,True,0.004,0.9344,27.79,True,
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,redness,0.03,5.9381,0.55,True,0.0016,0.2343,27.79,True,
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,redness,0.01,5.9381,0.55,True,0.0003,0.0131,27.79,True,
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,blue,0.2,23.625,300.05,False,0.2213,0.3849,6.98,False,"anisotropy 0.221 exceeds 0.150 (x=23.625, y=29.503 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 7.0 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,blue,0.15,5.9746,1.17,True,1.3264,1.3767,27.62,False,"anisotropy 1.326 exceeds 0.150 (x=5.975, y=29.503 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,blue,0.1,5.9574,0.88,True,1.1959,0.5824,27.7,False,"anisotropy 1.196 exceeds 0.150 (x=5.957, y=23.679 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,blue,0.05,5.934,0.48,True,0.0025,0.7291,27.81,True,
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,blue,0.03,5.934,0.48,True,0.0004,0.1506,27.81,True,
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,blue,0.01,5.934,0.48,True,0.0004,0.0139,27.81,True,
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,green,0.2,29.5058,399.63,False,0.0001,0.0083,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,green,0.15,11.8454,100.58,False,0.8541,0.782,13.93,False,"anisotropy 0.854 exceeds 0.150 (x=11.845, y=29.503 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 13.9 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,green,0.1,5.9638,0.99,True,1.3247,0.9695,27.67,False,"anisotropy 1.325 exceeds 0.150 (x=5.964, y=29.363 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,green,0.05,5.9338,0.48,True,0.004,1.2315,27.81,True,
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,green,0.03,5.9338,0.48,True,0.0023,0.5385,27.81,True,
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,green,0.01,5.9338,0.48,True,0.0005,0.0148,27.81,True,
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,luma,0.2,29.5059,399.63,False,0.0001,0.0084,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,luma,0.15,11.8987,101.48,False,0.8504,0.7948,13.87,False,"anisotropy 0.850 exceeds 0.150 (x=11.899, y=29.502 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 13.9 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,luma,0.1,5.9661,1.03,True,1.3245,1.0379,27.66,False,"anisotropy 1.325 exceeds 0.150 (x=5.966, y=29.363 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,luma,0.05,5.933,0.47,True,0.0042,1.1523,27.81,True,
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,luma,0.03,5.933,0.47,True,0.0027,0.6037,27.81,True,
+gt_norm_150dpi,clean,ecg-image-kit,5.90551,True,luma,0.01,5.933,0.47,True,0.0009,0.1082,27.81,True,
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,redness,0.2,29.5147,399.78,False,0.0002,0.0022,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,redness,0.15,29.5147,399.78,False,0.0002,0.0022,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,redness,0.1,29.5147,399.78,False,0.0002,0.0022,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,redness,0.05,29.5147,399.78,False,0.0002,0.0022,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,redness,0.03,29.4707,399.04,False,0.0017,0.2515,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,redness,0.01,5.9348,0.5,True,1.3304,1.2137,27.8,False,"anisotropy 1.330 exceeds 0.150 (x=5.935, y=29.520 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,blue,0.2,29.5115,399.73,False,0.0,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,blue,0.15,29.5115,399.73,False,0.0,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,blue,0.1,29.5115,399.73,False,0.0,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,blue,0.05,11.9186,101.82,False,0.8493,0.7186,13.84,False,"anisotropy 0.849 exceeds 0.150 (x=11.919, y=29.511 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 13.8 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,blue,0.03,6.0101,1.77,True,1.323,0.7606,27.45,False,"anisotropy 1.323 exceeds 0.150 (x=6.010, y=29.499 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,blue,0.01,5.9381,0.55,True,1.3292,0.3503,27.79,False,"anisotropy 1.329 exceeds 0.150 (x=5.938, y=29.471 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,green,0.2,29.5112,399.72,False,0.0,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,green,0.15,29.5112,399.72,False,0.0,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,green,0.1,29.5112,399.72,False,0.0,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,green,0.05,29.5112,399.72,False,0.0,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,green,0.03,11.922,101.88,False,0.849,0.7289,13.84,False,"anisotropy 0.849 exceeds 0.150 (x=11.922, y=29.511 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 13.8 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,green,0.01,6.0115,1.8,True,1.3229,0.5297,27.45,False,"anisotropy 1.323 exceeds 0.150 (x=6.012, y=29.500 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,luma,0.2,29.5091,399.69,False,0.0001,0.0027,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,luma,0.15,29.5091,399.69,False,0.0001,0.0027,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,luma,0.1,29.5091,399.69,False,0.0001,0.0027,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,luma,0.05,29.4332,398.4,False,0.0022,0.2524,5.61,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,luma,0.03,11.8513,100.68,False,0.8534,0.6214,13.92,False,"anisotropy 0.853 exceeds 0.150 (x=11.851, y=29.493 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 13.9 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_1.0,ecg-image-kit,5.90551,True,luma,0.01,6.0217,1.97,True,1.3212,0.5278,27.4,False,"anisotropy 1.321 exceeds 0.150 (x=6.022, y=29.464 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,redness,0.2,29.5211,399.89,False,0.0004,0.0009,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,redness,0.15,29.5211,399.89,False,0.0004,0.0009,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,redness,0.1,29.5211,399.89,False,0.0004,0.0009,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,redness,0.05,29.5211,399.89,False,0.0004,0.0009,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,redness,0.03,29.5211,399.89,False,0.0004,0.0009,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,redness,0.01,29.5211,399.89,False,0.0004,0.0009,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,blue,0.2,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,blue,0.15,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,blue,0.1,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,blue,0.05,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,blue,0.03,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,blue,0.01,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,green,0.2,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,green,0.15,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,green,0.1,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,green,0.05,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,green,0.03,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,green,0.01,29.5023,399.57,False,0.0009,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,luma,0.2,29.5011,399.55,False,0.0008,0.0018,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,luma,0.15,29.5011,399.55,False,0.0008,0.0018,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,luma,0.1,29.5011,399.55,False,0.0008,0.0018,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,luma,0.05,29.5011,399.55,False,0.0008,0.0018,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,luma,0.03,29.5011,399.55,False,0.0008,0.0018,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_2.0,ecg-image-kit,5.90551,True,luma,0.01,29.5011,399.55,False,0.0008,0.0018,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,redness,0.2,29.5265,399.98,False,0.0002,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,redness,0.15,29.5265,399.98,False,0.0002,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,redness,0.1,29.5265,399.98,False,0.0002,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,redness,0.05,29.5265,399.98,False,0.0002,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,redness,0.03,29.5265,399.98,False,0.0002,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,redness,0.01,29.5265,399.98,False,0.0002,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,blue,0.2,29.5053,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,blue,0.15,29.5053,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,blue,0.1,29.5053,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,blue,0.05,29.5053,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,blue,0.03,29.5053,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,blue,0.01,29.5053,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,green,0.2,29.5049,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,green,0.15,29.5049,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,green,0.1,29.5049,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,green,0.05,29.5049,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,green,0.03,29.5049,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,green,0.01,29.5049,399.62,False,0.0009,0.0015,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,luma,0.2,29.4988,399.51,False,0.0011,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,luma,0.15,29.4988,399.51,False,0.0011,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,luma,0.1,29.4988,399.51,False,0.0011,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,luma,0.05,29.4988,399.51,False,0.0011,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,luma,0.03,29.4988,399.51,False,0.0011,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,blur_3.0,ecg-image-kit,5.90551,True,luma,0.01,29.4988,399.51,False,0.0011,0.0025,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,redness,0.2,29.5012,399.55,False,0.0013,0.0085,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,redness,0.15,29.5012,399.55,False,0.0013,0.0085,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,redness,0.1,29.5012,399.55,False,0.0013,0.0085,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,redness,0.05,29.5012,399.55,False,0.0013,0.0085,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,redness,0.03,29.5012,399.55,False,0.0013,0.0085,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,redness,0.01,29.5012,399.55,False,0.0013,0.0085,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,blue,0.2,29.5073,399.66,False,0.0002,0.0078,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,blue,0.15,29.5073,399.66,False,0.0002,0.0078,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,blue,0.1,29.5073,399.66,False,0.0002,0.0078,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,blue,0.05,5.9814,1.29,True,1.0164,1.3799,27.59,False,"anisotropy 1.016 exceeds 0.150 (x=5.981, y=18.344 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,blue,0.03,5.9557,0.85,True,0.0215,1.2174,27.7,True,
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,blue,0.01,5.9177,0.21,True,0.0199,1.0223,27.88,True,
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,green,0.2,29.5071,399.65,False,0.0002,0.0077,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,green,0.15,29.5071,399.65,False,0.0002,0.0077,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,green,0.1,29.5071,399.65,False,0.0002,0.0077,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,green,0.05,29.5071,399.65,False,0.0002,0.0077,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,green,0.03,11.934,102.08,False,0.8479,0.7216,13.83,False,"anisotropy 0.848 exceeds 0.150 (x=11.934, y=29.501 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 13.8 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,green,0.01,5.9553,0.84,True,0.6608,0.7434,27.71,False,"anisotropy 0.661 exceeds 0.150 (x=5.955, y=11.833 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,luma,0.2,29.507,399.65,False,0.0002,0.0078,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,luma,0.15,29.507,399.65,False,0.0002,0.0078,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,luma,0.1,29.507,399.65,False,0.0002,0.0078,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,luma,0.05,29.2444,395.21,False,0.0088,0.3109,5.64,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,luma,0.03,5.9704,1.1,True,1.2,1.1622,27.64,False,"anisotropy 1.200 exceeds 0.150 (x=5.970, y=23.880 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q20,ecg-image-kit,5.90551,True,luma,0.01,5.924,0.31,True,0.0035,1.1023,27.85,True,
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,redness,0.2,29.3736,397.39,False,0.0046,0.2907,5.62,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,redness,0.15,29.241,395.15,False,0.0091,0.3606,5.64,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,redness,0.1,25.0025,323.38,False,0.1653,0.4592,6.6,False,"anisotropy 0.165 exceeds 0.150 (x=25.003, y=29.509 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 6.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,redness,0.05,24.3424,312.2,False,0.1919,0.4738,6.78,False,"anisotropy 0.192 exceeds 0.150 (x=24.342, y=29.509 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 6.8 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,redness,0.03,24.3424,312.2,False,0.1919,0.4738,6.78,False,"anisotropy 0.192 exceeds 0.150 (x=24.342, y=29.509 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 6.8 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,redness,0.01,24.3424,312.2,False,0.1919,0.4738,6.78,False,"anisotropy 0.192 exceeds 0.150 (x=24.342, y=29.509 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 6.8 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,blue,0.2,29.5046,399.61,False,0.0,0.0086,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,blue,0.15,29.5046,399.61,False,0.0,0.0086,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,blue,0.1,29.5046,399.61,False,0.0,0.0086,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,blue,0.05,29.2227,394.84,False,0.0042,0.3171,5.65,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,blue,0.03,5.6183,-4.86,True,1.247,1.3711,29.37,False,"anisotropy 1.247 exceeds 0.150 (x=5.618, y=24.226 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,blue,0.01,3.4196,-42.09,False,0.4707,1.893,48.25,False,"anisotropy 0.471 exceeds 0.150 (x=3.420, y=5.525 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,green,0.2,29.5045,399.61,False,0.0,0.0084,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,green,0.15,29.5045,399.61,False,0.0,0.0084,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,green,0.1,29.5045,399.61,False,0.0,0.0084,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,green,0.05,29.3734,397.39,False,0.0044,0.2178,5.62,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,green,0.03,29.2319,394.99,False,0.0093,0.3368,5.64,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,green,0.01,5.5088,-6.72,False,1.3704,1.5605,29.95,False,"anisotropy 1.370 exceeds 0.150 (x=5.509, y=29.491 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,luma,0.2,29.5044,399.61,False,0.0,0.0085,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,luma,0.15,29.5044,399.61,False,0.0,0.0085,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,luma,0.1,29.5044,399.61,False,0.0,0.0085,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,luma,0.05,29.5044,399.61,False,0.0,0.0085,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,luma,0.03,29.5044,399.61,False,0.0046,0.1992,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q10,ecg-image-kit,5.90551,True,luma,0.01,5.5753,-5.59,False,1.3147,1.406,29.6,False,"anisotropy 1.315 exceeds 0.150 (x=5.575, y=26.966 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,redness,0.2,26.1241,342.37,False,0.1095,0.8386,6.32,False,"implied paper speed 6.3 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,redness,0.15,3.117,-47.22,False,1.5541,3.7204,52.94,False,"anisotropy 1.554 exceeds 0.150 (x=3.117, y=24.845 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,redness,0.1,3.0309,-48.68,False,0.2055,3.1031,54.44,False,"anisotropy 0.206 exceeds 0.150 (x=3.031, y=3.725 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,redness,0.05,nan,nan,False,nan,3.1287,nan,False,"an axis failed to resolve (x=nan, y=3.0015863431999037)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,redness,0.03,nan,nan,False,nan,2.5929,nan,False,"an axis failed to resolve (x=nan, y=3.1395399067783387)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,redness,0.01,nan,nan,False,nan,2.3799,nan,False,"an axis failed to resolve (x=nan, y=3.1969495841257896)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,blue,0.2,29.5065,399.64,False,0.0001,0.0087,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,blue,0.15,29.5065,399.64,False,0.0001,0.0087,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,blue,0.1,29.5065,399.64,False,0.0001,0.0087,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,blue,0.05,29.2138,394.69,False,0.0099,0.3534,5.65,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,blue,0.03,22.9263,288.22,False,0.2509,0.5155,7.2,False,"anisotropy 0.251 exceeds 0.150 (x=22.926, y=29.504 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 7.2 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,blue,0.01,3.1738,-46.26,False,1.6083,3.0748,51.99,False,"anisotropy 1.608 exceeds 0.150 (x=3.174, y=29.233 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,green,0.2,29.5066,399.64,False,0.0001,0.0087,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,green,0.15,29.5066,399.64,False,0.0001,0.0087,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,green,0.1,29.5066,399.64,False,0.0001,0.0087,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,green,0.05,26.2364,344.27,False,0.1173,0.4568,6.29,False,"implied paper speed 6.3 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,green,0.03,3.1345,-46.92,False,1.6131,3.2932,52.64,False,"anisotropy 1.613 exceeds 0.150 (x=3.134, y=29.273 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,green,0.01,3.1101,-47.34,False,0.6075,2.9758,53.05,False,"anisotropy 0.608 exceeds 0.150 (x=3.110, y=5.824 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,luma,0.2,29.5062,399.64,False,0.0001,0.0086,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,luma,0.15,29.5062,399.64,False,0.0001,0.0086,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,luma,0.1,29.5062,399.64,False,0.0001,0.0086,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,luma,0.05,29.2652,395.56,False,0.0081,0.2818,5.64,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,luma,0.03,26.175,343.23,False,0.1196,0.4582,6.3,False,"implied paper speed 6.3 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_norm_150dpi,jpeg_q5,ecg-image-kit,5.90551,True,luma,0.01,3.1322,-46.96,False,1.5387,3.2029,52.68,False,"anisotropy 1.539 exceeds 0.150 (x=3.132, y=24.026 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,redness,0.2,39.2599,398.6,False,0.0021,0.184,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,redness,0.15,7.9438,0.89,True,1.328,1.2625,27.69,False,"anisotropy 1.328 exceeds 0.150 (x=7.944, y=39.342 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,redness,0.1,7.906,0.41,True,1.3297,0.1839,27.83,False,"anisotropy 1.330 exceeds 0.150 (x=7.906, y=39.271 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,redness,0.05,7.9021,0.36,True,0.0029,0.4598,27.84,True,
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,redness,0.03,7.9021,0.36,True,0.0006,0.0089,27.84,True,
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,redness,0.01,7.9021,0.36,True,0.0006,0.0089,27.84,True,
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,blue,0.2,35.3719,349.22,False,0.1064,0.3461,6.22,False,"implied paper speed 6.2 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,blue,0.15,7.9411,0.85,True,1.3283,1.1178,27.7,False,"anisotropy 1.328 exceeds 0.150 (x=7.941, y=39.349 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,blue,0.1,7.8986,0.31,True,1.1998,0.4276,27.85,False,"anisotropy 1.200 exceeds 0.150 (x=7.899, y=31.584 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,blue,0.05,7.8986,0.31,True,0.0021,0.3642,27.85,True,
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,blue,0.03,7.8986,0.31,True,0.0012,0.0104,27.85,True,
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,blue,0.01,7.8986,0.31,True,0.0012,0.0104,27.85,True,
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,green,0.2,39.3131,399.28,False,0.0009,0.0041,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,green,0.15,15.8279,101.01,False,0.8526,0.7942,13.9,False,"anisotropy 0.853 exceeds 0.150 (x=15.828, y=39.349 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 13.9 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,green,0.1,7.9175,0.55,True,1.33,0.4432,27.79,False,"anisotropy 1.330 exceeds 0.150 (x=7.917, y=39.349 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,green,0.05,7.8989,0.32,True,0.0041,0.9186,27.85,True,
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,green,0.03,7.8989,0.32,True,0.0002,0.1824,27.85,True,
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,green,0.01,7.8989,0.32,True,0.0003,0.0115,27.85,True,
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,luma,0.2,39.3054,399.18,False,0.0011,0.0042,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,luma,0.15,23.6156,199.92,False,0.4998,0.5435,9.32,False,"anisotropy 0.500 exceeds 0.150 (x=23.616, y=39.351 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 9.3 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,luma,0.1,7.9169,0.54,True,1.3293,0.4431,27.79,False,"anisotropy 1.329 exceeds 0.150 (x=7.917, y=39.300 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,luma,0.05,7.9014,0.35,True,0.0033,0.9604,27.84,True,
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,luma,0.03,7.9014,0.35,True,0.0019,0.3677,27.84,True,
+gt_mi_200dpi,clean,ecg-image-kit,7.87402,True,luma,0.01,7.9014,0.35,True,0.0007,0.0139,27.84,True,
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,redness,0.2,39.3661,399.95,False,0.0,0.0013,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,redness,0.15,39.3661,399.95,False,0.0,0.0013,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,redness,0.1,39.3661,399.95,False,0.0,0.0013,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,redness,0.05,7.8793,0.07,True,1.3329,0.3177,27.92,False,"anisotropy 1.333 exceeds 0.150 (x=7.879, y=39.366 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,redness,0.03,7.8765,0.03,True,1.3331,0.0026,27.93,False,"anisotropy 1.333 exceeds 0.150 (x=7.876, y=39.366 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,redness,0.01,7.8765,0.03,True,1.3331,0.0026,27.93,False,"anisotropy 1.333 exceeds 0.150 (x=7.876, y=39.366 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,blue,0.2,39.3576,399.84,False,0.0001,0.0013,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,blue,0.15,39.3576,399.84,False,0.0001,0.0013,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,blue,0.1,31.5718,300.96,False,0.2196,0.4285,6.97,False,"anisotropy 0.220 exceeds 0.150 (x=31.572, y=39.360 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 7.0 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,blue,0.05,7.8838,0.12,True,1.3323,0.2164,27.91,False,"anisotropy 1.332 exceeds 0.150 (x=7.884, y=39.346 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,blue,0.03,7.8838,0.12,True,1.2035,0.4284,27.91,False,"anisotropy 1.203 exceeds 0.150 (x=7.884, y=31.707 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,blue,0.01,7.8838,0.12,True,0.0046,1.2264,27.91,True,
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,green,0.2,39.3574,399.84,False,0.0001,0.0013,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,green,0.15,39.3574,399.84,False,0.0001,0.0013,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,green,0.1,39.3574,399.84,False,0.0001,0.0013,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,green,0.05,7.8931,0.24,True,1.3318,0.9415,27.87,False,"anisotropy 1.332 exceeds 0.150 (x=7.893, y=39.359 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,green,0.03,7.8852,0.14,True,1.3322,0.2166,27.9,False,"anisotropy 1.332 exceeds 0.150 (x=7.885, y=39.346 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,green,0.01,7.8852,0.14,True,1.2041,0.4284,27.9,False,"anisotropy 1.204 exceeds 0.150 (x=7.885, y=31.744 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,luma,0.2,39.3531,399.78,False,0.0001,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,luma,0.15,39.3531,399.78,False,0.0001,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,luma,0.1,39.3531,399.78,False,0.0001,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,luma,0.05,7.8939,0.25,True,1.3313,0.8942,27.87,False,"anisotropy 1.331 exceeds 0.150 (x=7.894, y=39.327 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,luma,0.03,7.887,0.16,True,1.3316,0.3122,27.89,False,"anisotropy 1.332 exceeds 0.150 (x=7.887, y=39.312 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,blur_1.0,ecg-image-kit,7.87402,True,luma,0.01,7.887,0.16,True,1.0062,0.5908,27.89,False,"anisotropy 1.006 exceeds 0.150 (x=7.887, y=23.856 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,redness,0.2,39.3707,400.01,False,0.0,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,redness,0.15,39.3707,400.01,False,0.0,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,redness,0.1,39.3707,400.01,False,0.0,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,redness,0.05,39.3707,400.01,False,0.0,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,redness,0.03,39.3707,400.01,False,0.0,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,redness,0.01,39.3707,400.01,False,0.0,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,blue,0.2,39.3663,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,blue,0.15,39.3663,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,blue,0.1,39.3663,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,blue,0.05,39.3663,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,blue,0.03,39.3663,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,blue,0.01,39.3663,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,green,0.2,39.3659,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,green,0.15,39.3659,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,green,0.1,39.3659,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,green,0.05,39.3659,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,green,0.03,39.3659,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,green,0.01,39.3659,399.95,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,luma,0.2,39.3617,399.89,False,0.0002,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,luma,0.15,39.3617,399.89,False,0.0002,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,luma,0.1,39.3617,399.89,False,0.0002,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,luma,0.05,39.3617,399.89,False,0.0002,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,luma,0.03,39.3617,399.89,False,0.0002,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_2.0,ecg-image-kit,7.87402,True,luma,0.01,39.3617,399.89,False,0.0002,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,redness,0.2,39.3749,400.06,False,0.0001,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,redness,0.15,39.3749,400.06,False,0.0001,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,redness,0.1,39.3749,400.06,False,0.0001,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,redness,0.05,39.3749,400.06,False,0.0001,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,redness,0.03,39.3749,400.06,False,0.0001,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,redness,0.01,39.3749,400.06,False,0.0001,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,blue,0.2,39.3756,400.07,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,blue,0.15,39.3756,400.07,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,blue,0.1,39.3756,400.07,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,blue,0.05,39.3756,400.07,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,blue,0.03,39.3756,400.07,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,blue,0.01,39.3756,400.07,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,green,0.2,39.3749,400.06,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,green,0.15,39.3749,400.06,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,green,0.1,39.3749,400.06,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,green,0.05,39.3749,400.06,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,green,0.03,39.3749,400.06,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,green,0.01,39.3749,400.06,False,0.0001,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,luma,0.2,39.3782,400.1,False,0.0001,0.0011,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,luma,0.15,39.3782,400.1,False,0.0001,0.0011,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,luma,0.1,39.3782,400.1,False,0.0001,0.0011,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,luma,0.05,39.3782,400.1,False,0.0001,0.0011,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,luma,0.03,39.3782,400.1,False,0.0001,0.0011,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,blur_3.0,ecg-image-kit,7.87402,True,luma,0.01,39.3782,400.1,False,0.0001,0.0011,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,redness,0.2,39.379,400.11,False,0.0001,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,redness,0.15,39.379,400.11,False,0.0001,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,redness,0.1,39.379,400.11,False,0.0001,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,redness,0.05,39.379,400.11,False,0.0001,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,redness,0.03,39.379,400.11,False,0.0001,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,redness,0.01,39.379,400.11,False,0.0001,0.0014,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,blue,0.2,39.2929,399.02,False,0.0015,0.0041,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,blue,0.15,39.2929,399.02,False,0.0015,0.0041,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,blue,0.1,39.2929,399.02,False,0.0015,0.0041,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,blue,0.05,7.7631,-1.41,True,1.3409,1.2891,28.34,False,"anisotropy 1.341 exceeds 0.150 (x=7.763, y=39.350 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,blue,0.03,7.7394,-1.71,True,1.3415,1.0059,28.43,False,"anisotropy 1.342 exceeds 0.150 (x=7.739, y=39.275 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,blue,0.01,7.7394,-1.71,True,1.227,1.0059,28.43,False,"anisotropy 1.227 exceeds 0.150 (x=7.739, y=32.307 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,green,0.2,39.3016,399.13,False,0.0014,0.0037,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,green,0.15,39.3016,399.13,False,0.0014,0.0037,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,green,0.1,39.3016,399.13,False,0.0014,0.0037,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,green,0.05,39.2788,398.84,False,0.002,0.2148,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,green,0.03,19.6512,149.57,False,0.6679,0.5469,11.2,False,"anisotropy 0.668 exceeds 0.150 (x=19.651, y=39.356 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 11.2 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,green,0.01,7.7974,-0.97,True,1.3381,0.2154,28.21,False,"anisotropy 1.338 exceeds 0.150 (x=7.797, y=39.323 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,luma,0.2,39.2905,398.99,False,0.0015,0.0043,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,luma,0.15,39.2905,398.99,False,0.0015,0.0043,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,luma,0.1,39.2905,398.99,False,0.0015,0.0043,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,luma,0.05,31.3367,297.98,False,0.2267,0.4241,7.02,False,"anisotropy 0.227 exceeds 0.150 (x=31.337, y=39.349 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 7.0 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,luma,0.03,7.9289,0.7,True,1.3274,0.7013,27.75,False,"anisotropy 1.327 exceeds 0.150 (x=7.929, y=39.223 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,jpeg_q20,ecg-image-kit,7.87402,True,luma,0.01,7.8807,0.08,True,1.1215,0.469,27.92,False,"anisotropy 1.122 exceeds 0.150 (x=7.881, y=28.003 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,redness,0.2,39.2539,398.52,False,0.0035,0.0053,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,redness,0.15,39.2539,398.52,False,0.0035,0.0053,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,redness,0.1,39.2539,398.52,False,0.0035,0.0053,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,redness,0.05,39.2539,398.52,False,0.0035,0.0053,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,redness,0.03,39.2539,398.52,False,0.0035,0.0053,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,redness,0.01,39.2539,398.52,False,0.0035,0.0053,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,blue,0.2,39.2732,398.77,False,0.0015,0.0046,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,blue,0.15,39.2732,398.77,False,0.0015,0.0046,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,blue,0.1,39.2732,398.77,False,0.0005,0.2351,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,blue,0.05,39.234,398.27,False,0.2677,0.5331,5.61,False,"anisotropy 0.268 exceeds 0.150 (x=39.234, y=29.969 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,blue,0.03,7.8912,0.22,True,0.2046,1.9671,27.88,False,"anisotropy 0.205 exceeds 0.150 (x=7.891, y=6.426 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,blue,0.01,7.8893,0.19,True,0.3249,2.1825,27.89,False,"anisotropy 0.325 exceeds 0.150 (x=7.889, y=5.684 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,green,0.2,39.2765,398.81,False,0.0013,0.0045,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,green,0.15,39.2765,398.81,False,0.0013,0.0045,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,green,0.1,39.2765,398.81,False,0.0013,0.0045,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,green,0.05,39.2765,398.81,False,0.0013,0.0045,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,green,0.03,39.2765,398.81,False,0.0013,0.0045,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,green,0.01,39.2765,398.81,False,0.0013,0.0045,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,luma,0.2,39.2694,398.72,False,0.0014,0.0047,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,luma,0.15,39.2694,398.72,False,0.0014,0.0047,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,luma,0.1,39.2694,398.72,False,0.0014,0.0047,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,luma,0.05,39.2694,398.72,False,0.0014,0.0047,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,luma,0.03,39.2694,398.72,False,0.0014,0.0047,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q10,ecg-image-kit,7.87402,True,luma,0.01,7.8544,-0.25,True,1.3321,1.0213,28.01,False,"anisotropy 1.332 exceeds 0.150 (x=7.854, y=39.183 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,redness,0.2,3.6031,-54.24,False,1.6644,4.236,61.06,False,"anisotropy 1.664 exceeds 0.150 (x=3.603, y=39.341 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 61.1 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,redness,0.15,3.6031,-54.24,False,1.6642,4.1163,61.06,False,"anisotropy 1.664 exceeds 0.150 (x=3.603, y=39.310 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 61.1 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,redness,0.1,3.4573,-56.09,False,1.6196,3.9279,63.63,False,"anisotropy 1.620 exceeds 0.150 (x=3.457, y=32.900 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 63.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,redness,0.05,3.6358,-53.83,False,1.5345,3.0206,60.51,False,"anisotropy 1.534 exceeds 0.150 (x=3.636, y=27.605 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 60.5 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,redness,0.03,3.6358,-53.83,False,1.5345,3.0206,60.51,False,"anisotropy 1.534 exceeds 0.150 (x=3.636, y=27.605 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 60.5 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,redness,0.01,3.6358,-53.83,False,1.5345,3.0206,60.51,False,"anisotropy 1.534 exceeds 0.150 (x=3.636, y=27.605 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 60.5 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,blue,0.2,39.2609,398.61,False,0.0015,0.0047,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,blue,0.15,39.2609,398.61,False,0.0015,0.0047,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,blue,0.1,39.245,398.41,False,0.0019,0.2454,5.61,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,blue,0.05,3.2408,-58.84,False,1.695,4.843,67.89,False,"anisotropy 1.695 exceeds 0.150 (x=3.241, y=39.265 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 67.9 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,blue,0.03,3.2512,-58.71,False,1.6934,4.3555,67.67,False,"anisotropy 1.693 exceeds 0.150 (x=3.251, y=39.163 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 67.7 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,blue,0.01,3.3062,-58.01,False,0.7758,4.132,66.54,False,"anisotropy 0.776 exceeds 0.150 (x=3.306, y=7.497 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 66.5 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,green,0.2,39.2632,398.64,False,0.0014,0.0046,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,green,0.15,39.2494,398.47,False,0.0018,0.2459,5.61,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,green,0.1,3.1632,-59.83,False,1.7022,4.8449,69.55,False,"anisotropy 1.702 exceeds 0.150 (x=3.163, y=39.320 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 69.5 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,green,0.05,3.1413,-60.11,False,1.7035,4.4762,70.03,False,"anisotropy 1.704 exceeds 0.150 (x=3.141, y=39.241 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 70.0 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,green,0.03,3.1523,-59.97,False,1.6181,4.3824,69.79,False,"anisotropy 1.618 exceeds 0.150 (x=3.152, y=29.865 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 69.8 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,green,0.01,3.8617,-50.96,False,0.5769,2.2802,56.97,False,"anisotropy 0.577 exceeds 0.150 (x=3.862, y=6.993 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,luma,0.2,39.2609,398.61,False,0.0016,0.0048,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,luma,0.15,39.2609,398.61,False,0.0016,0.0048,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,luma,0.1,39.2413,398.36,False,0.0021,0.2458,5.61,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,luma,0.05,3.1551,-59.93,False,1.7025,4.4775,69.73,False,"anisotropy 1.703 exceeds 0.150 (x=3.155, y=39.268 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 69.7 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,luma,0.03,3.1718,-59.72,False,1.7003,4.4218,69.36,False,"anisotropy 1.700 exceeds 0.150 (x=3.172, y=39.165 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 69.4 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_mi_200dpi,jpeg_q5,ecg-image-kit,7.87402,True,luma,0.01,3.1969,-59.4,False,0.7933,4.0763,68.82,False,"anisotropy 0.793 exceeds 0.150 (x=3.197, y=7.400 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 68.8 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,redness,0.2,41.3246,249.88,False,0.3531,0.4425,7.99,False,"anisotropy 0.353 exceeds 0.150 (x=41.325, y=59.047 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 8.0 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,redness,0.15,11.8394,0.24,True,1.3319,0.2205,27.87,False,"anisotropy 1.332 exceeds 0.150 (x=11.839, y=59.047 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,redness,0.1,11.8268,0.13,True,0.6695,0.634,27.9,False,"anisotropy 0.670 exceeds 0.150 (x=11.827, y=23.730 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,redness,0.05,11.8268,0.13,True,0.0007,0.0056,27.9,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,redness,0.03,11.8268,0.13,True,0.0007,0.0056,27.9,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,redness,0.01,11.8268,0.13,True,0.0007,0.0056,27.9,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,blue,0.2,23.6378,100.13,False,0.8565,0.5793,13.96,False,"anisotropy 0.856 exceeds 0.150 (x=23.638, y=59.045 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 14.0 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,blue,0.15,11.8262,0.13,True,1.3325,0.0052,27.9,False,"anisotropy 1.333 exceeds 0.150 (x=11.826, y=59.045 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,blue,0.1,11.8262,0.13,True,0.0071,1.058,27.9,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,blue,0.05,11.8262,0.13,True,0.0007,0.0059,27.9,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,blue,0.03,11.8262,0.13,True,0.0007,0.0059,27.9,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,blue,0.01,11.8262,0.13,True,0.0007,0.0059,27.9,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,green,0.2,59.0527,399.98,False,0.0001,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,green,0.15,11.8683,0.48,True,1.3305,0.4928,27.81,False,"anisotropy 1.331 exceeds 0.150 (x=11.868, y=59.045 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,green,0.1,11.8258,0.12,True,1.3325,0.2516,27.91,False,"anisotropy 1.333 exceeds 0.150 (x=11.826, y=59.041 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,green,0.05,11.8258,0.12,True,0.0008,0.0061,27.91,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,green,0.03,11.8258,0.12,True,0.0008,0.0061,27.91,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,green,0.01,11.8258,0.12,True,0.0008,0.0061,27.91,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,luma,0.2,59.0514,399.97,False,0.0001,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,luma,0.15,11.8776,0.56,True,1.3301,0.7191,27.78,False,"anisotropy 1.330 exceeds 0.150 (x=11.878, y=59.044 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,luma,0.1,11.8245,0.11,True,1.3325,0.3102,27.91,False,"anisotropy 1.333 exceeds 0.150 (x=11.825, y=59.038 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,luma,0.05,11.8245,0.11,True,0.0016,0.0068,27.91,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,luma,0.03,11.8245,0.11,True,0.0016,0.0068,27.91,True,
+gt_sttc_300dpi,clean,ecg-image-kit,11.81102,True,luma,0.01,11.8245,0.11,True,0.0016,0.0068,27.91,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,redness,0.2,59.0618,400.06,False,0.0001,0.0002,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,redness,0.15,41.2913,249.6,False,0.354,0.4816,7.99,False,"anisotropy 0.354 exceeds 0.150 (x=41.291, y=59.054 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 8.0 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,redness,0.1,11.8161,0.04,True,1.3331,0.0019,27.93,False,"anisotropy 1.333 exceeds 0.150 (x=11.816, y=59.054 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,redness,0.05,11.8161,0.04,True,0.0032,0.8371,27.93,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,redness,0.03,11.8161,0.04,True,0.0011,0.0025,27.93,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,redness,0.01,11.8161,0.04,True,0.0011,0.0025,27.93,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,blue,0.2,59.0569,400.01,False,0.0001,0.0003,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,blue,0.15,11.8497,0.33,True,1.3315,0.7349,27.85,False,"anisotropy 1.331 exceeds 0.150 (x=11.850, y=59.052 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,blue,0.1,11.8134,0.02,True,1.3332,0.2522,27.93,False,"anisotropy 1.333 exceeds 0.150 (x=11.813, y=59.050 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,blue,0.05,11.8134,0.02,True,0.0004,0.3141,27.93,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,blue,0.03,11.8134,0.02,True,0.0006,0.0079,27.93,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,blue,0.01,11.8134,0.02,True,0.0006,0.0079,27.93,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,green,0.2,59.057,400.02,False,0.0001,0.0003,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,green,0.15,59.057,400.02,False,0.0001,0.0003,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,green,0.1,11.816,0.04,True,1.3331,0.0035,27.93,False,"anisotropy 1.333 exceeds 0.150 (x=11.816, y=59.052 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,green,0.05,11.816,0.04,True,0.0029,1.4127,27.93,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,green,0.03,11.816,0.04,True,0.0008,0.5957,27.93,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,green,0.01,11.816,0.04,True,0.0009,0.0099,27.93,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,luma,0.2,59.0549,400.0,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,luma,0.15,59.0549,400.0,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,luma,0.1,11.8297,0.16,True,1.3324,0.2532,27.9,False,"anisotropy 1.332 exceeds 0.150 (x=11.830, y=59.050 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,luma,0.05,11.824,0.11,True,0.0011,1.2429,27.91,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,luma,0.03,11.824,0.11,True,0.002,0.6919,27.91,True,
+gt_sttc_300dpi,blur_1.0,ecg-image-kit,11.81102,True,luma,0.01,11.824,0.11,True,0.0016,0.0152,27.91,True,
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,redness,0.2,59.0638,400.07,False,0.0001,0.0002,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,redness,0.15,59.0638,400.07,False,0.0001,0.0002,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,redness,0.1,59.0638,400.07,False,0.0001,0.0002,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,redness,0.05,59.0638,400.07,False,0.0001,0.0002,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,redness,0.03,59.0638,400.07,False,0.0001,0.0002,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,redness,0.01,11.8173,0.05,True,1.3331,0.0018,27.93,False,"anisotropy 1.333 exceeds 0.150 (x=11.817, y=59.057 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,blue,0.2,59.0568,400.01,False,0.0001,0.0003,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,blue,0.15,59.0568,400.01,False,0.0001,0.0003,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,blue,0.1,59.0568,400.01,False,0.0001,0.0003,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,blue,0.05,59.0568,400.01,False,0.0001,0.0003,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,blue,0.03,11.9191,0.92,True,1.3282,0.4944,27.69,False,"anisotropy 1.328 exceeds 0.150 (x=11.919, y=59.052 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,blue,0.01,11.8194,0.07,True,1.3329,0.3129,27.92,False,"anisotropy 1.333 exceeds 0.150 (x=11.819, y=59.049 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,green,0.2,59.0568,400.01,False,0.0001,0.0003,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,green,0.15,59.0568,400.01,False,0.0001,0.0003,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,green,0.1,59.0568,400.01,False,0.0001,0.0003,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,green,0.05,59.0568,400.01,False,0.0001,0.0003,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,green,0.03,59.0568,400.01,False,0.0001,0.2542,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,green,0.01,11.9419,1.11,True,1.3271,0.4941,27.63,False,"anisotropy 1.327 exceeds 0.150 (x=11.942, y=59.049 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,luma,0.2,59.0574,400.02,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,luma,0.15,59.0574,400.02,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,luma,0.1,59.0574,400.02,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,luma,0.05,59.0574,400.02,False,0.0002,0.3149,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,luma,0.03,23.7328,100.94,False,0.8532,0.8387,13.9,False,"anisotropy 0.853 exceeds 0.150 (x=23.733, y=59.048 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 13.9 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_2.0,ecg-image-kit,11.81102,True,luma,0.01,11.9189,0.91,True,1.0116,0.5698,27.69,False,"anisotropy 1.012 exceeds 0.150 (x=11.919, y=36.316 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,redness,0.2,59.0658,400.09,False,0.0001,0.0001,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,redness,0.15,59.0658,400.09,False,0.0001,0.0001,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,redness,0.1,59.0658,400.09,False,0.0001,0.0001,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,redness,0.05,59.0658,400.09,False,0.0001,0.0001,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,redness,0.03,59.0658,400.09,False,0.0001,0.0001,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,redness,0.01,59.0658,400.09,False,0.0001,0.0001,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,blue,0.2,59.0585,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,blue,0.15,59.0585,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,blue,0.1,59.0585,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,blue,0.05,59.0585,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,blue,0.03,59.0585,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,blue,0.01,59.0585,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,green,0.2,59.0586,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,green,0.15,59.0586,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,green,0.1,59.0586,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,green,0.05,59.0586,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,green,0.03,59.0586,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,green,0.01,59.0586,400.03,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,luma,0.2,59.0577,400.02,False,0.0001,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,luma,0.15,59.0577,400.02,False,0.0001,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,luma,0.1,59.0577,400.02,False,0.0001,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,luma,0.05,59.0577,400.02,False,0.0001,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,luma,0.03,59.0577,400.02,False,0.0001,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,blur_3.0,ecg-image-kit,11.81102,True,luma,0.01,59.0577,400.02,False,0.0001,0.0007,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,redness,0.2,59.031,399.8,False,0.0001,0.0019,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,redness,0.15,59.031,399.8,False,0.0001,0.0019,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,redness,0.1,59.031,399.8,False,0.0001,0.0019,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,redness,0.05,11.9546,1.22,True,1.3263,1.3108,27.6,False,"anisotropy 1.326 exceeds 0.150 (x=11.955, y=59.026 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,redness,0.03,11.9536,1.21,True,1.3264,0.9238,27.61,False,"anisotropy 1.326 exceeds 0.150 (x=11.954, y=59.026 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,redness,0.01,11.9085,0.83,True,0.0079,0.9486,27.71,True,
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,blue,0.2,59.0542,399.99,False,0.0002,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,blue,0.15,59.0542,399.99,False,0.0002,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,blue,0.1,41.2783,249.49,False,0.3542,0.4422,7.99,False,"anisotropy 0.354 exceeds 0.150 (x=41.278, y=59.045 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 8.0 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,blue,0.05,11.8181,0.06,True,1.1999,0.4252,27.92,False,"anisotropy 1.200 exceeds 0.150 (x=11.818, y=47.263 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,blue,0.03,11.8181,0.06,True,0.0012,0.8313,27.92,True,
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,blue,0.01,11.8181,0.06,True,0.001,0.0067,27.92,True,
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,green,0.2,59.0524,399.98,False,0.0002,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,green,0.15,59.0524,399.98,False,0.0002,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,green,0.1,11.8758,0.55,True,1.3302,0.9339,27.79,False,"anisotropy 1.330 exceeds 0.150 (x=11.876, y=59.042 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,green,0.05,11.8272,0.14,True,0.0043,1.4665,27.9,True,
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,green,0.03,11.8272,0.14,True,0.0074,0.7895,27.9,True,
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,green,0.01,11.8272,0.14,True,0.0017,0.0109,27.9,True,
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,luma,0.2,59.0528,399.98,False,0.0001,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,luma,0.15,59.0528,399.98,False,0.0001,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,luma,0.1,11.865,0.46,True,1.3307,0.4028,27.81,False,"anisotropy 1.331 exceeds 0.150 (x=11.865, y=59.045 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,luma,0.05,11.8246,0.12,True,0.0042,1.4097,27.91,True,
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,luma,0.03,11.8246,0.12,True,0.002,0.5397,27.91,True,
+gt_sttc_300dpi,jpeg_q20,ecg-image-kit,11.81102,True,luma,0.01,11.8246,0.12,True,0.0034,0.01,27.91,True,
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,redness,0.2,59.0295,399.78,False,0.0,0.0017,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,redness,0.15,59.0295,399.78,False,0.0,0.0017,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,redness,0.1,59.0295,399.78,False,0.0,0.0017,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,redness,0.05,58.9245,398.89,False,0.0018,0.3118,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,redness,0.03,11.7069,-0.88,True,1.338,1.3998,28.19,False,"anisotropy 1.338 exceeds 0.150 (x=11.707, y=59.031 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,redness,0.01,11.6642,-1.24,True,1.34,0.9808,28.29,False,"anisotropy 1.340 exceeds 0.150 (x=11.664, y=59.031 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,blue,0.2,59.0553,400.0,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,blue,0.15,59.0553,400.0,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,blue,0.1,59.0553,400.0,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,blue,0.05,29.534,150.05,False,0.6663,0.6057,11.17,False,"anisotropy 0.666 exceeds 0.150 (x=29.534, y=59.047 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 11.2 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,blue,0.03,11.6459,-1.4,True,1.341,0.9834,28.34,False,"anisotropy 1.341 exceeds 0.150 (x=11.646, y=59.044 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,blue,0.01,11.8031,-0.07,True,1.2114,0.4185,27.96,False,"anisotropy 1.211 exceeds 0.150 (x=11.803, y=48.064 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,green,0.2,59.0547,400.0,False,0.0002,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,green,0.15,59.0547,400.0,False,0.0002,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,green,0.1,59.0547,400.0,False,0.0002,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,green,0.05,11.8619,0.43,True,1.3308,0.8815,27.82,False,"anisotropy 1.331 exceeds 0.150 (x=11.862, y=59.046 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,green,0.03,11.816,0.04,True,1.333,0.2533,27.93,False,"anisotropy 1.333 exceeds 0.150 (x=11.816, y=59.043 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,green,0.01,11.816,0.04,True,0.0057,0.7915,27.93,True,
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,luma,0.2,59.0555,400.0,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,luma,0.15,59.0555,400.0,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,luma,0.1,59.0555,400.0,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,luma,0.05,11.8771,0.56,True,1.3302,0.7085,27.78,False,"anisotropy 1.330 exceeds 0.150 (x=11.877, y=59.047 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,luma,0.03,11.8205,0.08,True,1.3327,0.3127,27.92,False,"anisotropy 1.333 exceeds 0.150 (x=11.820, y=59.033 px/mm) -- perspective, or one axis locked onto a harmonic"
+gt_sttc_300dpi,jpeg_q10,ecg-image-kit,11.81102,True,luma,0.01,11.8205,0.08,True,0.0095,0.959,27.92,True,
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,redness,0.2,59.0203,399.71,False,0.0,0.0034,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,redness,0.15,59.0203,399.71,False,0.0,0.0034,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,redness,0.1,59.0203,399.71,False,0.0,0.0034,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,redness,0.05,59.0203,399.71,False,0.0,0.0034,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,redness,0.03,59.0203,399.71,False,0.0,0.0034,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,redness,0.01,59.0203,399.71,False,0.0,0.0034,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,blue,0.2,59.0541,399.99,False,0.0002,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,blue,0.15,59.0541,399.99,False,0.0002,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,blue,0.1,59.0541,399.99,False,0.0002,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,blue,0.05,59.0541,399.99,False,0.0002,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,blue,0.03,59.0541,399.99,False,0.0006,0.3847,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,blue,0.01,59.0541,399.99,False,1.5838,3.3617,5.59,False,"anisotropy 1.584 exceeds 0.150 (x=59.054, y=6.858 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,green,0.2,59.052,399.97,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,green,0.15,59.052,399.97,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,green,0.1,59.052,399.97,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,green,0.05,59.052,399.97,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,green,0.03,59.052,399.97,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,green,0.01,59.052,399.97,False,0.0001,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,luma,0.2,59.0477,399.94,False,0.0,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,luma,0.15,59.0477,399.94,False,0.0,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,luma,0.1,59.0477,399.94,False,0.0,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,luma,0.05,59.0477,399.94,False,0.0,0.0005,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,luma,0.03,59.0477,399.94,False,0.0002,0.3623,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+gt_sttc_300dpi,jpeg_q5,ecg-image-kit,11.81102,True,luma,0.01,59.0477,399.94,False,0.175,0.4897,5.59,False,"anisotropy 0.175 exceeds 0.150 (x=59.048, y=49.548 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2,clean,synth,2.0,False,redness,0.2,nan,nan,False,nan,0.9024,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,redness,0.15,nan,nan,False,nan,0.7539,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,redness,0.1,nan,nan,False,nan,0.5491,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,redness,0.05,nan,nan,False,nan,0.1773,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,redness,0.03,nan,nan,False,nan,0.1238,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,redness,0.01,nan,nan,False,nan,0.1211,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,blue,0.2,nan,nan,False,nan,1.7285,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,blue,0.15,nan,nan,False,nan,1.1861,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,blue,0.1,nan,nan,False,nan,0.6463,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,blue,0.05,nan,nan,False,nan,0.1262,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,blue,0.03,nan,nan,False,nan,0.1213,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,blue,0.01,nan,nan,False,nan,0.1187,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,green,0.2,nan,nan,False,nan,1.7285,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,green,0.15,nan,nan,False,nan,1.1861,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,green,0.1,nan,nan,False,nan,0.6463,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,green,0.05,nan,nan,False,nan,0.1262,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,green,0.03,nan,nan,False,nan,0.1213,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,green,0.01,nan,nan,False,nan,0.1187,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,luma,0.2,nan,nan,False,nan,0.9706,nan,False,"an axis failed to resolve (x=nan, y=3.8786994826312253)"
+synth_2,clean,synth,2.0,False,luma,0.15,nan,nan,False,nan,0.711,nan,False,"an axis failed to resolve (x=nan, y=9.966226827445169)"
+synth_2,clean,synth,2.0,False,luma,0.1,nan,nan,False,nan,1.4874,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,luma,0.05,nan,nan,False,nan,0.7151,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,luma,0.03,nan,nan,False,nan,0.5512,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2,clean,synth,2.0,False,luma,0.01,nan,nan,False,nan,0.1721,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2.5,clean,synth,2.5,False,redness,0.2,9.9995,299.98,False,0.0004,0.2789,6.5,False,"implied paper speed 6.5 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,redness,0.15,7.5417,201.67,False,0.0066,0.3862,8.62,False,"implied paper speed 8.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,redness,0.1,7.4343,197.37,False,0.0119,0.3861,8.74,False,"implied paper speed 8.7 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,redness,0.05,nan,nan,False,nan,0.9396,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2.5,clean,synth,2.5,False,redness,0.03,nan,nan,False,nan,0.5999,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2.5,clean,synth,2.5,False,redness,0.01,nan,nan,False,nan,0.1965,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2.5,clean,synth,2.5,False,blue,0.2,9.9979,299.92,False,0.0004,0.4034,6.5,False,"implied paper speed 6.5 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,blue,0.15,7.5416,201.66,False,0.1534,0.3878,8.62,False,"anisotropy 0.153 exceeds 0.150 (x=7.542, y=8.795 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 8.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,blue,0.1,7.4288,197.15,False,0.0204,0.526,8.75,False,"implied paper speed 8.7 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,blue,0.05,nan,nan,False,nan,0.7749,nan,False,"an axis failed to resolve (x=nan, y=5.0080861316297565)"
+synth_2.5,clean,synth,2.5,False,blue,0.03,nan,nan,False,nan,0.9216,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2.5,clean,synth,2.5,False,blue,0.01,nan,nan,False,nan,0.5328,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2.5,clean,synth,2.5,False,green,0.2,9.9979,299.92,False,0.0004,0.4034,6.5,False,"implied paper speed 6.5 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,green,0.15,7.5416,201.66,False,0.1534,0.3878,8.62,False,"anisotropy 0.153 exceeds 0.150 (x=7.542, y=8.795 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 8.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,green,0.1,7.4288,197.15,False,0.0204,0.526,8.75,False,"implied paper speed 8.7 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,green,0.05,nan,nan,False,nan,0.7749,nan,False,"an axis failed to resolve (x=nan, y=5.0080861316297565)"
+synth_2.5,clean,synth,2.5,False,green,0.03,nan,nan,False,nan,0.9216,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2.5,clean,synth,2.5,False,green,0.01,nan,nan,False,nan,0.5328,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_2.5,clean,synth,2.5,False,luma,0.2,9.9981,299.92,False,0.0022,1.569,6.5,False,"implied paper speed 6.5 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,luma,0.15,7.5421,201.68,False,0.2788,0.717,8.62,False,"anisotropy 0.279 exceeds 0.150 (x=7.542, y=9.985 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 8.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,luma,0.1,7.4257,197.03,False,0.295,0.4399,8.75,False,"anisotropy 0.295 exceeds 0.150 (x=7.426, y=9.995 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 8.8 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)"
+synth_2.5,clean,synth,2.5,False,luma,0.05,nan,nan,False,nan,0.7551,nan,False,"an axis failed to resolve (x=nan, y=7.607304135749933)"
+synth_2.5,clean,synth,2.5,False,luma,0.03,nan,nan,False,nan,0.7243,nan,False,"an axis failed to resolve (x=nan, y=3.68858573608268)"
+synth_2.5,clean,synth,2.5,False,luma,0.01,nan,nan,False,nan,0.8165,nan,False,"an axis failed to resolve (x=nan, y=nan)"
+synth_3,clean,synth,3.0,True,redness,0.2,3.0001,0.0,True,nan,0.5548,26.0,False,"an axis failed to resolve (x=3.0001018929890506, y=nan)"
+synth_3,clean,synth,3.0,True,redness,0.15,3.0001,0.0,True,nan,0.0009,26.0,False,"an axis failed to resolve (x=3.0001018929890506, y=nan)"
+synth_3,clean,synth,3.0,True,redness,0.1,3.0001,0.0,True,nan,0.0011,26.0,False,"an axis failed to resolve (x=3.0001018929890506, y=nan)"
+synth_3,clean,synth,3.0,True,redness,0.05,3.0001,0.0,True,0.0,0.0017,26.0,True,
+synth_3,clean,synth,3.0,True,redness,0.03,3.0001,0.0,True,nan,0.0019,26.0,False,"an axis failed to resolve (x=3.0001018929890506, y=nan)"
+synth_3,clean,synth,3.0,True,redness,0.01,3.0001,0.0,True,0.0,0.0019,26.0,True,
+synth_3,clean,synth,3.0,True,blue,0.2,nan,nan,False,nan,0.5826,nan,False,"an axis failed to resolve (x=nan, y=3.0041105547791496)"
+synth_3,clean,synth,3.0,True,blue,0.15,nan,nan,False,nan,0.5541,nan,False,"an axis failed to resolve (x=nan, y=3.003925005250448)"
+synth_3,clean,synth,3.0,True,blue,0.1,nan,nan,False,nan,0.2612,nan,False,"an axis failed to resolve (x=nan, y=3.0002253997361095)"
+synth_3,clean,synth,3.0,True,blue,0.05,nan,nan,False,nan,0.0032,nan,False,"an axis failed to resolve (x=nan, y=3.000343109974068)"
+synth_3,clean,synth,3.0,True,blue,0.03,nan,nan,False,nan,0.0032,nan,False,"an axis failed to resolve (x=nan, y=3.000343109974068)"
+synth_3,clean,synth,3.0,True,blue,0.01,nan,nan,False,nan,0.0034,nan,False,"an axis failed to resolve (x=nan, y=3.0007338559688037)"
+synth_3,clean,synth,3.0,True,green,0.2,nan,nan,False,nan,0.5826,nan,False,"an axis failed to resolve (x=nan, y=3.0041105547791496)"
+synth_3,clean,synth,3.0,True,green,0.15,nan,nan,False,nan,0.5541,nan,False,"an axis failed to resolve (x=nan, y=3.003925005250448)"
+synth_3,clean,synth,3.0,True,green,0.1,nan,nan,False,nan,0.2612,nan,False,"an axis failed to resolve (x=nan, y=3.0002253997361095)"
+synth_3,clean,synth,3.0,True,green,0.05,nan,nan,False,nan,0.0032,nan,False,"an axis failed to resolve (x=nan, y=3.000343109974068)"
+synth_3,clean,synth,3.0,True,green,0.03,nan,nan,False,nan,0.0032,nan,False,"an axis failed to resolve (x=nan, y=3.000343109974068)"
+synth_3,clean,synth,3.0,True,green,0.01,nan,nan,False,nan,0.0034,nan,False,"an axis failed to resolve (x=nan, y=3.0007338559688037)"
+synth_3,clean,synth,3.0,True,luma,0.2,3.0001,0.0,True,0.0019,1.3442,26.0,True,
+synth_3,clean,synth,3.0,True,luma,0.15,3.0001,0.0,True,0.0019,0.7449,26.0,True,
+synth_3,clean,synth,3.0,True,luma,0.1,3.0001,0.0,True,0.0009,0.1354,26.0,True,
+synth_3,clean,synth,3.0,True,luma,0.05,3.0001,0.0,True,0.0,0.0044,26.0,True,
+synth_3,clean,synth,3.0,True,luma,0.03,3.0001,0.0,True,0.0001,0.0046,26.0,True,
+synth_3,clean,synth,3.0,True,luma,0.01,3.0001,0.0,True,0.0001,0.0047,26.0,True,
+synth_4,clean,synth,4.0,True,redness,0.2,4.0,-0.0,True,0.0001,0.4123,26.0,True,
+synth_4,clean,synth,4.0,True,redness,0.15,4.0,-0.0,True,0.0,0.0005,26.0,True,
+synth_4,clean,synth,4.0,True,redness,0.1,4.0,-0.0,True,0.0,0.0006,26.0,True,
+synth_4,clean,synth,4.0,True,redness,0.05,4.0,-0.0,True,0.0,0.0009,26.0,True,
+synth_4,clean,synth,4.0,True,redness,0.03,4.0,-0.0,True,0.0,0.001,26.0,True,
+synth_4,clean,synth,4.0,True,redness,0.01,4.0,-0.0,True,0.0,0.0011,26.0,True,
+synth_4,clean,synth,4.0,True,blue,0.2,3.9999,-0.0,True,0.0007,0.1415,26.0,True,
+synth_4,clean,synth,4.0,True,blue,0.15,3.9999,-0.0,True,0.0004,0.1351,26.0,True,
+synth_4,clean,synth,4.0,True,blue,0.1,3.9999,-0.0,True,0.0001,0.0014,26.0,True,
+synth_4,clean,synth,4.0,True,blue,0.05,3.9999,-0.0,True,0.0002,0.0016,26.0,True,
+synth_4,clean,synth,4.0,True,blue,0.03,3.9999,-0.0,True,0.0002,0.0017,26.0,True,
+synth_4,clean,synth,4.0,True,blue,0.01,3.9999,-0.0,True,0.0003,0.0018,26.0,True,
+synth_4,clean,synth,4.0,True,green,0.2,3.9999,-0.0,True,0.0007,0.1415,26.0,True,
+synth_4,clean,synth,4.0,True,green,0.15,3.9999,-0.0,True,0.0004,0.1351,26.0,True,
+synth_4,clean,synth,4.0,True,green,0.1,3.9999,-0.0,True,0.0001,0.0014,26.0,True,
+synth_4,clean,synth,4.0,True,green,0.05,3.9999,-0.0,True,0.0002,0.0016,26.0,True,
+synth_4,clean,synth,4.0,True,green,0.03,3.9999,-0.0,True,0.0002,0.0017,26.0,True,
+synth_4,clean,synth,4.0,True,green,0.01,3.9999,-0.0,True,0.0003,0.0018,26.0,True,
+synth_4,clean,synth,4.0,True,luma,0.2,3.9999,-0.0,True,0.0011,0.1491,26.0,True,
+synth_4,clean,synth,4.0,True,luma,0.15,3.9999,-0.0,True,0.001,0.0022,26.0,True,
+synth_4,clean,synth,4.0,True,luma,0.1,3.9999,-0.0,True,0.0003,0.0021,26.0,True,
+synth_4,clean,synth,4.0,True,luma,0.05,3.9999,-0.0,True,0.0001,0.0021,26.0,True,
+synth_4,clean,synth,4.0,True,luma,0.03,3.9999,-0.0,True,0.0002,0.0022,26.0,True,
+synth_4,clean,synth,4.0,True,luma,0.01,3.9999,-0.0,True,0.0003,0.0023,26.0,True,
+synth_6,clean,synth,6.0,True,redness,0.2,6.0,-0.0,True,0.0,0.1349,26.0,True,
+synth_6,clean,synth,6.0,True,redness,0.15,6.0,-0.0,True,0.0,0.0002,26.0,True,
+synth_6,clean,synth,6.0,True,redness,0.1,6.0,-0.0,True,0.0,0.0003,26.0,True,
+synth_6,clean,synth,6.0,True,redness,0.05,6.0,-0.0,True,0.0,0.0004,26.0,True,
+synth_6,clean,synth,6.0,True,redness,0.03,6.0,-0.0,True,0.0,0.0004,26.0,True,
+synth_6,clean,synth,6.0,True,redness,0.01,6.0,-0.0,True,0.0,0.0005,26.0,True,
+synth_6,clean,synth,6.0,True,blue,0.2,6.0,0.0,True,0.0001,0.0005,26.0,True,
+synth_6,clean,synth,6.0,True,blue,0.15,6.0,0.0,True,0.0,0.0005,26.0,True,
+synth_6,clean,synth,6.0,True,blue,0.1,6.0,0.0,True,0.0,0.0005,26.0,True,
+synth_6,clean,synth,6.0,True,blue,0.05,6.0,0.0,True,0.0,0.0006,26.0,True,
+synth_6,clean,synth,6.0,True,blue,0.03,6.0,0.0,True,0.0,0.0007,26.0,True,
+synth_6,clean,synth,6.0,True,blue,0.01,6.0,0.0,True,0.0,0.0007,26.0,True,
+synth_6,clean,synth,6.0,True,green,0.2,6.0,0.0,True,0.0001,0.0005,26.0,True,
+synth_6,clean,synth,6.0,True,green,0.15,6.0,0.0,True,0.0,0.0005,26.0,True,
+synth_6,clean,synth,6.0,True,green,0.1,6.0,0.0,True,0.0,0.0005,26.0,True,
+synth_6,clean,synth,6.0,True,green,0.05,6.0,0.0,True,0.0,0.0006,26.0,True,
+synth_6,clean,synth,6.0,True,green,0.03,6.0,0.0,True,0.0,0.0007,26.0,True,
+synth_6,clean,synth,6.0,True,green,0.01,6.0,0.0,True,0.0,0.0007,26.0,True,
+synth_6,clean,synth,6.0,True,luma,0.2,6.0,0.0,True,0.0001,0.2857,26.0,True,
+synth_6,clean,synth,6.0,True,luma,0.15,6.0,0.0,True,0.0,0.135,26.0,True,
+synth_6,clean,synth,6.0,True,luma,0.1,6.0,0.0,True,0.0,0.0007,26.0,True,
+synth_6,clean,synth,6.0,True,luma,0.05,6.0,0.0,True,0.0,0.0008,26.0,True,
+synth_6,clean,synth,6.0,True,luma,0.03,6.0,0.0,True,0.0,0.0008,26.0,True,
+synth_6,clean,synth,6.0,True,luma,0.01,6.0,0.0,True,0.0001,0.0009,26.0,True,
+synth_8,clean,synth,8.0,True,redness,0.2,8.0,-0.0,True,0.0,0.1349,26.0,True,
+synth_8,clean,synth,8.0,True,redness,0.15,8.0,-0.0,True,0.0,0.0001,26.0,True,
+synth_8,clean,synth,8.0,True,redness,0.1,8.0,-0.0,True,0.0,0.0001,26.0,True,
+synth_8,clean,synth,8.0,True,redness,0.05,8.0,-0.0,True,0.0,0.0001,26.0,True,
+synth_8,clean,synth,8.0,True,redness,0.03,8.0,-0.0,True,0.0,0.0001,26.0,True,
+synth_8,clean,synth,8.0,True,redness,0.01,8.0,-0.0,True,0.0,0.0001,26.0,True,
+synth_8,clean,synth,8.0,True,blue,0.2,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,blue,0.15,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,blue,0.1,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,blue,0.05,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,blue,0.03,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,blue,0.01,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,green,0.2,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,green,0.15,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,green,0.1,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,green,0.05,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,green,0.03,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,green,0.01,8.0,0.0,True,0.0,0.0002,26.0,True,
+synth_8,clean,synth,8.0,True,luma,0.2,8.0001,0.0,True,0.0,0.0003,26.0,True,
+synth_8,clean,synth,8.0,True,luma,0.15,8.0001,0.0,True,0.0,0.0003,26.0,True,
+synth_8,clean,synth,8.0,True,luma,0.1,8.0001,0.0,True,0.0,0.0003,26.0,True,
+synth_8,clean,synth,8.0,True,luma,0.05,8.0001,0.0,True,0.0,0.0003,26.0,True,
+synth_8,clean,synth,8.0,True,luma,0.03,8.0001,0.0,True,0.0,0.0003,26.0,True,
+synth_8,clean,synth,8.0,True,luma,0.01,8.0001,0.0,True,0.0,0.0003,26.0,True,
+synth_12,clean,synth,12.0,True,redness,0.2,12.0,0.0,True,0.0,0.0,26.0,True,
+synth_12,clean,synth,12.0,True,redness,0.15,12.0,0.0,True,0.0,0.0,26.0,True,
+synth_12,clean,synth,12.0,True,redness,0.1,12.0,0.0,True,0.0,0.0,26.0,True,
+synth_12,clean,synth,12.0,True,redness,0.05,12.0,0.0,True,0.0,0.0,26.0,True,
+synth_12,clean,synth,12.0,True,redness,0.03,12.0,0.0,True,0.0,0.0,26.0,True,
+synth_12,clean,synth,12.0,True,redness,0.01,12.0,0.0,True,0.0,0.0,26.0,True,
+synth_12,clean,synth,12.0,True,blue,0.2,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,blue,0.15,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,blue,0.1,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,blue,0.05,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,blue,0.03,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,blue,0.01,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,green,0.2,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,green,0.15,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,green,0.1,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,green,0.05,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,green,0.03,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,green,0.01,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,luma,0.2,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,luma,0.15,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,luma,0.1,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,luma,0.05,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,luma,0.03,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_12,clean,synth,12.0,True,luma,0.01,12.0,0.0,True,0.0,0.0001,26.0,True,
+synth_16,clean,synth,16.0,True,redness,0.2,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,redness,0.15,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,redness,0.1,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,redness,0.05,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,redness,0.03,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,redness,0.01,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,blue,0.2,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,blue,0.15,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,blue,0.1,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,blue,0.05,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,blue,0.03,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,blue,0.01,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,green,0.2,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,green,0.15,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,green,0.1,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,green,0.05,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,green,0.03,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,green,0.01,16.0,0.0,True,0.0,0.0,26.0,True,
+synth_16,clean,synth,16.0,True,luma,0.2,16.0,0.0,True,0.0,0.0001,26.0,True,
+synth_16,clean,synth,16.0,True,luma,0.15,16.0,0.0,True,0.0,0.0001,26.0,True,
+synth_16,clean,synth,16.0,True,luma,0.1,16.0,0.0,True,0.0,0.0001,26.0,True,
+synth_16,clean,synth,16.0,True,luma,0.05,16.0,0.0,True,0.0,0.0001,26.0,True,
+synth_16,clean,synth,16.0,True,luma,0.03,16.0,0.0,True,0.0,0.0001,26.0,True,
+synth_16,clean,synth,16.0,True,luma,0.01,16.0,0.0,True,0.0,0.0001,26.0,True,

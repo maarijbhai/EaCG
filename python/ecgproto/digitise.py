@@ -227,11 +227,46 @@ def redness(image: np.ndarray) -> np.ndarray:
     return np.clip(r - 0.5 * (g + b), 0.0, None)
 
 
+#: Minimum autocorrelation height for a lag to be accepted as a grid peak.
+#:
+#: **Read the name with care: this is not a fraction of anything about the
+#: grid.** `_pitch_1d` thresholds at ``peak_fraction * ac[:hi].max()``, and
+#: because the autocorrelation is normalised by its zero lag that maximum is
+#: always exactly 1.0. The knob is an absolute threshold on normalised
+#: autocorrelation height, and the 0.20 it used to hold was an absolute 0.20.
+#:
+#: The value was lowered from 0.20 to 0.05 on 2026-09-17 after measuring how
+#: far apart the 1 mm and 5 mm rules sit in the autocorrelation. On the
+#: ecg-image-kit fixtures the minor rules stand at 0.11 to 0.19 against 0.72
+#: to 0.95 for the majors, so a threshold of 0.20 deletes every minor peak
+#: and the median spacing collapses onto the 5 mm comb -- a confident,
+#: self-consistent, fivefold error. On this repository's own `synth`
+#: renders the same peaks stand at 0.78 to 0.83, which is why the fault
+#: never appeared there. See `results/grid/`.
+#:
+#: 0.05 is a factor of two below the lowest value measured on any fixture
+#: (0.1007) and sixteen times below the synthetic renders, and it is the
+#: highest threshold at which *every* channel tested recovers *every* clean
+#: source correctly. Lower still buys nothing measurable: 0.01 returns the
+#: same pitch to four decimal places everywhere.
+#:
+#: What the change costs, stated because it is a real loss. At 0.20 a
+#: one-degree rotation made grid estimation fail outright and `digitise`
+#: refused; at 0.05 it succeeds and returns a waveform at PCC 0.49 to 0.77,
+#: and `check_calibration` accepts 10 of 12 such records because the pitch
+#: it recovers really is right. The two it rejects are caught by anisotropy,
+#: the y-axis having locked onto a harmonic. Rotation was never a tolerable
+#: input condition -- deskew runs first by design -- but the accidental
+#: safety net that used to sit here is gone, and a rotated frame now fails
+#: on PCC downstream rather than on calibration here.
+DEFAULT_PEAK_FRACTION = 0.05
+
+
 def estimate_grid_pitch(
     image: np.ndarray,
     min_pitch_px: float = 3.0,
     max_pitch_px: float = 80.0,
-    peak_fraction: float = 0.20,
+    peak_fraction: float = DEFAULT_PEAK_FRACTION,
 ) -> GridEstimate:
     """Recover pixels-per-millimetre from the printed grid, per axis.
 
@@ -257,7 +292,21 @@ def estimate_grid_pitch(
       and only the 5 mm ones survive. The peak spacing is then a clean 5 mm
       and the function returns a confident answer that is 5x wrong. Nothing
       in the autocorrelation distinguishes this case -- guard it outside, by
-      checking the implied paper speed against a plausible range.
+      checking the implied paper speed against a plausible range. Measured
+      on rendered strips, the floor is sharp: 3.0 px/mm recovers exactly,
+      2.5 returns a threefold error, 2.0 returns NaN.
+    * **Minor rules resolved but faint.** Distinct from the above and more
+      dangerous, because the information is present and gets thrown away.
+      ecg-image-kit draws the 1 mm rules about seven times lighter than the
+      5 mm ones, so their autocorrelation peaks stand at 0.11 to 0.19 where
+      the majors stand at 0.72 to 0.95, and any threshold above about 0.10
+      removes them. This is what `DEFAULT_PEAK_FRACTION` was lowered for.
+      The margin is source-dependent by a factor of eight -- the synthetic
+      renders here put both families at 0.78 to 0.83 -- so no fixed height
+      threshold is safe for every printer. A selection rule that tests a
+      candidate fundamental against its own harmonics, rather than against
+      an absolute height, would not have this failure mode; that is a
+      change to the control condition and has not been made.
     * **Rotation.** The projection smears line energy across columns once
       the grid is more than about a degree off-axis, flattening the peaks.
       Deskew first.
@@ -321,7 +370,17 @@ def _pitch_1d(
         return float("nan"), 0, 0.0, float("nan")
 
     peaks, props = sps.find_peaks(ac[:hi], height=peak_fraction * ac[:hi].max())
-    peaks = peaks[peaks >= min_pitch_px]
+    # `keep` is held rather than recomputed further down: after `peaks` is
+    # filtered, `peaks >= min_pitch_px` is an all-true mask of the *filtered*
+    # length, and indexing the unfiltered `props["peak_heights"]` with it
+    # raises as soon as anything is actually dropped. Nothing was ever
+    # dropped at the default threshold -- a peak below a lag of 3 needs a
+    # normalised autocorrelation above 0.20 at lag 1 or 2 -- so the fault sat
+    # latent until the threshold sweep went low enough to admit one. It
+    # affects `confidence` only; `pitch` is computed from `peaks` and is
+    # unchanged.
+    keep = peaks >= min_pitch_px
+    peaks = peaks[keep]
     if len(peaks) < 2:
         # One peak (or none) is not a comb; fall back to its lag if plausible.
         if len(peaks) == 1 and min_pitch_px <= peaks[0] <= max_pitch_px:
@@ -341,7 +400,7 @@ def _pitch_1d(
     if not (min_pitch_px <= pitch <= max_pitch_px):
         return float("nan"), int(len(peaks)), 0.0, spacing_cv
 
-    heights = props["peak_heights"][peaks >= min_pitch_px] if len(props) else ac[peaks]
+    heights = props["peak_heights"][keep] if len(props) else ac[peaks]
     return pitch, int(len(peaks)), float(np.mean(heights)), spacing_cv
 
 

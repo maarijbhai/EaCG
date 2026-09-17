@@ -1,85 +1,85 @@
 ecg_id,lead,condition,applied_deg,recovered_deg,interp,error,snr_db,shifted_snr_db,rmse_mv,pcc,gain_ratio,px_per_mm_x,px_per_mm_y,spacing_cv,confidence,calibration_ok
-9,II,unrotated,0.0,0.0,lanczos,,7.627,7.627,0.04768,0.9882,0.9231,8.0,8.0,0.1349,0.6341,True
-9,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.820302971459881, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-9,II,deskewed,1.0,0.9955,lanczos,,7.366,7.366,0.04913,0.9822,0.9184,7.9999,7.9998,0.0002,0.5813,True
-9,II,roundtrip_control,1.0,1.0,lanczos,,7.393,7.393,0.04919,0.9819,0.9158,8.0,7.9998,0.0002,0.5816,True
-9,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.93850853122149, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-9,II,deskewed,3.0,3.0001,lanczos,,7.735,7.735,0.0473,0.9685,0.9041,8.0,7.9998,0.4573,0.5638,True
-9,II,roundtrip_control,3.0,3.0,lanczos,,7.735,7.735,0.0473,0.9685,0.9042,8.0,7.9998,0.4573,0.5638,True
-38,II,unrotated,0.0,0.0,lanczos,,8.562,8.562,0.04913,0.9335,0.8343,8.0,8.0,0.1349,0.6339,True
-38,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.81889322349906, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-38,II,deskewed,1.0,0.9954,lanczos,,9.536,9.536,0.04392,0.9495,0.8413,8.0,7.9998,0.0002,0.5809,True
-38,II,roundtrip_control,1.0,1.0,lanczos,,9.545,9.545,0.04385,0.9496,0.8418,8.0,7.9998,0.0002,0.5812,True
-38,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.92894798796064, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-38,II,deskewed,3.0,3.0001,lanczos,,8.532,8.567,0.04928,0.9332,0.8333,8.0,7.9998,0.4573,0.5634,True
-38,II,roundtrip_control,3.0,3.0,lanczos,,8.533,8.566,0.04927,0.9332,0.8333,8.0,7.9998,0.4573,0.5634,True
-40,II,unrotated,0.0,0.0,lanczos,,10.223,10.223,0.03131,0.9705,0.8962,8.0,8.0,0.1349,0.635,True
-40,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.821892624935089, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-40,II,deskewed,1.0,0.9954,lanczos,,9.787,9.787,0.03291,0.9654,0.8946,7.9999,7.9998,0.0002,0.5821,True
-40,II,roundtrip_control,1.0,1.0,lanczos,,9.801,9.801,0.03287,0.9653,0.89,7.9999,7.9998,0.0002,0.5824,True
-40,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.938956358625575, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-40,II,deskewed,3.0,3.0001,lanczos,,9.146,9.146,0.03545,0.9709,0.8961,8.0,7.9998,0.4573,0.5644,True
-40,II,roundtrip_control,3.0,3.0,lanczos,,9.142,9.142,0.03546,0.9708,0.8958,8.0,7.9998,0.4573,0.5644,True
-57,II,unrotated,0.0,0.0,lanczos,,8.597,8.597,0.06236,0.9504,0.8428,8.0,8.0,0.1349,0.6346,True
-57,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.823667585406895, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-57,II,deskewed,1.0,0.9955,lanczos,,8.259,8.259,0.0648,0.9406,0.8312,7.9999,7.9999,0.0002,0.582,True
-57,II,roundtrip_control,1.0,1.0,lanczos,,8.062,8.062,0.0663,0.9405,0.831,7.9999,7.9999,0.0002,0.5823,True
-57,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.93870590820771, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-57,II,deskewed,3.0,3.0001,lanczos,,9.005,9.005,0.05947,0.95,0.8424,8.0,7.9999,0.4573,0.5641,True
-57,II,roundtrip_control,3.0,3.0,lanczos,,9.006,9.006,0.05946,0.9501,0.8424,8.0,7.9999,0.4573,0.5641,True
-59,II,unrotated,0.0,0.0,lanczos,,11.891,11.891,0.03683,0.9722,0.8607,8.0,8.0,0.1349,0.635,True
-59,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.820271894550473, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-59,II,deskewed,1.0,0.9954,lanczos,,10.567,10.567,0.04289,0.9595,0.8458,7.9999,7.9998,0.0002,0.5823,True
-59,II,roundtrip_control,1.0,1.0,lanczos,,10.586,10.586,0.0428,0.9597,0.8459,7.9999,7.9999,0.0002,0.5826,True
-59,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.935330237532725, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-59,II,deskewed,3.0,3.0001,lanczos,,11.529,11.529,0.03841,0.9724,0.8597,8.0,7.9999,0.4573,0.5643,True
-59,II,roundtrip_control,3.0,3.0,lanczos,,11.529,11.529,0.03841,0.9724,0.8597,8.0,7.9999,0.4573,0.5643,True
-63,II,unrotated,0.0,0.0,lanczos,,7.523,7.523,0.04961,0.9825,0.9149,8.0,8.0,0.1349,0.6349,True
-63,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.821967291179931, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-63,II,deskewed,1.0,0.9955,lanczos,,7.199,7.199,0.0515,0.9749,0.9089,8.0,7.9997,0.0002,0.5823,True
-63,II,roundtrip_control,1.0,1.0,lanczos,,7.202,7.202,0.05148,0.975,0.9089,8.0,7.9997,0.0002,0.5826,True
-63,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.93539954243758, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-63,II,deskewed,3.0,3.0001,lanczos,,7.563,7.563,0.04938,0.983,0.916,8.0,7.9997,0.4573,0.5647,True
-63,II,roundtrip_control,3.0,3.0,lanczos,,7.561,7.561,0.0494,0.983,0.916,8.0,7.9997,0.4573,0.5647,True
-65,II,unrotated,0.0,0.0,lanczos,,7.861,7.861,0.08888,0.9385,0.8424,8.0,8.0,0.1349,0.6337,True
-65,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.820336320481715, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-65,II,deskewed,1.0,0.9955,lanczos,,8.932,8.932,0.07862,0.9585,0.8541,8.0,7.9999,0.0002,0.5808,True
-65,II,roundtrip_control,1.0,1.0,lanczos,,8.91,8.91,0.07881,0.9582,0.8542,8.0,7.9999,0.0002,0.5811,True
-65,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.938152964074504, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-65,II,deskewed,3.0,3.0001,lanczos,,7.846,7.846,0.08904,0.9382,0.8425,8.0001,8.0,0.4573,0.563,True
-65,II,roundtrip_control,3.0,3.0,lanczos,,7.847,7.847,0.08903,0.9382,0.8425,8.0001,8.0,0.4573,0.563,True
-75,II,unrotated,0.0,0.0,lanczos,,8.68,8.68,0.05826,0.9746,0.8689,8.0,8.0,0.1349,0.6354,True
-75,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.823655630673159, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-75,II,deskewed,1.0,0.9955,lanczos,,7.992,7.992,0.06306,0.962,0.8535,7.9999,7.9997,0.0002,0.5829,True
-75,II,roundtrip_control,1.0,1.0,lanczos,,7.984,7.984,0.06312,0.9619,0.8531,7.9999,7.9997,0.0002,0.5833,True
-75,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.9330021736385, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-75,II,deskewed,3.0,3.0001,lanczos,,7.048,7.048,0.0703,0.94,0.84,7.9999,7.9998,0.4573,0.565,True
-75,II,roundtrip_control,3.0,3.0,lanczos,,7.047,7.047,0.07031,0.9399,0.84,7.9999,7.9998,0.4573,0.565,True
-76,II,unrotated,0.0,0.0,lanczos,,10.557,10.557,0.0421,0.9745,0.8855,8.0,8.0,0.1349,0.6342,True
-76,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.819809042227661, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-76,II,deskewed,1.0,0.9954,lanczos,,9.812,9.812,0.04585,0.9656,0.8749,8.0,7.9999,0.0002,0.5812,True
-76,II,roundtrip_control,1.0,1.0,lanczos,,9.807,9.807,0.0459,0.9655,0.8749,8.0,7.9999,0.0002,0.5815,True
-76,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.924257290139565, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-76,II,deskewed,3.0,3.0001,lanczos,,10.493,10.493,0.04241,0.974,0.8844,8.0,7.9999,0.3013,0.5607,True
-76,II,roundtrip_control,3.0,3.0,lanczos,,10.494,10.494,0.04241,0.974,0.8844,8.0,7.9999,0.3013,0.5607,True
-79,II,unrotated,0.0,0.0,lanczos,,7.462,7.462,0.05546,0.9701,0.8581,8.0,8.0,0.1349,0.6342,True
-79,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.817477962302803, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-79,II,deskewed,1.0,0.9954,lanczos,,6.966,6.966,0.0587,0.9584,0.845,8.0,7.9997,0.0002,0.5813,True
-79,II,roundtrip_control,1.0,1.0,lanczos,,6.959,6.959,0.05874,0.9583,0.8447,8.0,7.9997,0.0002,0.5816,True
-79,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.93605609005559, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-79,II,deskewed,3.0,3.0001,lanczos,,6.659,6.659,0.06084,0.9698,0.8569,8.0,7.9996,0.4573,0.5638,True
-79,II,roundtrip_control,3.0,3.0,lanczos,,6.662,6.662,0.06082,0.9698,0.857,8.0,7.9996,0.4573,0.5638,True
-93,II,unrotated,0.0,0.0,lanczos,,8.178,8.178,0.0691,0.9778,0.8885,8.0,8.0,0.1349,0.6332,True
-93,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.820435397771519, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-93,II,deskewed,1.0,0.9955,lanczos,,7.706,7.706,0.07296,0.9683,0.8794,7.9999,7.9998,0.0002,0.5804,True
-93,II,roundtrip_control,1.0,1.0,lanczos,,7.708,7.708,0.07294,0.9684,0.8794,7.9999,7.9998,0.0002,0.5807,True
-93,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.93225938328618, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-93,II,deskewed,3.0,3.0001,lanczos,,8.177,8.177,0.06913,0.9779,0.8891,8.0,7.9999,0.3013,0.56,True
-93,II,roundtrip_control,3.0,3.0,lanczos,,8.177,8.177,0.06912,0.9779,0.8891,8.0,7.9999,0.3013,0.56,True
-100,II,unrotated,0.0,0.0,lanczos,,10.892,10.892,0.03709,0.9729,0.869,8.0,8.0,0.1349,0.6348,True
-100,II,rotated,1.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.820533620333009, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-100,II,deskewed,1.0,0.9954,lanczos,,10.065,10.065,0.04088,0.9635,0.8604,7.9999,7.9998,0.0002,0.582,True
-100,II,roundtrip_control,1.0,1.0,lanczos,,10.059,10.059,0.0409,0.9633,0.8602,7.9999,7.9998,0.0002,0.5823,True
-100,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=39.934785587118256, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
-100,II,deskewed,3.0,3.0001,lanczos,,10.844,10.844,0.0373,0.9727,0.8686,8.0,7.9999,0.4573,0.5642,True
-100,II,roundtrip_control,3.0,3.0,lanczos,,10.837,10.837,0.03733,0.9727,0.8684,8.0,7.9999,0.4573,0.5642,True
+9,II,unrotated,0.0,0.0,lanczos,,7.627,7.627,0.04768,0.9882,0.9231,8.0,8.0,0.0001,0.6189,True
+9,II,rotated,1.0,nan,lanczos,,-2.059,-2.059,0.14492,0.6885,1.1727,8.0047,7.325,16.1414,0.2211,True
+9,II,deskewed,1.0,0.9977,lanczos,,7.35,7.35,0.04922,0.9821,0.9185,7.9999,7.9997,0.0003,0.5576,True
+9,II,roundtrip_control,1.0,1.0,lanczos,,7.393,7.393,0.04919,0.9819,0.9158,8.0,7.9997,0.0003,0.5576,True
+9,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.985567517723666, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+9,II,deskewed,3.0,3.001,lanczos,,7.723,7.723,0.04736,0.9684,0.9035,8.0,7.9996,0.2688,0.5102,True
+9,II,roundtrip_control,3.0,3.0,lanczos,,7.735,7.735,0.0473,0.9685,0.9042,8.0,7.9996,0.2688,0.5102,True
+38,II,unrotated,0.0,0.0,lanczos,,8.562,8.562,0.04913,0.9335,0.8343,8.0,8.0,0.0001,0.6187,True
+38,II,rotated,1.0,nan,lanczos,,-1.08,-0.985,0.14904,0.6477,0.8981,7.9995,7.7524,15.2247,0.23,True
+38,II,deskewed,1.0,0.9976,lanczos,,9.54,9.54,0.04388,0.9496,0.8414,8.0,7.9997,0.0003,0.5572,True
+38,II,roundtrip_control,1.0,1.0,lanczos,,9.545,9.545,0.04385,0.9496,0.8418,8.0,7.9997,0.0003,0.5573,True
+38,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.980282081611108, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+38,II,deskewed,3.0,3.001,lanczos,,8.536,8.562,0.04926,0.9333,0.8331,8.0,7.9996,0.2688,0.51,True
+38,II,roundtrip_control,3.0,3.0,lanczos,,8.533,8.566,0.04927,0.9332,0.8333,8.0,7.9996,0.2688,0.51,True
+40,II,unrotated,0.0,0.0,lanczos,,10.223,10.223,0.03131,0.9705,0.8962,8.0,8.0,0.0001,0.6198,True
+40,II,rotated,1.0,nan,lanczos,,1.068,1.068,0.08984,0.4867,0.1719,8.0015,31.7531,2.8156,0.2318,False
+40,II,deskewed,1.0,0.9977,lanczos,,9.784,9.784,0.03292,0.9653,0.8947,7.9999,7.9997,0.0003,0.5583,True
+40,II,roundtrip_control,1.0,1.0,lanczos,,9.801,9.801,0.03287,0.9653,0.89,7.9999,7.9997,0.0003,0.5584,True
+40,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.967863938351172, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+40,II,deskewed,3.0,3.0011,lanczos,,9.127,9.127,0.03552,0.9707,0.8965,8.0,7.9996,0.2688,0.5108,True
+40,II,roundtrip_control,3.0,3.0,lanczos,,9.142,9.142,0.03546,0.9708,0.8959,8.0,7.9996,0.2688,0.5108,True
+57,II,unrotated,0.0,0.0,lanczos,,8.597,8.597,0.06236,0.9504,0.8428,8.0,8.0,0.0001,0.6195,True
+57,II,rotated,1.0,nan,lanczos,,1.182,1.182,0.14644,0.6894,0.7708,8.0005,7.7745,15.1779,0.2294,True
+57,II,deskewed,1.0,0.9974,lanczos,,8.255,8.255,0.06484,0.9404,0.8309,7.9999,7.9999,0.0003,0.5582,True
+57,II,roundtrip_control,1.0,1.0,lanczos,,8.062,8.062,0.06629,0.9405,0.831,7.9999,7.9999,0.0003,0.5583,True
+57,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.923761242007657, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+57,II,deskewed,3.0,3.0013,lanczos,,9.003,9.003,0.05949,0.95,0.843,8.0,7.9997,0.2688,0.5108,True
+57,II,roundtrip_control,3.0,3.0,lanczos,,9.006,9.006,0.05946,0.9501,0.8424,8.0,7.9997,0.2688,0.5108,True
+59,II,unrotated,0.0,0.0,lanczos,,11.891,11.891,0.03683,0.9722,0.8607,8.0,8.0,0.0001,0.6198,True
+59,II,rotated,1.0,nan,lanczos,,1.889,1.889,0.11654,0.7158,0.2338,7.9961,31.8656,2.8042,0.2247,False
+59,II,deskewed,1.0,0.9975,lanczos,,10.575,10.575,0.04285,0.9596,0.846,7.9999,7.9998,0.0003,0.5586,True
+59,II,roundtrip_control,1.0,1.0,lanczos,,10.586,10.586,0.0428,0.9597,0.8459,7.9999,7.9998,0.0003,0.5587,True
+59,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.952555842347806, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+59,II,deskewed,3.0,3.0011,lanczos,,11.524,11.524,0.03843,0.9724,0.8594,8.0,7.9998,0.2688,0.511,True
+59,II,roundtrip_control,3.0,3.0,lanczos,,11.529,11.529,0.03841,0.9724,0.8597,8.0,7.9998,0.2688,0.511,True
+63,II,unrotated,0.0,0.0,lanczos,,7.523,7.523,0.04961,0.9825,0.9149,8.0,8.0,0.0001,0.6197,True
+63,II,rotated,1.0,nan,lanczos,,-1.614,-1.614,0.14158,0.6946,1.1519,7.9978,7.3097,14.6003,0.217,True
+63,II,deskewed,1.0,0.9978,lanczos,,7.204,7.204,0.05147,0.9749,0.9087,8.0,7.9997,0.0003,0.5585,True
+63,II,roundtrip_control,1.0,1.0,lanczos,,7.202,7.202,0.05148,0.975,0.9089,8.0,7.9997,0.0003,0.5586,True
+63,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.9603569448185, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+63,II,deskewed,3.0,3.0009,lanczos,,7.568,7.568,0.04935,0.9831,0.9158,8.0,7.9996,0.2688,0.511,True
+63,II,roundtrip_control,3.0,3.0,lanczos,,7.561,7.561,0.0494,0.983,0.916,8.0,7.9995,0.2688,0.511,True
+65,II,unrotated,0.0,0.0,lanczos,,7.861,7.861,0.08888,0.9385,0.8424,8.0,8.0,0.0001,0.6186,True
+65,II,rotated,1.0,nan,lanczos,,2.95,3.071,0.15644,0.7625,0.8028,7.9946,7.5539,14.1439,0.2262,True
+65,II,deskewed,1.0,0.9974,lanczos,,8.918,8.918,0.07874,0.9583,0.854,8.0001,7.9999,0.0003,0.5572,True
+65,II,roundtrip_control,1.0,1.0,lanczos,,8.91,8.91,0.07881,0.9582,0.8542,8.0,7.9999,0.0003,0.5573,True
+65,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.958483474166229, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+65,II,deskewed,3.0,3.0011,lanczos,,7.847,7.847,0.08903,0.9383,0.8428,8.0001,7.9998,0.2688,0.5101,True
+65,II,roundtrip_control,3.0,3.0,lanczos,,7.847,7.847,0.08903,0.9382,0.8425,8.0001,7.9998,0.2688,0.5101,True
+75,II,unrotated,0.0,0.0,lanczos,,8.68,8.68,0.05826,0.9746,0.8689,8.0,8.0,0.0001,0.6203,True
+75,II,rotated,1.0,nan,lanczos,,0.878,0.878,0.14305,0.7287,0.922,7.9952,7.716,15.2836,0.2327,True
+75,II,deskewed,1.0,0.9977,lanczos,,7.993,7.993,0.06306,0.962,0.8532,7.9999,7.9997,0.0003,0.5593,True
+75,II,roundtrip_control,1.0,1.0,lanczos,,7.984,7.984,0.06312,0.9619,0.8531,7.9999,7.9997,0.0003,0.5593,True
+75,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.930538503349027, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+75,II,deskewed,3.0,3.0012,lanczos,,7.039,7.039,0.07037,0.9399,0.8398,7.9999,7.9996,0.2688,0.5118,True
+75,II,roundtrip_control,3.0,3.0,lanczos,,7.047,7.047,0.07031,0.9399,0.84,7.9999,7.9996,0.2688,0.5118,True
+76,II,unrotated,0.0,0.0,lanczos,,10.557,10.557,0.0421,0.9745,0.8855,8.0,8.0,0.0001,0.619,True
+76,II,rotated,1.0,nan,lanczos,,-0.428,-0.428,0.14912,0.6834,0.9135,7.9964,7.4601,14.6394,0.222,True
+76,II,deskewed,1.0,0.9978,lanczos,,9.814,9.814,0.04584,0.9656,0.8747,8.0,7.9999,0.0003,0.5575,True
+76,II,roundtrip_control,1.0,1.0,lanczos,,9.807,9.807,0.0459,0.9655,0.8749,8.0,7.9999,0.0003,0.5576,True
+76,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.990207801669385, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+76,II,deskewed,3.0,3.0013,lanczos,,10.492,10.492,0.04241,0.9739,0.8844,8.0,7.9998,0.2688,0.5101,True
+76,II,roundtrip_control,3.0,3.0,lanczos,,10.494,10.494,0.04241,0.974,0.8844,8.0,7.9998,0.2688,0.5101,True
+79,II,unrotated,0.0,0.0,lanczos,,7.462,7.462,0.05546,0.9701,0.8581,8.0,8.0,0.0001,0.619,True
+79,II,rotated,1.0,nan,lanczos,,-0.337,-0.337,0.13615,0.635,0.8438,8.0022,7.8174,16.4337,0.2253,True
+79,II,deskewed,1.0,0.9977,lanczos,,6.96,6.96,0.05874,0.9583,0.8446,8.0,7.9997,0.0003,0.5575,True
+79,II,roundtrip_control,1.0,1.0,lanczos,,6.959,6.959,0.05874,0.9583,0.8447,8.0,7.9997,0.0003,0.5575,True
+79,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.994674056216041, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+79,II,deskewed,3.0,3.001,lanczos,,6.661,6.661,0.06083,0.9698,0.8571,8.0,7.9995,0.2688,0.51,True
+79,II,roundtrip_control,3.0,3.0,lanczos,,6.661,6.661,0.06082,0.9698,0.857,8.0,7.9995,0.2688,0.51,True
+93,II,unrotated,0.0,0.0,lanczos,,8.178,8.178,0.0691,0.9778,0.8885,8.0,8.0,0.0001,0.6181,True
+93,II,rotated,1.0,nan,lanczos,,1.866,1.866,0.14296,0.7714,0.9733,8.0023,7.631,13.9132,0.2279,True
+93,II,deskewed,1.0,0.9978,lanczos,,7.712,7.712,0.07291,0.9684,0.8794,7.9999,7.9998,0.0003,0.5568,True
+93,II,roundtrip_control,1.0,1.0,lanczos,,7.708,7.708,0.07294,0.9684,0.8794,7.9999,7.9998,0.0003,0.5569,True
+93,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.958773211592643, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+93,II,deskewed,3.0,3.0008,lanczos,,8.175,8.175,0.06914,0.9779,0.8889,8.0,7.9998,0.2688,0.5097,True
+93,II,roundtrip_control,3.0,3.0,lanczos,,8.177,8.177,0.06912,0.9779,0.8891,8.0,7.9998,0.2688,0.5097,True
+100,II,unrotated,0.0,0.0,lanczos,,10.892,10.892,0.03709,0.9729,0.869,8.0,8.0,0.0001,0.6197,True
+100,II,rotated,1.0,nan,lanczos,,-0.483,-0.483,0.13742,0.6014,0.7605,8.0016,7.6728,15.3967,0.2392,True
+100,II,deskewed,1.0,0.9977,lanczos,,10.061,10.061,0.0409,0.9633,0.8604,7.9999,7.9997,0.0003,0.5583,True
+100,II,roundtrip_control,1.0,1.0,lanczos,,10.059,10.059,0.0409,0.9633,0.8602,7.9999,7.9998,0.0003,0.5584,True
+100,II,rotated,3.0,nan,lanczos,"ValueError: grid pitch estimation failed; cannot calibrate. (grid.px_per_mm_x=7.959484117870588, grid.px_per_mm_y=nan)",nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+100,II,deskewed,3.0,3.0011,lanczos,,10.848,10.848,0.03728,0.9728,0.8691,8.0,7.9997,0.2688,0.5109,True
+100,II,roundtrip_control,3.0,3.0,lanczos,,10.838,10.838,0.03733,0.9727,0.8684,8.0,7.9997,0.2688,0.5109,True
