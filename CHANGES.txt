@@ -1485,3 +1485,56 @@ CLAUDE.md. It was a completed task's prompt sitting in a file that is read
 as standing project instructions, and one of its lines was "Do not modify
 any code", which would misdirect every future session. It is in git history
 at 970672c if it is wanted back.
+
+================================================================================
+CHANGES - ECG-App
+Session of 2026-09-17 (second)
+================================================================================
+
+Android: OpenCV integration, and the deskew stage ported to the device.
+
+Built and verified only at compile time. Nothing in this block was run on
+hardware; every behavioural claim is marked as requiring device
+verification, and the numbers that are here are build artefacts (APK size),
+not measurements of anything running.
+
+Build workaround still in force: gradlew.bat is broken in this project's
+Gradle 9.5 wrapper (it sets an empty CLASSPATH), so builds go through
+  java -Dorg.gradle.appname=gradlew -jar gradle/wrapper/gradle-wrapper.jar <task>
+
+
+--------------------------------------------------------------------------------
+12.1 OPENCV, AND WHAT IT COSTS TO SHIP
+--------------------------------------------------------------------------------
+
+Added org.opencv:opencv:4.14.0, the official Maven artifact, loaded once
+from Application.onCreate via OpenCVLoader.initLocal() and reported on
+screen. The load verdict is held in OpenCvRuntime rather than attempted at
+first use, because OpenCV's Java API is a JNI shim: if the native library
+is absent nothing fails at the point of the mistake, it fails later as an
+UnsatisfiedLinkError from inside whichever Mat operation happened to run
+first. OpenCvRuntime catches Throwable, not Exception, because
+UnsatisfiedLinkError is an Error and would otherwise pass straight through.
+
+APK SIZE, debug build, from the packaged artifact:
+
+    baseline, no OpenCV                13,119,013 B     12.51 MiB
+    + OpenCV, arm64-v8a only           39,322,058 B     37.50 MiB   +24.99
+    + OpenCV, all four ABIs           164,712,971 B    157.08 MiB  +144.57
+
+The ABI filter removes 119.58 MiB, which is 76.1% of the unfiltered APK.
+The reason is visible in the artifact: libopencv_java4.so is 24.7 MB for
+arm64-v8a, 16.1 MB for armeabi-v7a, 45.3 MB for x86 and 60.5 MB for x86_64,
+and native libraries are stored uncompressed in the APK. The target device
+is a Galaxy A30s (Exynos 7904, 64-bit ARM), so arm64-v8a is the only ABI
+this thesis benchmarks on and the other three are dead weight.
+
+Two honest qualifications on that table. It is a DEBUG build -- the release
+buildType currently has optimization disabled, so neither figure is a
+shipping size, and a release build with resource shrinking would reduce the
+non-OpenCV part but not the .so. And the APK size varies by about 45 KB
+between otherwise identical builds, so the third decimal place is noise.
+
+A threefold APK for one dependency is itself a deployment-characterisation
+result: OpenCV is not a free import on a phone, and the number is here so
+it can be cited rather than re-derived.
