@@ -13,19 +13,37 @@ models, and the open question is whether that pipeline survives
 compression onto consumer mobile hardware, and at what cost in latency,
 memory and reconstruction fidelity.
 
-**Status: early.** The Python prototype exists and runs: rendering,
-deskew, grid estimation, classical digitisation and the reconstruction
-metrics, with committed measurements under `results/`. Lead segmentation
-does not exist, and nothing has been measured on a physical device. The
-Android app loads images and has one ported stage (`GridEstimator.kt`),
-which is currently divergent from the Python — see limitation 6.
+**Status.** The Python prototype exists and runs: rendering, deskew, grid
+estimation, classical digitisation and the reconstruction metrics, with
+committed measurements under `results/`. Lead segmentation does not exist.
+
+The Android app runs two ported stages on the target device: grid
+estimation (`GridEstimator.kt`) and skew estimation (`SkewEstimator.kt`),
+with OpenCV 4.14.0 for the resize and warp. A rotation slider injects a
+known angle so the estimator can be scored against ground truth on the
+phone itself, and a benchmark button reports per-stage timings. See
+CHANGES.txt section 12 for the whole of it.
+
+**First device results, Galaxy A30s, 2026-09-18.** Grid pitch on the three
+fixtures: 5.941 / 7.899 / 11.82 px/mm, errors +0.61% / +0.32% / +0.08%,
+matching the Python to within 0.06 percentage points. Grid estimation
+205 ms at 8.41 MP. A full inject-estimate-correct pass on the 300 dpi
+fixture, about 3500 ms — but see limitation 9: most of that is test
+scaffolding, not pipeline.
 
 ## Repository layout
 
 ```
 ECG-App/
-├── android/          Kotlin/Compose app; image loading only so far
-│   └── app/src/main/assets/reference/   3 printouts of known px/mm
+├── android/          Kotlin/Compose app; OpenCV, grid + skew estimation
+│   ├── app/src/main/assets/reference/   3 printouts of known px/mm
+│   └── app/src/main/java/com/maarijalam/eacg/
+│       ├── GridEstimator.kt    port of digitise.estimate_grid_pitch
+│       ├── SkewEstimator.kt    port of deskew.estimate_skew
+│       ├── GridResponse.kt     the redness response, shared by both
+│       ├── ImageWarp.kt        OpenCV resize/rotate, Python conventions
+│       ├── DeskewPipeline.kt   inject -> estimate -> correct, timed
+│       └── DigitiseScreen.kt   UI, slider, results, benchmark
 ├── python/           the prototype (this is what exists)
 │   ├── ecgproto/
 │   │   ├── ptbxl.py      PTB-XL loader
@@ -168,6 +186,28 @@ scope boundaries.
    projection to a subregion all cost more accuracy than resolution does
    for the same time.
 
+9. **On-device timings must separate pipeline from scaffolding.** The
+   verification loop injects a rotation and renders previews so a human can
+   score the estimator; a deployed capture does neither — a photograph of a
+   crooked page arrives crooked at no cost. The app reports `PIPELINE`
+   (to Mat + estimate skew + correcting warp) and `HARNESS` (injecting warp
+   + previews) separately for this reason, and only `PIPELINE` belongs in
+   the results chapter. The first observed total of ~3500 ms on the 300 dpi
+   fixture is roughly double the figure that should be quoted.
+
+10. **The desktop-to-device scaling factor is not yet known.** CHANGES.txt
+    §11.3 projected 8–12× from clock and IPC ratios; the first real
+    comparison (§12.4) suggests 2–4× for this kind of work, i.e. that the
+    original band was threefold pessimistic. Both are inferences. Neither is
+    a measurement of the deskew stage, which §12.7's benchmark now makes
+    directly observable.
+
+11. **`python/ecgproto/grid_reference.py` is stale.** It is the
+    line-for-line Python twin of `GridEstimator.kt` and still carries the
+    green channel and the `0.25 * windowMax` rule that limitation 6
+    retired. The Kotlin has moved; the twin has not. Bring it across before
+    trusting it.
+
 ## Technical decisions already made
 
 - **Kotlin, not C++/NDK.** LiteRT inference and OpenCV already run
@@ -180,6 +220,27 @@ scope boundaries.
   cooling, so latency, memory and thermal numbers from it are invalid for
   a thesis about mobile constraints. All benchmarking must use a physical
   device (one borrowed older Android phone is currently the only target).
+  Note the APK is now filtered to `arm64-v8a` alone, so it will not install
+  on an x86 emulator image at all.
+- **OpenCV does resize and warp; Kotlin does the response and the search.**
+  Not a stylistic split. Resize and warp are full-resolution and per-pixel,
+  where a SIMD native routine wins. The angle search bins pixels by
+  `y - x*tan(a)` and has no OpenCV equivalent — expressing it in primitives
+  would mean one warp per angle, which is slower *and* wrong, since every
+  warp low-passes the grid detail the objective measures.
+
+## Building the Android app
+
+`gradlew.bat` is broken in this project's Gradle 9.5 wrapper — it sets an
+empty CLASSPATH. Build from `android/` with:
+
+```
+java -Dorg.gradle.appname=gradlew -jar gradle/wrapper/gradle-wrapper.jar assembleDebug
+```
+
+The APK lands at `android/app/build/outputs/apk/debug/app-debug.apk`.
+Nothing in the Android tree can be verified beyond compilation without the
+physical device; say so explicitly rather than asserting behaviour.
 
 ## Conventions
 
