@@ -1664,3 +1664,59 @@ twin of GridEstimator.kt and still carries the green channel and the
 0.25 * windowMax rule, so it no longer matches the Kotlin it documents.
 This task forbids modifying anything under python/, so it was left alone.
 It must be brought across before it is trusted again.
+
+
+--------------------------------------------------------------------------------
+12.4 FIRST MEASUREMENTS FROM THE TARGET DEVICE
+--------------------------------------------------------------------------------
+
+Samsung Galaxy A30s, Exynos 7904, 3 GB RAM. Debug build. These are the
+first numbers in this project measured on hardware rather than on the
+bench, and they are read off the app's own results panel.
+
+GRID PITCH, and the port confirmed:
+
+    fixture     true px/mm   device      error    simulated (Python)
+    150 dpi       5.90551     5.941      +0.61%       5.9415  +0.61%
+    200 dpi       7.87402     7.899      +0.32%       7.8995  +0.32%
+    300 dpi      11.81102    11.82       +0.08%      11.8204  +0.08%
+
+The device agrees with the pre-change simulation to every digit displayed,
+and with the Python's own estimate_grid_pitch (+0.55%, +0.36%, +0.13%) to
+within 0.06 percentage points. Two implementations, two languages, two
+processors, three fixtures of known scale: the port is a port.
+
+LATENCY, 300 dpi fixture (3300x2550, 8.41 MP):
+
+    grid estimate        205 ms
+    load (decode +       428 ms
+      estimate + preview)
+
+WHAT THE 205 MS SAYS ABOUT THE DEVICE PROJECTION IN 12.3 -- WITH CARE.
+
+Section 11.3 projected desktop-to-device at 8-12x, from clock and IPC
+ratios. The only directly comparable pair now measured says less:
+
+    estimate_grid_pitch, desktop, 8.41 MP, both axes    117.7 ms
+    GridEstimator,       device,  8.41 MP, one axis     205   ms
+                                          naive ratio     1.74x
+                                          per-axis        3.48x
+
+That is a factor of three better than assumed, and if it holds, deskew's
+74-89 ms desktop becomes roughly 260-310 ms on the phone rather than
+0.6-1.1 s.
+
+Four reasons not to bank it yet. The two sides are not the same program:
+the Python does both axes with OpenCV's SIMD channel split, NumPy's FFT and
+SciPy's peak finder, while the Kotlin does one axis with getPixels, a
+hand-written radix-2 FFT and a hand-written peak scan -- so the ratio mixes
+hardware with implementation. It is a single reading, taken cold, with no
+warm-up and no repetition. It is a debug build. And deskew has a different
+shape again: an OpenCV resize plus a Kotlin sweep over an image reduced to
+900 px, which is 28x fewer pixels than this measurement covers.
+
+So the honest statement is that the 8-12x band was probably pessimistic and
+the real figure is likelier 2-4x for this kind of work, and that stage 12.6
+measures the deskew stage directly rather than inferring it. Recorded here
+because a projection that was wrong by three-fold is worth correcting in
+the record even before the better number exists.
