@@ -1852,3 +1852,65 @@ risked on a device that is already the constraint. The tag stays and says
 what it means.
 
 NOT VERIFIED: all of it. Compile only.
+
+
+--------------------------------------------------------------------------------
+12.7 INSTRUMENTATION
+--------------------------------------------------------------------------------
+
+A benchmark button repeats the pass eleven times -- one cold, ten warm --
+and reports per-stage wall clock as cold / warm mean / warm p95.
+
+THE COLD RUN IS NEVER AVERAGED IN. On a JVM the first pass through a code
+path pays for class loading, interpretation before JIT compilation and cold
+caches; on a phone it also pays for the governor still being at an idle
+clock. Folding that into a mean describes neither case. Both are real and
+they answer different questions -- cold is what a user feels pressing a
+button on a freshly opened app, warm is what the algorithm costs -- so both
+are kept and labelled.
+
+The 95th percentile sits next to the mean because a mean alone hides the
+behaviour that matters on a thermally constrained device: a stage that
+usually takes 80 ms and occasionally 400 has a mean near 90 and is a
+different proposition from one that always takes 90. At n = 10 the p95 is
+the largest warm sample, so the column reads "worst observed" rather than a
+tail estimate. The panel says so on screen rather than leaving it to be
+misread; ten warm runs is a concession to a device where a single pass on
+the 300 dpi fixture takes about three and a half seconds, making eleven runs
+roughly forty seconds of holding a phone.
+
+THE SPLIT THAT MATTERS, and the reason the first device total is misleading.
+A full pass at +/-10 degrees on the 300 dpi fixture measured about 3500 ms
+on the A30s. That is NOT the cost of deskew, and quoting it as such would
+roughly double the real figure:
+
+  PIPELINE   to Mat + estimate skew + rotate (correct)
+             what a deployed capture actually pays
+
+  HARNESS    rotate (inject) + previews
+             manufacturing a known ground truth, and letting a human look
+             at the result. A photograph of a crooked page arrives crooked,
+             at no cost, and a deployed pipeline renders no previews.
+
+Both subtotals are displayed above the per-stage rows, the scaffolding rows
+are starred, and the panel states in words that PIPELINE is the figure to
+quote. `toMat` is charged to the pipeline rather than the harness because a
+real capture does have to get its pixels into a Mat once -- though in a
+deployed app that would happen upstream at capture and be shared with every
+later stage, so even PIPELINE is a slight overstatement.
+
+Timings extend DeskewPipeline.Timings, which already existed, rather than
+introducing a second mechanism; summarise() in TimingStats.kt adds only the
+aggregation.
+
+WHAT THIS IS FOR. Section 11.3 projected deskew at 0.6-1.1 s on this device
+from clock and IPC ratios, and section 12.4 revised that to a likelier 2-4x
+desktop after the first real measurement suggested the original band was
+threefold pessimistic. Neither is an observation of the deskew stage. The
+PIPELINE row is, and the `estimate skew` row inside it is the one that
+should be flat in input size -- the same at 150 dpi as at 300 -- because
+everything after the first resize runs at a fixed 900 px. That is the claim
+section 11.1 makes on the desktop and the one the device can now confirm or
+refute.
+
+NOT VERIFIED: every number above except the 3500 ms total. Compile only.

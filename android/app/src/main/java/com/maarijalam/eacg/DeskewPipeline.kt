@@ -66,7 +66,30 @@ object DeskewPipeline {
         val correctMs: Long,
         val previewMs: Long,
         val totalMs: Long
-    )
+    ) {
+        /**
+         * What a real capture would actually pay: estimate the skew, then
+         * apply one correcting warp.
+         *
+         * **This is the number for the results chapter, and it is not the
+         * total.** The total includes two things no deployed pipeline does.
+         * The injecting warp exists only to manufacture a known ground truth
+         * — a photograph of a crooked page arrives crooked, at no cost — and
+         * the previews exist only so a human can look at the result. Both
+         * are test scaffolding. Reporting the total as the cost of deskew
+         * would roughly double it and would be measuring this screen rather
+         * than the stage.
+         *
+         * `toMatMs` is charged to the pipeline rather than the harness: a
+         * real capture still has to get its pixels into a Mat once, even
+         * though in a deployed app that conversion would happen upstream at
+         * capture and be shared with every later stage.
+         */
+        val pipelineMs: Long get() = toMatMs + skewMs + correctMs
+
+        /** Test scaffolding: manufacturing the ground truth, and looking at it. */
+        val harnessMs: Long get() = rotateMs + previewMs
+    }
 
     /**
      * Run the loop on [source], injecting [injectedDeg].

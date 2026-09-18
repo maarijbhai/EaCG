@@ -83,7 +83,15 @@ data class PipelineState(
      */
     val deskew: DeskewPipeline.Run? = null,
     /** Set when the estimator threw rather than returning an angle. */
-    val deskewError: String? = null
+    val deskewError: String? = null,
+
+    // ---- instrumentation --------------------------------------------------
+    /** Completed benchmark, in run order; index 0 is the cold run. */
+    val benchmark: List<DeskewPipeline.Timings> = emptyList(),
+    /** Non-null while a benchmark is running, e.g. "run 4 / 11". */
+    val benchmarkProgress: String? = null,
+    /** Angle and image the benchmark was taken at, so the table cannot be misread. */
+    val benchmarkLabel: String? = null
 )
 
 @Composable
@@ -143,6 +151,51 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
                         status = "Failed: ${e.message ?: "unknown error"}"
                     )
                 }
+        }
+    }
+
+    /**
+     * Repeat the pass and summarise it.
+     *
+     * Sequential, deliberately: running passes concurrently would have them
+     * contend for the same cores and memory bandwidth and would measure the
+     * contention rather than the stage. Each result is discarded as soon as
+     * its timings are taken, so the benchmark holds no more memory than a
+     * single pass does.
+     */
+    fun benchmark(angle: Float) {
+        val source = state.bitmap ?: return
+        scope.launch {
+            val total = BENCHMARK_RUNS + 1
+            state = state.copy(
+                busy = true, benchmark = emptyList(), benchmarkLabel = null,
+                benchmarkProgress = "run 1 / $total"
+            )
+            val samples = mutableListOf<DeskewPipeline.Timings>()
+            try {
+                repeat(total) { i ->
+                    state = state.copy(benchmarkProgress = "run ${i + 1} / $total")
+                    samples += DeskewPipeline.run(source, angle.toDouble()).timings
+                }
+                state = state.copy(
+                    busy = false,
+                    benchmarkProgress = null,
+                    benchmark = samples.toList(),
+                    benchmarkLabel = "%s @ %+.2f deg, %d x %d".format(
+                        state.sourceLabel ?: "image", angle,
+                        source.width, source.height
+                    )
+                )
+            } catch (c: CancellationException) {
+                throw c
+            } catch (e: Throwable) {
+                state = state.copy(
+                    busy = false,
+                    benchmarkProgress = null,
+                    deskewError = "benchmark: ${e::class.java.simpleName}: " +
+                        (e.message ?: "no message")
+                )
+            }
         }
     }
 
@@ -257,6 +310,14 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
         )
 
         DeskewPanel(run = state.deskew, error = state.deskewError)
+
+        BenchmarkControl(
+            enabled = state.bitmap != null && !state.busy && state.rotationDeg != 0f,
+            progress = state.benchmarkProgress,
+            onRun = { benchmark(state.rotationDeg) }
+        )
+
+        BenchmarkPanel(samples = state.benchmark, label = state.benchmarkLabel)
 
         ReferenceRow(
             enabled = !state.busy,
@@ -543,6 +604,118 @@ private fun DeskewPanel(run: DeskewPipeline.Run?, error: String?) {
  * `results/deskew/finescale.csv`.
  */
 private const val PYTHON_WORST_DEG = 0.0408
+
+/**
+ * Warm runs per benchmark, on top of one cold run that is reported
+ * separately and never averaged in.
+ *
+ * Ten is a compromise with the device rather than a statistical choice. A
+ * pass on the 300 dpi fixture takes roughly three and a half seconds, so
+ * eleven runs is about forty seconds of the user holding a phone, and
+ * twenty would be eighty. The consequence is stated on the panel rather
+ * than hidden: at n = 10 the 95th percentile is the largest warm sample, so
+ * that column reads "worst observed" and not a genuine tail estimate.
+ */
+private const val BENCHMARK_RUNS = 10
+
+@Composable
+private fun BenchmarkControl(enabled: Boolean, progress: String?, onRun: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedButton(
+            onClick = onRun,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(progress ?: "Benchmark (1 cold + $BENCHMARK_RUNS warm)")
+        }
+        if (!enabled && progress == null) {
+            Text(
+                "Load an image and set a non-zero rotation first.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * Per-stage timings, cold run against warm mean and 95th percentile.
+ *
+ * The two subtotals above the per-stage rows are the point of the table.
+ * `Pipeline` is what a deployed capture would pay -- get the pixels into a
+ * Mat, estimate the skew, apply one correcting warp. `Harness` is the
+ * injecting warp and the two previews, which exist only to manufacture a
+ * known ground truth and to let a human look at it, and which no deployed
+ * pipeline performs. Quoting the total as the cost of deskew would roughly
+ * double it and would be measuring this screen.
+ */
+@Composable
+private fun BenchmarkPanel(
+    samples: List<DeskewPipeline.Timings>,
+    label: String?
+) {
+    if (samples.isEmpty()) return
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                "Timing",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            label?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                "cold / warm mean / warm p95, ms  (n=${samples.size - 1} warm)",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            HorizontalDivider()
+
+            TimingRow("PIPELINE", samples) { it.pipelineMs }
+            TimingRow("HARNESS", samples) { it.harnessMs }
+            HorizontalDivider()
+            TimingRow("  to Mat", samples) { it.toMatMs }
+            TimingRow("  estimate skew", samples) { it.skewMs }
+            TimingRow("  rotate (correct)", samples) { it.correctMs }
+            TimingRow("  rotate (inject)*", samples) { it.rotateMs }
+            TimingRow("  previews*", samples) { it.previewMs }
+            HorizontalDivider()
+            TimingRow("Total", samples) { it.totalMs }
+
+            Text(
+                "* test scaffolding: no deployed pipeline injects a rotation " +
+                    "or renders previews. PIPELINE is the figure to quote.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                "At n=10 the p95 is the largest warm sample, so that column " +
+                    "reads as worst observed rather than a tail estimate.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimingRow(
+    label: String,
+    samples: List<DeskewPipeline.Timings>,
+    selector: (DeskewPipeline.Timings) -> Long
+) {
+    val stats = summarise(samples.map(selector))
+    ResultRow(label, stats.format())
+}
 
 /**
  * Injects a known rotation.
