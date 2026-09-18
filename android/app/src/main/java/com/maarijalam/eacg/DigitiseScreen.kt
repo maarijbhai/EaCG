@@ -69,9 +69,21 @@ data class PipelineState(
     val sourcePreview: Bitmap? = null,
     /** Display-sized copy of the rotated image. Null until the slider moves. */
     val rotatedPreview: Bitmap? = null,
-    /** True while a warp is in flight, so the slider can say so. */
+    /** True while a pass is in flight, so the slider can say so. */
     val warping: Boolean = false,
-    val rotateMs: String = "--"
+    val rotateMs: String = "--",
+
+    // ---- the verification loop -------------------------------------------
+    /**
+     * The last completed inject-estimate-correct pass. Null before the
+     * slider has moved, and replaced wholesale rather than field by field so
+     * that the recovered angle, the error and the corrected image on screen
+     * always come from the same pass -- a half-updated set of these would be
+     * a reading of two different runs.
+     */
+    val deskew: DeskewPipeline.Run? = null,
+    /** Set when the estimator threw rather than returning an angle. */
+    val deskewError: String? = null
 )
 
 @Composable
@@ -165,28 +177,26 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
                 // Not a warp of zero degrees: at 0 the original IS the
                 // answer, and warping it anyway would apply an interpolation
                 // — a low-pass filter on the grid detail everything
-                // downstream measures — for no reason.
-                state = state.copy(rotatedPreview = null, rotateMs = "--", warping = false)
+                // downstream measures — for no reason. With nothing injected
+                // there is also nothing for the estimator to be scored
+                // against, so the whole loop is skipped rather than run on a
+                // ground truth of zero.
+                state = state.copy(
+                    rotatedPreview = null, rotateMs = "--", warping = false,
+                    deskew = null, deskewError = null
+                )
                 return@collectLatest
             }
             state = state.copy(warping = true)
             try {
-                val (preview, ms) = withContext(Dispatchers.Default) {
-                    val started = System.nanoTime()
-                    val src = ImageWarp.toMat(source)
-                    try {
-                        val rotated = ImageWarp.rotate(src, angle.toDouble())
-                        try {
-                            val small = ImageWarp.previewBitmap(rotated)
-                            small to (System.nanoTime() - started) / 1_000_000
-                        } finally {
-                            rotated.release()
-                        }
-                    } finally {
-                        src.release()
-                    }
-                }
-                state = state.copy(rotatedPreview = preview, rotateMs = "$ms", warping = false)
+                val run = DeskewPipeline.run(source, angle.toDouble())
+                state = state.copy(
+                    rotatedPreview = run.rotatedPreview,
+                    rotateMs = "${run.timings.rotateMs}",
+                    deskew = run,
+                    deskewError = null,
+                    warping = false
+                )
             } catch (c: CancellationException) {
                 // NOT an error, and must not be reported as one. This is how
                 // collectLatest works: every new slider value cancels the
@@ -205,7 +215,9 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
             } catch (e: Throwable) {
                 state = state.copy(
                     warping = false,
-                    status = "Rotate failed: ${e.message ?: e::class.java.simpleName}"
+                    deskew = null,
+                    deskewError = "${e::class.java.simpleName}: " +
+                        (e.message ?: "no message")
                 )
             }
         }
@@ -238,6 +250,13 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
             warping = state.warping,
             onChange = { state = state.copy(rotationDeg = it) }
         )
+
+        ComparisonRow(
+            original = state.sourcePreview,
+            corrected = state.deskew?.correctedPreview
+        )
+
+        DeskewPanel(run = state.deskew, error = state.deskewError)
 
         ReferenceRow(
             enabled = !state.busy,
@@ -409,6 +428,123 @@ private fun ImagePanel(bitmap: Bitmap?, busy: Boolean, caption: String? = null) 
 }
 
 /**
+ * Original and corrected, side by side, which is the only honest way to look
+ * at a correction.
+ *
+ * A corrected image on its own always looks plausible -- the grid is
+ * straight because the warp made it straight, whatever angle it used. What
+ * says whether the estimate was right is the comparison, and the numbers
+ * underneath.
+ */
+@Composable
+private fun ComparisonRow(original: Bitmap?, corrected: Bitmap?) {
+    if (original == null || corrected == null) return
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        SmallPanel("original", original, Modifier.weight(1f))
+        SmallPanel("corrected", corrected, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun SmallPanel(caption: String, bitmap: Bitmap, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = caption,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize().padding(4.dp)
+            )
+        }
+        Text(
+            caption,
+            style = MaterialTheme.typography.labelSmall,
+            fontFamily = FontFamily.Monospace,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Injected against recovered, and the error between them.
+ *
+ * The error row is the result. The Python's worst case over three fixtures
+ * and seventeen angles at this working resolution is 0.041 degrees, and that
+ * figure is printed next to the measurement rather than left in a changelog,
+ * because a number with nothing to be compared against is not a test.
+ */
+@Composable
+private fun DeskewPanel(run: DeskewPipeline.Run?, error: String?) {
+    if (error != null) {
+        ErrorCard(title = "Skew estimation failed", body = error)
+        return
+    }
+    if (run == null) return
+
+    val err = run.absErrorDeg
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                "Deskew",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            HorizontalDivider()
+            ResultRow("Injected", "%+.3f deg".format(run.injectedDeg))
+            ResultRow("Recovered", "%+.3f deg".format(run.skew.angleDeg))
+            ResultRow("Absolute error", "%.4f deg".format(err))
+            ResultRow(
+                "vs Python worst",
+                if (err <= PYTHON_WORST_DEG) "within %.3f".format(PYTHON_WORST_DEG)
+                else "OVER by %.4f".format(err - PYTHON_WORST_DEG)
+            )
+            HorizontalDivider()
+            // Diagnostics that cost nothing and say whether to trust the
+            // angle. margin is the objective at the optimum over the
+            // objective a degree away: a real lattice gives tens to
+            // hundreds, a featureless frame gives about 1. Axis disagreement
+            // is free evidence of perspective -- a pure rotation moves both
+            // families of rules together.
+            ResultRow("Peak margin", "%.1f".format(run.skew.margin))
+            ResultRow("Axis disagreement", "%.4f deg".format(run.skew.axisDisagreementDeg))
+            ResultRow("Coarse angle", "%+.2f deg".format(run.skew.coarseAngleDeg))
+            ResultRow(
+                "Working size",
+                "${run.skew.workRows} x ${run.skew.workCols}" +
+                    "  (x%.3f)".format(run.skew.imageScale)
+            )
+            HorizontalDivider()
+            ResultRow("  to Mat", "${run.timings.toMatMs} ms")
+            ResultRow("  rotate (inject)", "${run.timings.rotateMs} ms")
+            ResultRow("  estimate skew", "${run.timings.skewMs} ms")
+            ResultRow("  rotate (correct)", "${run.timings.correctMs} ms")
+            ResultRow("  previews", "${run.timings.previewMs} ms")
+            ResultRow("Total", "${run.timings.totalMs} ms")
+        }
+    }
+}
+
+/**
+ * The Python's worst-case angle recovery error at a 900 px working
+ * resolution, over three fixtures and seventeen injected angles.
+ * `results/deskew/finescale.csv`.
+ */
+private const val PYTHON_WORST_DEG = 0.0408
+
+/**
  * Injects a known rotation.
  *
  * This is not a viewer control and is not throwaway. It is how ground truth
@@ -517,8 +653,16 @@ private fun ResultsPanel(state: PipelineState) {
             // these fixtures off the rails (results/deskew/guards.csv). A
             // reading that cannot move under the one input that should move
             // it most is exactly the healthy-looking, uninformative metric
-            // deskew.py's docstring warns about. Stage 4 re-estimates on the
-            // rotated image and this tag goes away.
+            // deskew.py's docstring warns about.
+            //
+            // Still true after the verification loop landed. Re-running the
+            // grid estimate on the CORRECTED image would be the natural
+            // demonstration of CLAUDE.md limitation 7 -- deskew must precede
+            // grid estimation -- but GridEstimator takes a Bitmap, so it
+            // would mean materialising the full-resolution corrected image
+            // on the Java heap: 43 MB for the 300 dpi fixture, on top of the
+            // 34 MB source, against a per-app heap of roughly 200 MB. Left
+            // out deliberately rather than risked.
             val stale = state.rotationDeg != 0f
             val staleTag = if (stale) "  (pre-rotation)" else ""
             ResultRow("Grid pitch", "${state.gridPitch} px/mm$staleTag")

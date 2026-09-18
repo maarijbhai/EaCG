@@ -1793,3 +1793,62 @@ that cannot be exercised, estimate() requires the constants to say so and
 fails loudly if either is ever set below the working size.
 
 NOT VERIFIED: anything on hardware. Compile and desktop simulation only.
+
+
+--------------------------------------------------------------------------------
+12.6 THE VERIFICATION LOOP
+--------------------------------------------------------------------------------
+
+DeskewPipeline.run wires the slider to the estimator:
+
+    inject a known rotation -> estimate the skew -> correct it -> display
+
+and DigitiseScreen shows injected, recovered, absolute error, the peak
+margin, the axis disagreement, the coarse angle, the working size, a
+per-stage timing breakdown, and the original and corrected images side by
+side.
+
+WHY THIS IS A TEST AND NOT A DEMO. On the bench a rotation is injected and
+recovered by the same script, so agreement proves only self-consistency.
+Here the injected angle comes from a slider a human moved, the estimate runs
+on a different processor in a different language, and there is a published
+number to be scored against: the Python's worst case over three fixtures and
+seventeen angles at a 900 px working resolution is 0.041 degrees. That
+figure is printed in the panel next to the measurement, as a "vs Python
+worst" row, because a number with nothing to compare against is not a test.
+A device result materially worse than 0.041 indicates a porting error rather
+than a property of the algorithm.
+
+Two things about the arrangement that are deliberate.
+
+The corrected image is shown NEXT TO the original, never alone. A corrected
+image on its own always looks plausible -- the grid is straight because the
+warp made it straight, whatever angle it used. Only the comparison, and the
+numbers under it, say whether the estimate was right.
+
+The rotation is applied twice, and the report should say so. Injecting a
+skew and then removing it costs two interpolations where a real capture is
+warped once, so the corrected image on screen is slightly softer than the
+same page photographed straight would be, and any grid measurement from it
+is pessimistic. The Python's roundtrip_control condition prices exactly
+this and finds it costs almost nothing: PCC 0.9623 against 0.9624.
+
+MEMORY, which is the risk this stage carries. On the 300 dpi fixture the
+pass holds three Mats at once -- source 33.7 MB, injected-rotation 43.8 MB,
+and the correction, which expands a second time, about 59 MB -- roughly
+136 MB of native allocation, plus the 33.7 MB source bitmap on the Java
+heap. Native memory is not heap-limited and every Mat is released in a
+finally block, but this is the first point in the project where a 3 GB
+device is plausibly under pressure, and it is the thing to watch for on
+hardware.
+
+NOT DONE, and previously implied. Re-running the grid estimate on the
+CORRECTED image would be the natural on-device demonstration of CLAUDE.md
+limitation 7 -- deskew must precede grid estimation -- and would retire the
+"(pre-rotation)" tag added in 12.3. GridEstimator takes a Bitmap, so it
+would mean materialising the full-resolution corrected image on the Java
+heap, 43 MB on top of the 34 MB source. Left out deliberately rather than
+risked on a device that is already the constraint. The tag stays and says
+what it means.
+
+NOT VERIFIED: all of it. Compile only.
