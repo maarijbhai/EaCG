@@ -33,9 +33,34 @@ import kotlin.math.PI
  */
 object GridEstimator {
 
-    /** Plausible range. Outside this the estimate is rejected rather than returned. */
+    /**
+     * Plausible range. Outside this the estimate is rejected rather than
+     * returned. Both bounds are `digitise.estimate_grid_pitch`'s
+     * `min_pitch_px` and `max_pitch_px`.
+     *
+     * MAX was 40.0 and is now 80.0, matching the Python. 40 was too tight in
+     * a way that bit at the top of the fixture set: the lag search window is
+     * derived from it, and at 300 dpi the 5 mm rule sits at 59.06 px, right
+     * at the edge of the window a limit of 40 produced.
+     */
     private const val MIN_PX_PER_MM = 3.0
-    private const val MAX_PX_PER_MM = 40.0
+    private const val MAX_PX_PER_MM = 80.0
+
+    /**
+     * Minimum autocorrelation height for a lag to count as a grid peak.
+     *
+     * **Absolute, not a fraction of anything.** The autocorrelation is
+     * normalised by its zero lag, so this is a height on a 0..1 scale. The
+     * Python's `DEFAULT_PEAK_FRACTION` is the same 0.05 and is absolute for
+     * the same reason -- it multiplies `ac[:hi].max()`, which is always
+     * exactly 1.0.
+     *
+     * This replaces a `0.25 * windowMax` rule, and the replacement is the
+     * fix for the failure CLAUDE.md limitation 6 predicted and the device
+     * confirmed: grid estimation returning "failed" on all three bundled
+     * fixtures. See [pitchFromAcf].
+     */
+    private const val PEAK_THRESHOLD = 0.05
 
     /** Window for the moving-average detrend. See [projectionProfile]. */
     private const val DETREND_WINDOW = 41
@@ -70,20 +95,40 @@ object GridEstimator {
     }
 
     /**
-     * Mean ink density per image column, high-pass filtered.
+     * Mean grid response per image column, high-pass filtered.
      *
-     * TWO NON-OBVIOUS CHOICES, both of which cause a silent NaN if got wrong:
+     * 1. REDNESS, `r - 0.5*(g + b)` clipped at zero — the Python's
+     *    `digitise.redness`, and NOT the green channel this used to read.
      *
-     * 1. GREEN channel, not red. Standard ECG paper prints the grid in red or
-     *    orange, which means the grid is nearly INVISIBLE in the red channel —
-     *    that is precisely why trace binarisation uses red. For grid detection
-     *    the opposite is required. Measured contrast on a rendered printout:
-     *    green profile range 9.9..123.9, red only 3.9..64.5.
+     *    The green-channel argument was that a red grid is nearly invisible
+     *    in the red channel, so grid detection needs the opposite of what
+     *    trace binarisation uses. It is wrong, and measurement says so. On
+     *    the ecg-image-kit fixtures the minor rules are BGR (219,223,254)
+     *    and the majors (0,0,255), so `255-G` sees the minors at 32/255 of
+     *    the majors and `255-B` at 36/255 — the channel moves the
+     *    minor-to-major ratio by about 20%, and green moves it the WRONG
+     *    way, being the worst of blue, redness, green and luma. See
+     *    `results/grid/contrast.csv`.
      *
-     * 2. Moving-average detrend. The trace itself contributes strong periodic
-     *    structure at the heart rate — QRS complexes roughly every 170 px at
-     *    8 px/mm — which dominates the autocorrelation and buries the 8 px
-     *    grid periodicity. Subtracting a local mean high-passes that away.
+     *    Redness also has a reason the others do not: it is near-silent on
+     *    the neutral dark trace, so the profile it builds is grid rather
+     *    than grid-plus-waveform.
+     *
+     *    Simulated over the three fixtures before this was written, changing
+     *    the channel ALONE fixes nothing — still NaN on two fixtures and a
+     *    199% error on the third. The channel was never the fault; see
+     *    [pitchFromAcf] for what was.
+     *
+     * 2. Moving-average detrend. The trace contributes periodic structure at
+     *    the heart rate — QRS complexes roughly every 170 px at 8 px/mm —
+     *    which the autocorrelation would otherwise pick up alongside the
+     *    grid. Subtracting a local mean high-passes it away.
+     *
+     *    Kept unchanged, and it is worth recording that it turned out not to
+     *    matter: with the other changes in place, removing it moves the
+     *    recovered pitch by under 0.15 percentage points on every fixture.
+     *    The Python has no equivalent, so this is the one remaining
+     *    structural difference between the two implementations.
      */
     private fun projectionProfile(bitmap: Bitmap): DoubleArray {
         val w = bitmap.width
@@ -96,9 +141,19 @@ object GridEstimator {
         for (y in 0 until h) {
             bitmap.getPixels(row, 0, w, 0, y, w, 1)
             for (x in 0 until w) {
-                // ARGB_8888 packing: A<<24 | R<<16 | G<<8 | B
-                val green = (row[x] shr 8) and 0xFF
-                sums[x] += 255.0 - green
+                // ARGB_8888 packing: A<<24 | R<<16 | G<<8 | B.
+                // Note for anyone comparing against the Python: OpenCV on the
+                // desktop reads files as BGR, so `cv2.split` there yields
+                // (b, g, r) and `redness` indexes channel 2 for red. Here red
+                // is the high byte of the packed int. Same arithmetic,
+                // different order, and getting it backwards yields a response
+                // that is wrong without looking wrong.
+                val p = row[x]
+                val r = (p shr 16) and 0xFF
+                val g = (p shr 8) and 0xFF
+                val b = p and 0xFF
+                val redness = r - 0.5 * (g + b)
+                sums[x] += if (redness > 0.0) redness else 0.0
             }
         }
         for (x in 0 until w) sums[x] /= h
@@ -149,15 +204,48 @@ object GridEstimator {
      * Peak spacing is immune to which harmonic is tallest, because peaks at
      * 1, 2, 3 and 4 mm all still exist. This is the same fundamental-versus-
      * harmonic problem, and the same remedy, as pitch detection in audio.
+     *
+     * **That remedy only works if the 1 mm peaks survive selection, and
+     * until 2026-09-18 they did not.** The threshold here was
+     * `0.25 * windowMax`, a fraction of the tallest peak in the lag window,
+     * which reads as a modest cut and is not: on the fixtures that window
+     * maximum measures 0.71 to 0.95, so the cut landed at 0.178 to 0.238 on
+     * a normalised scale — essentially where the Python's old absolute 0.20
+     * landed, and above the 0.11 to 0.19 the minor rules stand at. Every
+     * minor peak was deleted, fewer than three peaks survived, and the
+     * estimate came back NaN. That is what "Grid pitch: failed" on all three
+     * fixtures was, confirmed on the device on 2026-09-18 and predicted from
+     * the Python side the day before.
+     *
+     * The threshold is now [PEAK_THRESHOLD], absolute, matching the Python
+     * exactly. The lag window widens with it: `MAX_PX_PER_MM * 6` rather
+     * than `* 1.5`, which is the Python's `hi = min(max_pitch_px * 6, ...)`.
+     *
+     * Verified by simulating this function against the three fixtures before
+     * the change was written — recovered px/mm, error against truth:
+     *
+     *     shipped (green, 0.25*windowMax)   NaN      NaN      NaN
+     *     redness alone                     NaN   +199.15%    NaN
+     *     + absolute 0.05                 +0.20%   -0.08%   -0.15%
+     *     + wide lag window               +0.61%   +0.32%   +0.08%
+     *
+     * and the last of those sits within 0.06 percentage points of what the
+     * Python returns on the same images (+0.55%, +0.36%, +0.13%), which is
+     * the check that this is a port and not a reimplementation. Synthetic
+     * renders at 6, 8, 12 and 16 px/mm are unaffected by any of it.
      */
     private fun pitchFromAcf(acf: DoubleArray): Triple<Double, Int, Double> {
         val minLag = MIN_PX_PER_MM.toInt()
-        val maxLag = minOf((MAX_PX_PER_MM * 1.5).toInt(), acf.size - 2)
+        val maxLag = minOf((MAX_PX_PER_MM * 6).toInt(), acf.size - 2)
         if (maxLag <= minLag) return Triple(Double.NaN, 0, 0.0)
 
+        // windowMax is no longer the threshold's basis -- see the docstring --
+        // but is still returned as the objective, because it says how strong
+        // the strongest periodicity in the grid band was and that is worth
+        // seeing next to a result.
         var windowMax = 0.0
         for (i in minLag until maxLag) if (acf[i] > windowMax) windowMax = acf[i]
-        val threshold = 0.25 * windowMax
+        val threshold = PEAK_THRESHOLD
 
         val peaks = ArrayList<Double>()
         for (i in (minLag + 1) until (maxLag - 1)) {

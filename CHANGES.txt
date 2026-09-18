@@ -1593,3 +1593,74 @@ unchanged rather than warped by zero, since every interpolation is a
 low-pass filter on the grid detail the later stages measure.
 
 NOT VERIFIED: that any of this behaves on hardware. Compile only.
+
+
+--------------------------------------------------------------------------------
+12.3 TWO DEVICE-CONFIRMED BUGS, ONE OF THEM PREDICTED
+--------------------------------------------------------------------------------
+
+First run on the A30s. The image rotates and does so in acceptable time, so
+12.2 works. Two faults, and the second is a result rather than a defect.
+
+A. "Rotate failed: Child of the scoped flow was cancelled", permanently.
+
+Self-inflicted, in the code written yesterday. The warp was wrapped in
+runCatching, which catches Throwable -- and that includes
+CancellationException, which is not a failure but the NORMAL outcome of
+collectLatest. Every slider value cancels the warp in flight, so during a
+drag nearly every iteration ends in cancellation; each one wrote a failure
+into the status line, and the single iteration that did succeed had no way
+to clear it. Now caught separately and rethrown, which also matters beyond
+the message: swallowing a CancellationException leaves the coroutine
+machinery believing a cancelled child is still live.
+
+B. Grid pitch "failed" on all three fixtures.
+
+Not new, and not a surprise. CLAUDE.md limitation 6 predicted exactly this
+from the Python side on 2026-09-17: GridEstimator.kt "returns NaN on all
+three, because its 0.25 * max(acf[3:60]) cut lands at 0.178-0.238 -- the
+same place as the Python's 0.20". This is that prediction confirmed on
+hardware, which is worth more than the fix: the failure was derived from a
+desktop measurement of the autocorrelation and then observed on the device
+without any further tuning.
+
+Fixed with the three changes limitation 6 named, and ONLY those three:
+
+  1. redness (r - 0.5*(g+b), clipped) instead of 255 - green
+  2. an absolute 0.05 threshold instead of 0.25 * windowMax
+  3. MAX_PX_PER_MM 40 -> 80, widening the lag search window from
+     MAX * 1.5 to MAX * 6, which is the Python's min(max_pitch_px * 6, ...)
+
+Each was simulated against the three fixtures before being written, by
+reimplementing the Kotlin's exact control flow in Python -- its detrend, its
+peak test, its three-peak minimum, its median of successive gaps -- and
+varying only the authorised parameters:
+
+    configuration                        norm       mi      sttc
+    shipped (green, 0.25*windowMax)       NaN      NaN       NaN
+    (a) redness only                      NaN  +199.15%      NaN
+    (b) + absolute 0.05                +0.20%   -0.08%    -0.15%
+    (c) + wide lag window              +0.61%   +0.32%    +0.08%
+
+Two things fall out of that table. The channel change ALONE fixes nothing --
+(a) is still broken on all three -- which confirms for the third time, and
+now in the port itself, that the channel was never the fault. And (c) sits
+within 0.06 percentage points of what the Python returns on the same images
+(+0.55%, +0.36%, +0.13%), which is the check that this is a port rather
+than a reimplementation that happens to agree.
+
+Synthetic renders at 6, 8, 12 and 16 px/mm are unaffected by every
+configuration, so nothing regressed on the family the Python was developed
+against.
+
+NOT changed, deliberately: the moving-average detrend, which is not on the
+authorised list. Recorded because it is now measured -- with the other three
+changes in place, removing it moves the recovered pitch by under 0.15
+percentage points on every fixture. It is the one remaining structural
+difference between the two implementations and it does not matter.
+
+OUTSTANDING: python/ecgproto/grid_reference.py is the line-for-line Python
+twin of GridEstimator.kt and still carries the green channel and the
+0.25 * windowMax rule, so it no longer matches the Kotlin it documents.
+This task forbids modifying anything under python/, so it was left alone.
+It must be brought across before it is trusted again.

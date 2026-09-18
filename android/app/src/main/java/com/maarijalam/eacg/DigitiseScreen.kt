@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -169,15 +170,15 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
                 return@collectLatest
             }
             state = state.copy(warping = true)
-            val result = runCatching {
-                withContext(Dispatchers.Default) {
+            try {
+                val (preview, ms) = withContext(Dispatchers.Default) {
                     val started = System.nanoTime()
                     val src = ImageWarp.toMat(source)
                     try {
                         val rotated = ImageWarp.rotate(src, angle.toDouble())
                         try {
-                            val preview = ImageWarp.previewBitmap(rotated)
-                            preview to (System.nanoTime() - started) / 1_000_000
+                            val small = ImageWarp.previewBitmap(rotated)
+                            small to (System.nanoTime() - started) / 1_000_000
                         } finally {
                             rotated.release()
                         }
@@ -185,18 +186,28 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
                         src.release()
                     }
                 }
+                state = state.copy(rotatedPreview = preview, rotateMs = "$ms", warping = false)
+            } catch (c: CancellationException) {
+                // NOT an error, and must not be reported as one. This is how
+                // collectLatest works: every new slider value cancels the
+                // warp in flight, so during a drag almost every iteration
+                // ends here. A `runCatching` around this block catches
+                // Throwable, which includes CancellationException, and turned
+                // normal operation into a permanent "Rotate failed: Child of
+                // the scoped flow was cancelled" on screen -- the one
+                // iteration that succeeds is the last one, and it could not
+                // clear a status the cancelled ones kept rewriting.
+                //
+                // Rethrowing also matters for correctness, not just for the
+                // message: swallowing a CancellationException leaves the
+                // coroutine machinery believing the child is still live.
+                throw c
+            } catch (e: Throwable) {
+                state = state.copy(
+                    warping = false,
+                    status = "Rotate failed: ${e.message ?: e::class.java.simpleName}"
+                )
             }
-            state = result.fold(
-                onSuccess = { (preview, ms) ->
-                    state.copy(rotatedPreview = preview, rotateMs = "$ms", warping = false)
-                },
-                onFailure = { e ->
-                    state.copy(
-                        warping = false,
-                        status = "Rotate failed: ${e.message ?: e::class.java.simpleName}"
-                    )
-                }
-            )
         }
     }
 
