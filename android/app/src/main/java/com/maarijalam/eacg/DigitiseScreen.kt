@@ -508,17 +508,30 @@ private fun ResultsPanel(state: PipelineState) {
             ResultRow("Status", state.status)
             ResultRow("Source", state.sourceLabel ?: "--")
             ResultRow("Image size", state.imageSize)
-            ResultRow("Grid pitch", "${state.gridPitch} px/mm")
+            // The grid estimate is made once, at load, on the UNROTATED
+            // bitmap; the slider does not re-run it. Saying so on the row
+            // matters more than it looks. The number otherwise sits directly
+            // beneath a visibly rotated image and silently describes a
+            // different one -- and rotation is the single condition that
+            // wrecks grid estimation hardest, one degree being enough to take
+            // these fixtures off the rails (results/deskew/guards.csv). A
+            // reading that cannot move under the one input that should move
+            // it most is exactly the healthy-looking, uninformative metric
+            // deskew.py's docstring warns about. Stage 4 re-estimates on the
+            // rotated image and this tag goes away.
+            val stale = state.rotationDeg != 0f
+            val staleTag = if (stale) "  (pre-rotation)" else ""
+            ResultRow("Grid pitch", "${state.gridPitch} px/mm$staleTag")
             // Shown only for fixtures. For a picked photo there is no known
             // answer, and printing a blank row would imply one exists.
             state.reference?.let { ref ->
                 ResultRow("True grid pitch", "%.4f px/mm".format(ref.pxPerMm))
-                state.gridError?.let { ResultRow("Error vs true", it) }
+                state.gridError?.let { ResultRow("Error vs true", it + staleTag) }
                 ResultRow("True 5 mm box", "%.3f px".format(ref.pxPerMajorBox))
                 ResultRow("PTB-XL record", ref.record)
             }
             ResultRow("Load time", "${state.latencyMs} ms")
-            ResultRow("Grid estimate", "${state.gridMs} ms")
+            ResultRow("Grid estimate", "${state.gridMs} ms$staleTag")
             ResultRow("Injected rotation", "%+.2f deg".format(state.rotationDeg))
             ResultRow("Rotate (warp)", "${state.rotateMs} ms")
         }
