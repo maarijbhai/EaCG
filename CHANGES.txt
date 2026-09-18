@@ -1914,3 +1914,89 @@ section 11.1 makes on the desktop and the one the device can now confirm or
 refute.
 
 NOT VERIFIED: every number above except the 3500 ms total. Compile only.
+
+
+--------------------------------------------------------------------------------
+12.8 A PORT-FIDELITY TEST, AND A MUTATION CHECK ON IT
+--------------------------------------------------------------------------------
+
+The project maintains two implementations of one algorithm, in two
+languages, and until now nothing forced them to agree. The port was checked
+once, by hand (section 12.5), which established agreement on the day and
+protects nothing afterwards -- and which had a hole: the check compared the
+Python against a TRANSCRIPTION of the Kotlin, so a mistake made identically
+in both directions survives it.
+
+WHAT WAS BUILT.
+
+python/make_port_fixtures.py computes reference values from ecgproto/deskew
+and writes android/app/src/test/resources/port_fixtures.txt, committed.
+Kotlin unit tests load them and assert that the actually compiled Kotlin
+reproduces them, at 1e-12 relative -- far tighter than the waveform could
+notice, because the point is to catch a changed computation while it is
+still small.
+
+SkewEstimator.estimate was split, with the angle search moved into an
+internal search() that takes a response plane and touches no OpenCV.
+Everything capable of carrying a porting bug -- binning, rounding,
+accumulator indexing, sweeps, parabola -- is now on the host-JVM side of
+that line and runs under `testDebugUnitTest` in half a second. Mat appears
+only in estimate()'s resize and response. A test that needed a device would
+be a test that did not get run.
+
+The input is generated from an integer LCG on both sides rather than
+stored: a realistic response plane is ~900x700 doubles, too large to commit.
+The field is pseudo-random and has no grid in it, which does not weaken the
+comparison -- these vectors check that the ARITHMETIC agrees, angle by
+angle. Whether the search finds a real angle is a separate test, against a
+lattice the Kotlin builds itself where the truth is known by construction
+and nothing crosses a language boundary.
+
+12 tests: 8 on the skew port, 3 on the response, 1 pre-existing.
+
+THE MUTATION CHECK, WHICH IS THE PART THAT MATTERS.
+
+A green suite means nothing on its own -- it could mean the code is right or
+that the tests do not look at the thing that matters. android/
+check_tests_catch_bugs.py breaks the source on purpose, eight ways, each a
+real mistake somebody could make porting this, and reports which survive.
+
+It immediately found a hole. Replacing Math.rint with Math.round -- half to
+even against half up, the obvious Kotlin spelling and the wrong one --
+PASSED every test. The reason is exact: `tan(radians(x))` is never an exact
+dyadic rational, so `col * tan` never lands precisely on .5 and the two
+roundings never disagree. Measured across the twenty sweep angles: zero
+produce a disagreeing shift. The fixture's own comment had claimed
+otherwise, and was wrong.
+
+Fixed by adding cases that feed the slope DIRECTLY as exact dyadics (0.5,
+0.25, 0.125 ...), which both implementations accept. At 0.5 the roundings
+first differ at column 3. Two of those cases also reach paths the angle
+sweep never does: 0.0, the degenerate no-shear projection, and 1.5, which
+trips the span guard.
+
+After that, 8 of 8 mutations caught: rint/round, binning sign, ssd divisor,
+uncentred crop, arange ceil/round, red-blue swap, unmasked signed byte, and
+a dropped parabola step.
+
+ONE MEASUREMENT WORTH RECORDING. The behavioural test recovers six injected
+angles from a synthetic lattice, worst error 0.0406 degrees -- against the
+Python's published worst of 0.0408 on real fixtures at the same working
+resolution. The error concentrates at SMALL angles (0.0406 at 0.7 degrees
+against 0.0018 at 8), and that is the algorithm rather than the port: the
+shear bins by a shift rounded to whole pixels, so at 0.7 degrees the shift
+spans only about eleven pixels across a 900-column plane and a range of
+nearby true angles produces the same rounded pattern. The objective flattens
+accordingly, margin 22.5 against 159 at 3 degrees. The Python shows the same
+shape, its largest sweep errors also falling at 0.1 and 0.25 degrees.
+
+Sizing that fixture matters and is recorded in the test: the same lattice at
+240x300 recovers 0.7 degrees as 0.775, three times worse, purely because
+angular resolution depends on how far a rule runs across the frame.
+
+NOT COVERED. GridEstimator has no equivalent fixture yet -- its pitch
+selection differs from the Python's `_pitch_1d` by design (successive gaps
+against origin-included, three peaks against two), so golden vectors would
+need generating from a specification rather than from ecgproto. Only its
+shared response function is tested here. And estimate()'s OpenCV half --
+resize, Mat-to-bytes -- is still covered by nothing but the device.

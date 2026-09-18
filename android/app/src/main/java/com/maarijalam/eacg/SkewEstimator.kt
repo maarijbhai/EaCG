@@ -169,6 +169,32 @@ object SkewEstimator {
         }
         val tResponse = System.nanoTime()
 
+        return search(planeH, imageScale, t0, tResize, tResponse)
+    }
+
+    /**
+     * The angle search, with no OpenCV in it.
+     *
+     * Split out of [estimate] so that it can be unit-tested on the host JVM.
+     * OpenCV's Java classes are a shim over a native library that a plain
+     * `testDebugUnitTest` has no way to load, so anything touching a `Mat`
+     * can only be exercised on a device or an emulator — which is the slow,
+     * manual path, and therefore the one that does not get run. Everything
+     * that could carry a porting bug is on this side of the line: the
+     * binning, the rounding, the accumulator indexing, the sweeps, the
+     * parabola. `Mat` appears only in [estimate]'s resize and response.
+     *
+     * `internal` rather than public: the test source set is a friend of the
+     * main one, so tests can reach it while the rest of the app cannot be
+     * tempted to bypass [estimate].
+     */
+    internal fun search(
+        planeH: Plane,
+        imageScale: Double = 1.0,
+        t0: Long = System.nanoTime(),
+        tResize: Long = t0,
+        tResponse: Long = t0
+    ): Result {
         var anyInk = false
         for (v in planeH.data) if (v != 0.0) { anyInk = true; break }
         if (!anyInk) {
@@ -194,10 +220,12 @@ object SkewEstimator {
         // exercised, the assumption is asserted: change either constant below
         // the working size and this fails loudly instead of quietly skipping
         // a reduction the Python would have performed.
-        require(COARSE_MAX_DIM >= workDim && FINE_MAX_DIM >= workDim) {
-            "COARSE_MAX_DIM and FINE_MAX_DIM must both equal the working size " +
-                "($workDim); a smaller one would require reducing the response " +
-                "itself, which this port does not implement."
+        require(COARSE_MAX_DIM == FINE_MAX_DIM) {
+            "COARSE_MAX_DIM ($COARSE_MAX_DIM) and FINE_MAX_DIM ($FINE_MAX_DIM) " +
+                "must be equal. estimate() reduces the image once, to the larger " +
+                "of the two, so a smaller one would require reducing the response " +
+                "itself for that pass -- which the Python does and this port does " +
+                "not implement."
         }
 
         // ---- coarse pass ---------------------------------------------------
@@ -276,7 +304,7 @@ object SkewEstimator {
     // ----------------------------------------------------------------------
 
     /** A 2-D double array in row-major order. */
-    private class Plane(val data: DoubleArray, val rows: Int, val cols: Int) {
+    internal class Plane(val data: DoubleArray, val rows: Int, val cols: Int) {
         fun transposed(): Plane {
             val out = DoubleArray(data.size)
             for (r in 0 until rows) {
@@ -294,7 +322,7 @@ object SkewEstimator {
      * estimate, and the GC pauses land in the middle of a latency
      * measurement.
      */
-    private class Scratch(plane: Plane) {
+    internal class Scratch(plane: Plane) {
         val shifts = IntArray(plane.cols)
         val starts = IntArray(plane.cols)
         // A shift span cannot exceed the column count for any angle under 45
@@ -303,7 +331,7 @@ object SkewEstimator {
     }
 
     /** RGBA Mat to a [Plane] of [GridResponse] values. */
-    private fun rednessPlane(mat: Mat): Plane {
+    internal fun rednessPlane(mat: Mat): Plane {
         val rows = mat.rows()
         val cols = mat.cols()
         val channels = mat.channels()
@@ -328,7 +356,7 @@ object SkewEstimator {
      * formula, and an off-by-one at the end of the sweep changes which
      * sample the parabola is fitted around.
      */
-    private fun arange(start: Double, stop: Double, step: Double): DoubleArray {
+    internal fun arange(start: Double, stop: Double, step: Double): DoubleArray {
         val n = ceil((stop - start) / step).toInt()
         return DoubleArray(if (n > 0) n else 0) { start + it * step }
     }
@@ -343,7 +371,7 @@ object SkewEstimator {
      * centred length makes the objective a statistic of the image instead of
      * one of the sweep geometry.
      */
-    private fun coreLengths(rows: Int, cols: Int, halfRangeDeg: Double): Pair<Int, Int> {
+    internal fun coreLengths(rows: Int, cols: Int, halfRangeDeg: Double): Pair<Int, Int> {
         val t = abs(tan(Math.toRadians(halfRangeDeg)))
         val lenH = rows - ceil(cols * t).toInt() - 1
         val lenV = cols - ceil(rows * t).toInt() - 1
@@ -390,7 +418,7 @@ object SkewEstimator {
      * estimate. The arithmetic is the Python's `_sheared_projection`
      * followed by `_sharpness(..., "ssd")`, unchanged.
      */
-    private fun shearedSharpness(
+    internal fun shearedSharpness(
         plane: Plane,
         tanA: Double,
         fixedLen: Int,
@@ -458,7 +486,7 @@ object SkewEstimator {
     }
 
     /** Sub-step optimum, by fitting a parabola to the best sample and its neighbours. */
-    private fun parabolicPeak(angles: DoubleArray, values: DoubleArray): Double {
+    internal fun parabolicPeak(angles: DoubleArray, values: DoubleArray): Double {
         var k = 0
         for (i in values.indices) if (values[i] > values[k]) k = i
         if (k == 0 || k == values.size - 1) return angles[k]
