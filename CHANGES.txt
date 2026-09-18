@@ -1720,3 +1720,76 @@ the real figure is likelier 2-4x for this kind of work, and that stage 12.6
 measures the deskew stage directly rather than inferring it. Recorded here
 because a projection that was wrong by three-fold is worth correcting in
 the record even before the better number exists.
+
+
+--------------------------------------------------------------------------------
+12.5 SKEW ESTIMATOR PORTED TO KOTLIN
+--------------------------------------------------------------------------------
+
+SkewEstimator.kt is ecgproto/deskew.py's estimate_skew, ported rather than
+redesigned. Every constant is read from the Python: coarse half-range 10
+degrees at 0.5 degree steps, fine half-range 0.5 at 0.05, both passes at
+900 px, ssd objective, redness response taken once on the already-reduced
+image.
+
+DIVISION OF LABOUR, which follows from the algorithm rather than from taste.
+OpenCV does the resize and the warp: both are full-resolution and per-pixel,
+which is where a SIMD native routine wins and a Kotlin loop loses badly.
+Kotlin does the response and the angle search, both of which run on an image
+already reduced to 900 px. The search has no OpenCV equivalent -- it bins
+pixels by y - x*tan(a), which rounds to a shift that is constant over runs
+of adjacent columns, so each projection is a grouped column sum plus a few
+hundred shifted adds, one pass over the image per angle with no
+interpolation anywhere. Expressing that in OpenCV primitives would mean
+warping once per angle, which is both slower and wrong: every warp
+interpolates, and interpolation is a low-pass filter on exactly the fine
+grid detail the objective measures.
+
+REUSE. GridResponse now holds the redness arithmetic for both stages, which
+reach the pixels by different routes -- packed ARGB ints from a Bitmap in
+GridEstimator, RGBA bytes from a Mat in SkewEstimator -- and so offered two
+chances to get the channel order wrong in a way that yields a response that
+is wrong without looking wrong. GridEstimator was changed only to call it;
+the arithmetic is identical and this is not one of the three algorithm
+changes of 12.3. The rest of GridEstimator's machinery does NOT apply: its
+projection is unsheared and its autocorrelation finds a period, where the
+skew search needs the sharpness of a sheared projection. Different
+quantities, no shared code beyond the response.
+
+VERIFICATION, in two levels, because compiling says nothing about numerics.
+The Kotlin was transcribed literally back into Python -- its fused
+projection-and-sharpness loop, its Math.rint, its accumulator indexing, its
+arange, its parabolic peak -- and run against deskew.py on the same inputs.
+
+  Level 1, one sheared projection at a time, over eleven angles from -10 to
+  +10 on a rotated 200 dpi fixture, both axes: relative difference exactly
+  0.00e+00 at every angle. The fused loop is bit-identical to
+  _sheared_projection followed by _sharpness.
+
+  Level 2, the whole estimate over three fixtures and fourteen injected
+  angles, exercising arange lengths, core lengths, the coarse argmax, the
+  coarse-to-fine handoff and the parabolic peak: worst |python - kotlin| is
+  7.1e-15 degrees, which is floating-point noise. Sweep lengths come out 41
+  coarse and 21 fine, matching. Worst error against the injected truth is
+  0.04080 degrees -- exactly the Python's published worst at 900 px, 0.0408.
+
+Between the two levels every line of estimate() is covered.
+
+THE LIMIT OF THAT CLAIM, stated because it is easy to overread: this
+verifies the algorithm as transcribed back into Python, not the compiled
+Kotlin running on the device. A mistake made identically in both directions
+would survive it, and so would anything specific to the JVM -- Math.rint
+semantics, integer overflow, the Mat-to-byte-array path. Stage 12.6 puts a
+known angle in on the phone and reads the recovered one out, which is the
+check that cannot be faked.
+
+ONE DELIBERATE DIVERGENCE, and one assertion. The transpose is materialised
+once and reused across all 65 angle evaluations; the Python re-slices
+response.T per call, which is free there because NumPy transposes are views
+but would mean a strided access on every evaluation here. And because both
+passes run at 900 px in the shipped configuration, the Python's per-pass
+_reduce of the response is the identity -- rather than implement a resampler
+that cannot be exercised, estimate() requires the constants to say so and
+fails loudly if either is ever set below the working size.
+
+NOT VERIFIED: anything on hardware. Compile and desktop simulation only.

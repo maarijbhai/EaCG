@@ -97,8 +97,8 @@ object GridEstimator {
     /**
      * Mean grid response per image column, high-pass filtered.
      *
-     * 1. REDNESS, `r - 0.5*(g + b)` clipped at zero — the Python's
-     *    `digitise.redness`, and NOT the green channel this used to read.
+     * 1. REDNESS — [GridResponse], the Python's `digitise.redness` — and NOT
+     *    the green channel this used to read.
      *
      *    The green-channel argument was that a red grid is nearly invisible
      *    in the red channel, so grid detection needs the opposite of what
@@ -140,21 +140,11 @@ object GridEstimator {
 
         for (y in 0 until h) {
             bitmap.getPixels(row, 0, w, 0, y, w, 1)
-            for (x in 0 until w) {
-                // ARGB_8888 packing: A<<24 | R<<16 | G<<8 | B.
-                // Note for anyone comparing against the Python: OpenCV on the
-                // desktop reads files as BGR, so `cv2.split` there yields
-                // (b, g, r) and `redness` indexes channel 2 for red. Here red
-                // is the high byte of the packed int. Same arithmetic,
-                // different order, and getting it backwards yields a response
-                // that is wrong without looking wrong.
-                val p = row[x]
-                val r = (p shr 16) and 0xFF
-                val g = (p shr 8) and 0xFF
-                val b = p and 0xFF
-                val redness = r - 0.5 * (g + b)
-                sums[x] += if (redness > 0.0) redness else 0.0
-            }
+            // The arithmetic lives in GridResponse, not here, because
+            // SkewEstimator needs the same response from a different pixel
+            // layout and two copies of a channel-order-sensitive expression
+            // is two chances to get it wrong.
+            for (x in 0 until w) sums[x] += GridResponse.fromArgb(row[x])
         }
         for (x in 0 until w) sums[x] /= h
 
