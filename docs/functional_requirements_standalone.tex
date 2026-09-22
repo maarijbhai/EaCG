@@ -1,0 +1,25 @@
+% Minimal wrapper for compiling the requirements table on its own, to check
+% it typesets before dropping \input{functional_requirements} into the thesis.
+%
+%     pdflatex functional_requirements_standalone.tex
+%
+% The thesis itself needs only the four \usepackage lines below.
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=25mm]{geometry}
+
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+
+\begin{document}
+
+\section*{Functional requirements}
+
+\input{functional_requirements}
+
+\end{document}

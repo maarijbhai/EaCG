@@ -1,0 +1,433 @@
+% ---------------------------------------------------------------------------
+%  Functional requirements table  --  ECG digitisation on a mobile device
+%
+%  Usage:   \input{functional_requirements}
+%
+%  Preamble requirements (add these once, in your main .tex):
+%
+%      \usepackage{longtable}   % table breaks across pages
+%      \usepackage{booktabs}    % \toprule \midrule \bottomrule
+%      \usepackage{array}       % the L{} column type defined below
+%      \usepackage{xcolor}      % status and evidence colour (optional)
+%
+%  Status is recorded as MEASURED, not as intended: a requirement is Met only
+%  where a committed measurement under results/ or a run on the target handset
+%  supports it.  Counts: 24 Met, 7 Partial, 13 Open, over 44 requirements.
+% ---------------------------------------------------------------------------
+
+% --- local definitions; delete any you already define globally -------------
+\providecommand{\fr}[1]{\texttt{#1}}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\definecolor{FRmet}{HTML}{2E6B4E}
+\definecolor{FRpartial}{HTML}{96610F}
+\definecolor{FRopen}{HTML}{6B605A}
+\definecolor{FRevidence}{HTML}{B83A2C}
+
+% Evidence line: what backs the status claim in that row.
+% Redefine as \renewcommand{\ev}[1]{} to drop provenance from the table.
+\providecommand{\ev}[1]{\newline{\scriptsize\ttfamily\textcolor{FRevidence}{#1}}}
+
+% Status markers.  Redefine these three to restyle every status cell at once;
+% for a black-and-white print, drop the \textcolor and keep the word.
+\providecommand{\stMet}{\textcolor{FRmet}{\textsf{\footnotesize MET}}}
+\providecommand{\stPart}{\textcolor{FRpartial}{\textsf{\footnotesize PARTIAL}}}
+\providecommand{\stOpen}{\textcolor{FRopen}{\textsf{\footnotesize OPEN}}}
+
+% Stage heading row spanning the full table width.
+\providecommand{\stage}[2]{%
+  \multicolumn{5}{@{}p{\dimexpr\textwidth-2\tabcolsep\relax}@{}}{%
+    \vspace{2pt}\textbf{#1}\newline
+    {\footnotesize\itshape #2}\vspace{2pt}}\\*
+  \midrule
+}
+% ---------------------------------------------------------------------------
+
+\begingroup
+\small
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
+\renewcommand{\arraystretch}{1.15}
+
+\begin{longtable}{@{}L{0.070\textwidth} L{0.190\textwidth} L{0.450\textwidth} L{0.035\textwidth} L{0.095\textwidth}@{}}
+
+\caption{Functional requirements for the photographic ECG digitisation
+pipeline, grouped by processing stage. Priority follows MoSCoW: \textbf{M}
+(Must), \textbf{S} (Should), \textbf{C} (Could). Status is recorded against
+evidence --- \textsc{met} denotes a committed measurement under
+\fr{results/} or a run on the target handset; \textsc{partial} denotes
+working code with a documented scope boundary; \textsc{open} denotes a
+requirement specified but not yet implemented.}
+\label{tab:functional-requirements}\\
+
+\toprule
+\textbf{ID} & \textbf{Requirement} & \textbf{Acceptance criterion \& evidence}
+  & \textbf{Pri.} & \textbf{Status} \\
+\midrule
+\endfirsthead
+
+\multicolumn{5}{@{}l}{\emph{Table \ref{tab:functional-requirements},
+  continued from the previous page}}\\
+\toprule
+\textbf{ID} & \textbf{Requirement} & \textbf{Acceptance criterion \& evidence}
+  & \textbf{Pri.} & \textbf{Status} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{5}{r@{}}{\emph{continued on the next page}}\\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+% ===== 1 ===================================================================
+\stage{1\quad Image acquisition}{Getting a printout into memory at a usable
+resolution. The capture path is the one stage where the prototype and the
+deployed application necessarily differ.}
+
+FR-1.1 & Load a printout from device storage
+  & User selects an image file; it decodes to a bitmap without loss of the
+    grid detail the later stages measure.
+    \ev{ImageSource.kt, UriSource; device run}
+  & M & \stMet \\
+
+FR-1.2 & Carry reference printouts of known scale
+  & At least three printouts of independently known px/mm ship with the
+    application, so the estimators can be scored on the handset without a
+    desktop in the loop.
+    \ev{assets/reference/; 150, 200 and 300 dpi}
+  & M & \stMet \\
+
+FR-1.3 & Decode large images under a memory bound
+  & Decoding is downsampled to a caller-set maximum dimension rather than
+    allocating the sensor's full bitmap, so an 8\,MP capture does not exhaust
+    the heap.
+    \ev{ImageSource.kt, decodeDownsampled}
+  & M & \stMet \\
+
+FR-1.4 & Capture the printout with the device camera
+  & A live CameraX preview and capture feeding the same \fr{ImageSource}
+    interface the file picker uses.
+    \ev{interface ready; CameraSource not written}
+  & M & \stOpen \\
+
+FR-1.5 & Rectify page geometry at capture time
+  & ML Kit Document Scanner detects the page edges and removes perspective
+    before the pipeline runs, so only residual in-plane rotation reaches
+    stage~2.
+    \ev{decision recorded; not integrated}
+  & M & \stOpen \\
+\midrule
+
+% ===== 2 ===================================================================
+\stage{2\quad Geometric correction --- deskew}{Rotation is not a tolerable
+input condition: one degree of residual skew costs roughly 0.25 of
+correlation downstream. This stage runs before calibration.}
+
+FR-2.1 & Estimate in-plane rotation without user input
+  & The angle is recovered from the grid's own periodicity by a
+    sheared-projection sweep; no manual alignment, no fiducial marks.
+    \ev{deskew.estimate\_skew; SkewEstimator.kt}
+  & M & \stMet \\
+
+FR-2.2 & Recover the angle to within 0.1\textdegree
+  & 0.1\textdegree{} is the threshold below which the reconstructed waveform
+    cannot tell the difference. Worst case over three fixtures and seventeen
+    angles: \textbf{0.041\textdegree}.
+    \ev{results/deskew/finerobust.csv}
+  & M & \stMet \\
+
+FR-2.3 & Cost independent of input resolution
+  & The fine pass runs at a fixed 900\,px working size: 74--89\,ms regardless
+    of input, against 1.7--1.9\,s at full resolution for 0.004\textdegree{}
+    more accuracy.
+    \ev{results/deskew/finescale.csv, levers.csv}
+  & S & \stMet \\
+
+FR-2.4 & Apply the correcting rotation at full resolution
+  & The angle is estimated small and applied large, with one interpolation
+    only --- a second warp low-passes exactly the grid detail stage~3
+    measures.
+    \ev{ImageWarp.kt; deskew.rotate\_image}
+  & M & \stMet \\
+
+FR-2.5 & Correct out-of-plane perspective
+  & A page photographed off-axis has an anisotropic grid that FR-3.4 rejects
+    rather than repairs. Delegated to FR-1.5 rather than solved here.
+    \ev{deferred to ML Kit; not implemented}
+  & S & \stOpen \\
+\midrule
+
+% ===== 3 ===================================================================
+\stage{3\quad Spatial calibration --- grid estimation}{The printed grid is a
+physical ruler: 1\,mm minor and 5\,mm major divisions. Scale must come from
+it, because for a camera capture the image's stated DPI says nothing about a
+physical inch.}
+
+FR-3.1 & Recover px/mm from image content alone
+  & No use of EXIF, DPI metadata or an assumed capture distance; the pitch
+    comes from autocorrelation of a grid response profile.
+    \ev{digitise.estimate\_grid\_pitch; GridEstimator.kt}
+  & M & \stMet \\
+
+FR-3.2 & Pitch error within 1\% of the true scale
+  & On the three reference printouts, on the target handset: 5.941 / 7.899 /
+    11.82\,px/mm --- \textbf{+0.61\% / +0.32\% / +0.08\%}.
+    \ev{Galaxy A30s, 2026-09-18}
+  & M & \stMet \\
+
+FR-3.3 & Estimate both axes and report anisotropy
+  & The $x$ and $y$ pitch are estimated independently; their ratio is the
+    observable that distinguishes a square grid from a projected one.
+    \ev{GridEstimate.anisotropy}
+  & M & \stMet \\
+
+FR-3.4 & Refuse an untrustworthy calibration
+  & A pitch that locks onto a 5$\times$ harmonic is self-consistent and
+    wrong, and nothing downstream can see it. Guards on anisotropy,
+    peak spacing and implied paper speed run inside \fr{digitise()} and gate
+    the result.
+    \ev{digitise.check\_calibration, called at digitise.py:558}
+  & M & \stMet \\
+
+FR-3.5 & Tolerate grids of differing ink weight
+  & ecg-image-kit draws minor rules about seven times lighter than major
+    ones; the synthetic renderer draws them equally. One acceptance threshold
+    (0.05) now covers both, measured across four channel responses and two
+    image sources.
+    \ev{results/grid/threshold.csv, contrast.csv}
+  & S & \stPart \\
+
+FR-3.6 & Recover the gain axis (mm/mV) independently
+  & Vertical calibration currently assumes the conventional 10\,mm/mV rather
+    than reading the calibration pulse the printout carries.
+    \ev{assumed constant; pulse detection not written}
+  & S & \stOpen \\
+\midrule
+
+% ===== 4 ===================================================================
+\stage{4\quad Lead segmentation}{The stage that does not exist yet, and the
+one that blocks the pipeline from running end to end on a real clinical
+printout.}
+
+FR-4.1 & Locate the twelve cells of a 3$\times$4 layout
+  & Cell boundaries found from the printout itself. Without this the tracer
+    runs straight across a boundary and returns a waveform spliced from two
+    different leads.
+    \ev{documented scope boundary, limitation 1}
+  & M & \stOpen \\
+
+FR-4.2 & Locate and separate the rhythm strip
+  & Lead II runs the full 10\,s beneath the grid of cells and is the only
+    lead that does; it must be traced as one continuous strip.
+    \ev{layout.render\_12lead defines it; no detector}
+  & M & \stOpen \\
+
+FR-4.3 & Attach each cell to its lead name and time window
+  & The four columns are \emph{consecutive} 2.5\,s windows, so leads in
+    different columns are not simultaneous. Output must carry the offset, not
+    imply concurrency.
+    \ev{LayoutSpec.cell holds the geometry; unused}
+  & M & \stOpen \\
+
+FR-4.4 & Read the printed lead labels
+  & Optical character recognition of the per-cell label as a cross-check on
+    positional assignment, for printouts whose column order departs from the
+    convention.
+    \ev{not started}
+  & C & \stOpen \\
+\midrule
+
+% ===== 5 ===================================================================
+\stage{5\quad Trace extraction and digitisation}{The classical, non-learned
+path. It is kept deliberately as the control condition against which any
+learned component must later be justified.}
+
+FR-5.1 & Separate trace ink from grid ink
+  & The grid prints red and the trace near-neutral, so red saturation
+    separates them. Real paper varies --- faded thermal prints, blue-grey
+    grids, monochrome photocopies --- and this stage is expected to need
+    replacing for those.
+    \ev{digitise.binarise\_trace; limitation 2}
+  & M & \stPart \\
+
+FR-5.2 & Return one amplitude per image column
+  & The intensity-weighted centroid of the ink in each column, giving a
+    single-valued trace at sub-pixel precision.
+    \ev{digitise.trace\_positions}
+  & M & \stMet \\
+
+FR-5.3 & Bridge short breaks in the trace
+  & Gaps up to a bounded width are interpolated; anything wider is left
+    absent rather than invented.
+    \ev{digitise.\_interpolate\_gaps}
+  & S & \stMet \\
+
+FR-5.4 & Establish the isoelectric baseline
+  & The zero-millivolt row is recovered from the trace's own distribution,
+    not assumed at the cell centre.
+    \ev{digitise.baseline\_from\_trace}
+  & M & \stMet \\
+
+FR-5.5 & Convert pixels to millivolts and seconds
+  & Using the stage-3 pitch with the paper speed and gain, sign convention
+    accounted for (image rows grow downward).
+    \ev{digitise.pixels\_to\_mv}
+  & M & \stMet \\
+
+FR-5.6 & Report how much of the trace was actually found
+  & Coverage --- the fraction of columns that carried ink --- ships with
+    every result, so a waveform reconstructed from half a trace is not read
+    as a whole one.
+    \ev{DigitiseResult.coverage}
+  & M & \stMet \\
+
+FR-5.7 & Digitise a multi-cell printout end to end
+  & Depends entirely on stage~4. \fr{digitise()} today handles a single
+    continuous strip and nothing else.
+    \ev{blocked on lead segmentation}
+  & M & \stOpen \\
+
+FR-5.8 & Run the tracer on the handset
+  & Deskew and grid estimation are ported to Kotlin and run on-device;
+    binarisation, tracing and conversion are not yet.
+    \ev{2 of 5 stages ported}
+  & M & \stPart \\
+\midrule
+
+% ===== 6 ===================================================================
+\stage{6\quad Reconstruction fidelity}{The metrics fail in different
+directions and are therefore reported together: high correlation with high
+RMSE localises the fault to calibration, whereas low correlation means the
+tracer lost the waveform altogether.}
+
+FR-6.1 & Score a reconstruction four ways at once
+  & SNR, shift-tolerant SNR, RMSE in mV and Pearson correlation are computed
+    and reported as one record --- never singly.
+    \ev{evaluate.evaluate\_all; Metrics}
+  & M & \stMet \\
+
+FR-6.2 & Distinguish a mis-scaled trace from a noisy one
+  & A least-squares gain ratio separates a systematic amplitude error from a
+    broadband residual, which are two different faults with two different
+    remedies.
+    \ev{evaluate.gain\_ratio; Metrics.diagnose}
+  & S & \stPart \\
+
+FR-6.3 & Commit every measurement with its provenance
+  & Each experiment writes a CSV plus a JSON sidecar carrying the git commit,
+    the parameters and the library versions. A number that exists only in a
+    terminal cannot be cited.
+    \ev{results/; 15 CSV/JSON pairs committed}
+  & M & \stMet \\
+
+FR-6.4 & Score against a photograph, not a re-read render
+  & A printout drawn and decoded by the same constants returns 0.00\% error
+    tautologically. The protocol for printing a target at true scale,
+    measuring it with a ruler and photographing it breaks that loop.
+    \ev{docs/photo\_protocol.md, score\_photo.py; awaiting a print}
+  & M & \stPart \\
+\midrule
+
+% ===== 7 ===================================================================
+\stage{7\quad Classification}{Optional to the thesis contribution and
+unbuilt, but specified here because the data-layer requirements that
+constrain it are already satisfied and they constrain the digitiser output
+format.}
+
+FR-7.1 & Split by patient, never at random
+  & 21,799 records come from $\sim$18,900 patients. The published
+    \fr{strat\_fold} column is used --- folds 1--8 train, 9 validate, 10 test
+    --- so no patient crosses the boundary.
+    \ev{ptbxl.split\_folds}
+  & M & \stMet \\
+
+FR-7.2 & Treat diagnosis as multi-label
+  & A record can be MI and STTC at once, so the label matrix over the five
+    superclasses is built as independent binary targets; sigmoid and binary
+    cross-entropy, never softmax.
+    \ev{ptbxl.superclass\_matrix; no model yet}
+  & M & \stPart \\
+
+FR-7.3 & Classify a recovered waveform
+  & Must account for a printout carrying $\sim$33\% of the recorded
+    lead-seconds in non-simultaneous windows; a model trained on twelve
+    concurrent 10\,s leads cannot consume digitiser output unaltered.
+    \ev{not started}
+  & S & \stOpen \\
+
+FR-7.4 & Run inference on-device under LiteRT
+  & Quantised model, no network round trip, latency and memory measured on
+    the physical handset like every other stage.
+    \ev{runtime chosen; no model to run}
+  & S & \stOpen \\
+
+FR-7.5 & Report macro AUROC and macro F-measure
+  & The two field conventions --- the PTB-XL benchmark and the PhysioNet
+    Challenge 2024 --- reported together so the result is comparable in both
+    literatures.
+    \ev{not started}
+  & S & \stOpen \\
+\midrule
+
+% ===== 8 ===================================================================
+\stage{8\quad Deployment characterisation}{The thesis contribution. These
+requirements are not about making the pipeline work --- they are about making
+its cost on real hardware observable and honest.}
+
+FR-8.1 & Time every stage separately on the device
+  & Stages differ by an order of magnitude and answer different questions; a
+    single total would hide the resolution independence FR-2.3 was built to
+    obtain. Grid estimation: 205\,ms at 8.41\,MP.
+    \ev{TimingStats.kt; DeskewPipeline.Timings}
+  & M & \stMet \\
+
+FR-8.2 & Separate pipeline cost from test scaffolding
+  & The verification loop injects a rotation and renders previews; a deployed
+    capture does neither --- a crooked page arrives crooked at no cost.
+    Reported as \fr{PIPELINE} and \fr{HARNESS}, and only the first is
+    quotable.
+    \ev{limitation 9; $\sim$3500\,ms total is $\sim$2$\times$ the citable
+    figure}
+  & M & \stMet \\
+
+FR-8.3 & Generate ground truth on the handset
+  & A slider injects a known rotation in 0.1\textdegree{} detents; the
+    estimator recovers it without sight of it, so accuracy is scored
+    on-device rather than inferred from the bench.
+    \ev{DeskewPipeline; DigitiseScreen.kt}
+  & M & \stMet \\
+
+FR-8.4 & Prove the Kotlin port matches the Python
+  & A port-fidelity suite asserts that the two implementations agree
+    numerically, and a mutation check confirms the suite would fail if they
+    did not.
+    \ev{SkewEstimatorPortTest.kt, GridResponseTest.kt; commit 8039ea9}
+  & M & \stMet \\
+
+FR-8.5 & Benchmark only on physical hardware
+  & The emulator runs on a host x86 CPU with active cooling, so its latency,
+    memory and thermal figures are invalid for a thesis about mobile
+    constraints. The package is filtered to \fr{arm64-v8a} and will not
+    install on one.
+    \ev{build.gradle abiFilters; Galaxy A30s}
+  & M & \stMet \\
+
+FR-8.6 & Measure peak memory per stage
+  & Latency is instrumented; the memory half of the deployment cost is not
+    yet captured, and the full-resolution warps are where it will be spent.
+    \ev{not instrumented}
+  & S & \stOpen \\
+
+FR-8.7 & Quantify the desktop-to-device penalty
+  & Two inferences disagree by roughly threefold (8--12$\times$ projected
+    from clock and IPC ratios; 2--4$\times$ from the first real comparison).
+    Neither is a measurement of the deskew stage, which FR-8.1's benchmark
+    now makes directly observable.
+    \ev{limitation 10; benchmark built, not yet run to conclusion}
+  & M & \stPart \\
+
+\end{longtable}
+\endgroup
