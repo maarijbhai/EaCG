@@ -1,0 +1,73 @@
+{
+  "experiment": "inject",
+  "utc": "2026-09-20T14:49:10+00:00",
+  "git_commit": "8039ea902d02194f633a06db9af147bee035a2a8",
+  "git_dirty": true,
+  "params": {
+    "root": "C:\\dev\\ECG-App\\data\\ptb-xl\\1.0.3",
+    "n": 12,
+    "rate": 100,
+    "leads": [
+      "II"
+    ],
+    "px_per_mm": 8.0,
+    "good_px_per_mm": [
+      8.0,
+      12.0,
+      16.0
+    ],
+    "lowres_px_per_mm": [
+      4.0
+    ],
+    "angles": [
+      0.5,
+      1.0,
+      2.0,
+      5.0
+    ],
+    "pitch_factors": [
+      5.0,
+      0.2
+    ],
+    "sim_interp": "lanczos"
+  },
+  "module_defaults": {
+    "quality.REJECT_PP_MV": [
+      0.05,
+      6.0
+    ],
+    "quality.FLAG_PP_MV": [
+      0.2,
+      3.5
+    ],
+    "quality.REJECT_BPM": [
+      25.0,
+      300.0
+    ],
+    "quality.FLAG_BPM": [
+      35.0,
+      220.0
+    ],
+    "quality.REJECT_COVERAGE": 0.5,
+    "quality.FLAG_COVERAGE": 0.9,
+    "quality.EXPECTED_TRACES_PER_COLUMN": 1,
+    "quality.BAND_SEPARATION_MM": 1.0,
+    "digitise.DEFAULT_PEAK_FRACTION": 0.05,
+    "digitise.MAX_ANISOTROPY": 0.15,
+    "digitise.MAX_SPACING_CV": 0.25,
+    "digitise.PAPER_SPEED_RANGE_MM_S": [
+      15.0,
+      60.0
+    ],
+    "digitise.MM_PER_S": 25.0,
+    "digitise.MM_PER_MV": 10.0
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "scipy": "1.16.2",
+    "opencv": "5.0.0",
+    "platform": "Windows-11-10.0.26100-SP0"
+  },
+  "n_rows": 120
+}
