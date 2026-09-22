@@ -47,6 +47,9 @@ import numpy as np
 import scipy
 
 from ecgproto import deskew as dsk
+from ecgproto import digitise as dig
+from ecgproto import quality as qual
+from ecgproto import evaluate
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "android" / "app" / "src" / "test" / "resources" / "port_fixtures.txt"
@@ -93,6 +96,78 @@ ANGLES = [-10.0, -8.0, -5.0, -3.0, -1.5, -0.5, -0.05, 0.0, 0.05, 0.5,
 SHEAR_TANS = [0.0, 0.5, -0.5, 0.25, -0.25, 0.125, -0.125, 0.0625, 1.5]
 
 
+#: Shape of the trace mask. Prime, unequal, and not a multiple of the two
+#: moduli below, so that a transposed index or an off-by-one at the last
+#: column cannot pass unnoticed.
+TRACE_ROWS, TRACE_COLS = 41, 97
+
+#: Columns where `c % TRACE_GAP_MOD` is 0 or 1 carry no ink at all. These are
+#: the dropout the gap interpolation exists for, and they also put the first
+#: inked column away from zero so the span trim has something to trim.
+#:
+#: **Two columns wide, not one, and that width is the point.** A one-column
+#: gap is bridged by every `max_gap_px` down to and including 1, so the
+#: re-blanking half of `_interpolate_gaps` -- the half that refuses to invent
+#: signal across a long gap -- is never reached and a port could omit it
+#: entirely and pass. At two wide, `max_gap_px=1` must leave them NaN.
+TRACE_GAP_MOD = 23
+TRACE_GAP_WIDTH = 2
+
+#: The band's row wanders as `8 + (c * c) % TRACE_BAND_MOD`. A quadratic in
+#: the column index rather than a sine: it is exactly representable in
+#: integer arithmetic on both sides, and it moves by several pixels between
+#: adjacent columns, which a linear ramp would not.
+TRACE_BAND_MOD = 19
+TRACE_THICKNESS = 2
+
+#: Two gap widths. The first bridges this mask's runs, the second is narrower
+#: than them and must leave them NaN.
+TRACE_MAX_GAP_PX = 12
+TRACE_MAX_GAP_TIGHT = 1
+
+#: Scale the conversion is exercised at, and the output rates. 8 px/mm is the
+#: repository's working scale; 100 Hz is PTB-XL's lower rate and 37.0 is
+#: deliberately not a divisor of anything, so the interpolation is doing real
+#: work rather than selecting samples.
+TRACE_PX_PER_MM = 8.0
+TRACE_FS_OUT = (100.0, 37.0)
+
+#: The stacked mask: four bands, as a 3x4 sheet's column carries.
+BANDS_ROWS, BANDS_COLS = 400, 91
+BANDS_ROWS_AT = (40, 140, 240, 340)
+
+#: Two bands 12 px apart, for the millimetre-versus-pixel semantics. See the
+#: comment at `bands.close_*`: 1.5 mm at 8 px/mm, 0.375 mm at 32 px/mm.
+BANDS_CLOSE_AT = (100, 112)
+
+
+def trace_mask(rows: int, cols: int) -> np.ndarray:
+    """A single wandering ink band with periodic dropout.
+
+    Must match `PortFixtures.traceMask` exactly. Integer arithmetic only,
+    for the same reason `lcg_plane` is: so that neither side can diverge
+    through a floating-point detail the other does not share.
+    """
+    mask = np.zeros((rows, cols), dtype=bool)
+    for c in range(cols):
+        if c % TRACE_GAP_MOD < TRACE_GAP_WIDTH:
+            continue
+        top = 8 + (c * c) % TRACE_BAND_MOD
+        for k in range(TRACE_THICKNESS):
+            r = top + k
+            if 0 <= r < rows:
+                mask[r, c] = True
+    return mask
+
+
+def stacked_mask(rows: int, cols: int, at, thickness: int) -> np.ndarray:
+    """Several straight bands, one per entry in `at`. A 3x4 sheet's column."""
+    mask = np.zeros((rows, cols), dtype=bool)
+    for top in at:
+        mask[top: top + thickness, :] = True
+    return mask
+
+
 def lcg_plane(rows: int, cols: int) -> np.ndarray:
     """The shared input. Must match `SkewEstimator.lcgPlane` exactly."""
     state = LCG_SEED & LCG_MASK
@@ -119,11 +194,29 @@ def main() -> int:
         lines.append(key + " " + " ".join(_fmt(v) for v in values))
 
     def _fmt(v) -> str:
+        # Labels pass through. The format is `key token token ...`, so a token
+        # may be a bare word provided it carries no space; the loader reads
+        # numeric rows by index and never parses these.
+        if isinstance(v, str):
+            assert " " not in v, f"label {v!r} would break the row format"
+            return v
         if isinstance(v, (int, np.integer)):
             return str(int(v))
         # repr-round-trip precision: these are compared at 1e-12 relative, so
         # the text must not be the thing that loses the agreement.
-        return repr(float(v))
+        #
+        # Non-finite values are spelled the way java.lang.Double.parseDouble
+        # spells them, not the way repr() does: Python emits 'nan' and 'inf',
+        # and parseDouble accepts only 'NaN' and 'Infinity'. A trace with
+        # dropout is full of NaN, so this is not an edge case here.
+        f = float(v)
+        if f != f:
+            return "NaN"
+        if f == float("inf"):
+            return "Infinity"
+        if f == float("-inf"):
+            return "-Infinity"
+        return repr(f)
 
     lines.append("# Golden vectors for the Kotlin port of ecgproto/deskew.py.")
     lines.append("# GENERATED by python/make_port_fixtures.py -- do not hand-edit.")
@@ -251,6 +344,137 @@ def main() -> int:
     for i, (r, g, b) in enumerate(redness_cases):
         v = max(0.0, r - 0.5 * (g + b))
         emit(f"redness.{i}", r, g, b, v)
+    lines.append("")
+
+    # ---- the tracer: FR5 to FR7 ------------------------------------------
+    # Input is a mask built from the integer formula in `trace_mask`, so both
+    # sides construct bit-identical pixels with nothing stored. Emitting the
+    # arrays in full rather than a checksum is deliberate: when a value
+    # moves, `git diff` should say which column, because an off-by-one in the
+    # inked-span trim and a sign error in the conversion look identical
+    # through a checksum.
+    mask = trace_mask(TRACE_ROWS, TRACE_COLS)
+    emit("trace.rows", TRACE_ROWS)
+    emit("trace.cols", TRACE_COLS)
+    emit("trace.gap_mod", TRACE_GAP_MOD)
+    emit("trace.gap_width", TRACE_GAP_WIDTH)
+    emit("trace.band_mod", TRACE_BAND_MOD)
+    emit("trace.thickness", TRACE_THICKNESS)
+    emit("trace.ink", int(mask.sum()))
+
+    centroids = dig.trace_positions(mask)
+    emit("trace.centroids", *centroids)
+
+    # `digitise` trims to the first and last inked column before measuring
+    # coverage, so that leading and trailing blank paper is not counted as
+    # a tracing failure. The trim has to be ported too, and it is the kind
+    # of boundary that survives a careless port by being nearly right.
+    inked = np.flatnonzero(np.isfinite(centroids))
+    trimmed = centroids[inked[0]: inked[-1] + 1]
+    emit("trace.trim_lo", int(inked[0]))
+    emit("trace.trim_hi", int(inked[-1]))
+    emit("trace.coverage", float(np.isfinite(trimmed).mean()))
+
+    filled = dig._interpolate_gaps(trimmed, TRACE_MAX_GAP_PX)
+    emit("trace.max_gap_px", TRACE_MAX_GAP_PX)
+    emit("trace.filled", *filled)
+    # A second gap width, small enough that the runs this mask contains are
+    # left NaN instead of bridged. Without this the "leave long gaps alone"
+    # half of the function is never exercised.
+    emit("trace.max_gap_px_tight", TRACE_MAX_GAP_TIGHT)
+    emit("trace.filled_tight", *dig._interpolate_gaps(trimmed, TRACE_MAX_GAP_TIGHT))
+
+    emit("trace.baseline", dig.baseline_from_trace(filled))
+
+    # The sign convention. Rows grow down and millivolts grow up, so this is
+    # the one line in the pipeline whose error produces a perfectly shaped,
+    # perfectly inverted waveform -- PCC -1.0 rather than a visible failure.
+    px_per_mv = TRACE_PX_PER_MM * dig.MM_PER_MV
+    baseline = dig.baseline_from_trace(filled)
+    mv = dig.pixels_to_mv(filled, baseline, px_per_mv)
+    emit("trace.px_per_mm", TRACE_PX_PER_MM)
+    emit("trace.px_per_mv", px_per_mv)
+    emit("trace.mv", *mv)
+
+    # Resampling onto a fixed output rate. One pixel column is one sample at
+    # px_per_s, and n_out floors, so the last partial sample is dropped
+    # rather than extrapolated.
+    px_per_s = TRACE_PX_PER_MM * dig.MM_PER_S
+    for j, fs_out in enumerate(TRACE_FS_OUT):
+        duration_s = len(mv) / px_per_s
+        n_out = int(np.floor(duration_s * fs_out))
+        t_in = np.arange(len(mv)) / px_per_s
+        t_out = np.arange(n_out) / fs_out
+        emit(f"resample.{j}.in", px_per_s, fs_out, len(mv))
+        emit(f"resample.{j}.out", *np.interp(t_out, t_in, mv))
+    emit("resample.n", len(TRACE_FS_OUT))
+    lines.append("")
+
+    # ---- the FR8 layout check --------------------------------------------
+    # Counts ink bands down a column. One band is a strip; four is a 3x4
+    # sheet, which is the failure the app's own bundled fixtures would walk
+    # into. Two masks: the single-band trace mask above, and an explicitly
+    # stacked one.
+    emit("bands.trace_mask", qual.traces_per_column(mask, TRACE_PX_PER_MM))
+    stacked = stacked_mask(BANDS_ROWS, BANDS_COLS, BANDS_ROWS_AT, TRACE_THICKNESS)
+    emit("bands.rows", BANDS_ROWS)
+    emit("bands.cols", BANDS_COLS)
+    emit("bands.at", *BANDS_ROWS_AT)
+    emit("bands.stacked", qual.traces_per_column(stacked, TRACE_PX_PER_MM))
+    # Same pixels, two recovered pitches. The separation is specified in
+    # millimetres and converted with the pitch, so a FINER pitch -- more
+    # pixels per millimetre -- raises the pixel threshold and merges bands
+    # that a coarser one resolves. Note the direction: it is the opposite
+    # way round from the first guess, and a check written in pixels would
+    # return the same answer for both while changing meaning with camera
+    # distance.
+    #
+    # The four-band mask above has its bands 100 px apart, which no
+    # plausible pitch can merge, so the semantics are exercised on a
+    # closely-spaced pair instead: 12 px apart is 1.5 mm at 8 px/mm (two
+    # bands) and 0.375 mm at 32 px/mm (one).
+    close = stacked_mask(BANDS_ROWS, BANDS_COLS, BANDS_CLOSE_AT, 1)
+    emit("bands.close_at", *BANDS_CLOSE_AT)
+    emit("bands.close_fine_pitch", 32.0)
+    emit("bands.close_coarse_pitch", TRACE_PX_PER_MM)
+    emit("bands.close_coarse", qual.traces_per_column(close, TRACE_PX_PER_MM))
+    emit("bands.close_fine", qual.traces_per_column(close, 32.0))
+    emit("bands.separation_mm", qual.BAND_SEPARATION_MM)
+    emit("bands.column_stride", 7)
+    lines.append("")
+
+    # ---- reconstruction fidelity -----------------------------------------
+    # The numbers the handset will quote for itself. Cases chosen so that the
+    # three metrics DISAGREE: a scaled copy is perfect on PCC and wrong on
+    # gain, an inverted one is -1.0 on PCC, and an offset one is invisible to
+    # both PCC and gain while RMSE sees it. A fixture where all three agree
+    # would not detect a metric wired to the wrong formula.
+    ref = np.array([0.0, 0.2, 1.0, -0.3, 0.1, 0.4, -0.1, 0.0, 0.6, 0.15])
+    fid_cases = [
+        ("identical", ref.copy()),
+        ("scaled_0.87", ref * 0.87),
+        ("inverted", -ref),
+        ("offset_0.5", ref + 0.5),
+        ("offset_and_scaled", ref * 0.87 + 0.5),
+        ("noisy", ref + np.array([0.01, -0.02, 0.03, 0.0, -0.01,
+                                  0.02, -0.03, 0.01, 0.0, -0.02])),
+        ("flat", np.zeros_like(ref)),
+        # Unequal lengths, so the truncation is exercised. `align_length`
+        # truncates rather than resampling on purpose: resampling would undo
+        # a time-axis calibration error before any metric could see it.
+        ("longer", np.concatenate([ref * 0.9, [0.3, 0.4, 0.5]])),
+    ]
+    emit("fid.ref", *ref)
+    emit("fid.n", len(fid_cases))
+    for i, (name, test) in enumerate(fid_cases):
+        emit(f"fid.{i}.name", name)
+        emit(f"fid.{i}.test", *test)
+        emit(f"fid.{i}.out",
+             evaluate.pcc(ref, test),
+             evaluate.rmse_mv(ref, test),
+             evaluate.gain_ratio(ref, test),
+             len(evaluate.align_length(ref, test)[0]))
+    lines.append("")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")

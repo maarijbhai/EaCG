@@ -35,7 +35,7 @@ class PortFixtures private constructor(private val rows: Map<String, List<String
         }
     }
 
-    private fun row(key: String): List<String> =
+    internal fun row(key: String): List<String> =
         rows[key] ?: error("missing key '$key' in $RESOURCE; regenerate it")
 
     fun int(key: String, index: Int = 0): Int = row(key)[index].toInt()
@@ -65,4 +65,54 @@ class PortFixtures private constructor(private val rows: Map<String, List<String
         }
         return SkewEstimator.Plane(data, rows, cols)
     }
+
+    /**
+     * The trace mask, regenerated here rather than transferred.
+     *
+     * Must match `make_port_fixtures.trace_mask` exactly. Integer arithmetic
+     * throughout for the same reason [lcgPlane] uses it: neither side can
+     * then diverge through a floating-point detail the other does not share.
+     * A single ink band whose row wanders as `8 + (c * c) % band_mod`, with
+     * `gap_width` blank columns at every multiple of `gap_mod` — the dropout
+     * the gap bridging exists for, and which also puts the first inked column
+     * away from zero so the span trim has something to trim. The gaps are two
+     * columns wide on purpose: a one-column gap is bridged by every limit
+     * down to 1, so the re-blanking half of the function would never run.
+     */
+    internal fun traceMask(): TraceExtractor.Mask {
+        val rows = int("trace.rows")
+        val cols = int("trace.cols")
+        val gapMod = int("trace.gap_mod")
+        val gapWidth = int("trace.gap_width")
+        val bandMod = int("trace.band_mod")
+        val thickness = int("trace.thickness")
+        val data = ByteArray(rows * cols)
+        for (c in 0 until cols) {
+            if (c % gapMod < gapWidth) continue
+            val top = 8 + (c * c) % bandMod
+            for (k in 0 until thickness) {
+                val r = top + k
+                if (r in 0 until rows) data[r * cols + c] = 1
+            }
+        }
+        return TraceExtractor.Mask(data, rows, cols)
+    }
+
+    /** Straight bands, one per entry in [at]. A 3x4 sheet's column. */
+    internal fun stackedMask(
+        rows: Int, cols: Int, at: List<Int>, thickness: Int
+    ): TraceExtractor.Mask {
+        val data = ByteArray(rows * cols)
+        for (top in at) {
+            for (k in 0 until thickness) {
+                val r = top + k
+                if (r in 0 until rows) {
+                    for (c in 0 until cols) data[r * cols + c] = 1
+                }
+            }
+        }
+        return TraceExtractor.Mask(data, rows, cols)
+    }
+
+    fun ints(key: String): List<Int> = row(key).map { it.toInt() }
 }

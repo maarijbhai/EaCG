@@ -91,7 +91,25 @@ data class PipelineState(
     /** Non-null while a benchmark is running, e.g. "run 4 / 11". */
     val benchmarkProgress: String? = null,
     /** Angle and image the benchmark was taken at, so the table cannot be misread. */
-    val benchmarkLabel: String? = null
+    val benchmarkLabel: String? = null,
+
+    // ---- FR5 to FR8: the tracer, the calibration and the gate ------------
+    /**
+     * The last completed digitisation pass, replaced wholesale rather than
+     * field by field for the same reason [deskew] is: a half-updated set of
+     * waveform, verdict and timings would be a reading of two different runs.
+     */
+    val digitise: DigitisePipeline.Run? = null,
+    /** True while a digitisation is in flight. */
+    val digitising: Boolean = false,
+    /** Which image and scale the digitisation came from. */
+    val digitiseLabel: String? = null,
+    /**
+     * The source waveform the loaded fixture was rendered from, when one is
+     * committed alongside it. Null for the sheets and for anything the user
+     * picked — for an arbitrary photograph there is no right answer.
+     */
+    val truth: DoubleArray? = null
 )
 
 @Composable
@@ -107,7 +125,17 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
      */
     fun load(source: ImageSource, label: String, reference: ReferenceImage?) {
         scope.launch {
-            state = state.copy(busy = true, status = "Loading", reference = reference)
+            // The previous pass's waveform and verdict are cleared here rather
+            // than left on screen: they belong to an image that is no longer
+            // loaded, and a stale verdict beside a new picture is the most
+            // readable way to publish a wrong number.
+            state = state.copy(
+                busy = true, status = "Loading", reference = reference,
+                digitise = null, digitiseLabel = null, truth = null
+            )
+            val truth = runCatching {
+                TruthWaveform.load(context, reference?.truthAsset)
+            }.getOrNull()
             val started = System.nanoTime()
             runCatching {
                 val bmp = source.acquire()
@@ -127,6 +155,7 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
                 .onSuccess { (bmp, grid, preview) ->
                     val ms = (System.nanoTime() - started) / 1_000_000
                     state = state.copy(
+                        truth = truth,
                         bitmap = bmp,
                         sourcePreview = preview,
                         rotatedPreview = null,
@@ -276,6 +305,45 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
         }
     }
 
+    /**
+     * Run FR3 to FR8 on whatever is loaded.
+     *
+     * `expectedDurationS` comes from the fixture when it is known and is null
+     * otherwise, which is the normal case for a picked photograph: nobody can
+     * tell the app how long a stranger's strip was meant to be. The gate then
+     * reports its paper-speed check unavailable rather than inventing a
+     * verdict, and the desktop has measured what that costs.
+     */
+    fun digitise() {
+        val source = state.bitmap ?: return
+        scope.launch {
+            state = state.copy(digitising = true, digitise = null)
+            try {
+                val run = DigitisePipeline.run(
+                    source = source,
+                    truth = state.truth,
+                    truthFs = state.reference?.truthFs ?: 100.0,
+                    expectedDurationS = state.reference?.durationS
+                )
+                state = state.copy(
+                    digitising = false,
+                    digitise = run,
+                    digitiseLabel = "%s, %d x %d".format(
+                        state.sourceLabel ?: "image", source.width, source.height
+                    )
+                )
+            } catch (c: CancellationException) {
+                throw c
+            } catch (e: Throwable) {
+                state = state.copy(
+                    digitising = false,
+                    status = "Digitise failed: ${e::class.java.simpleName}: " +
+                        (e.message ?: "no message")
+                )
+            }
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -329,6 +397,25 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
                 )
             }
         )
+
+        StripRow(
+            enabled = !state.busy,
+            onPick = { ref ->
+                load(
+                    source = AssetSource(context, ref.assetPath),
+                    label = "strip II @ ${ref.renderDpi} dpi (known)",
+                    reference = ref
+                )
+            }
+        )
+
+        DigitiseControl(
+            enabled = state.bitmap != null && !state.busy,
+            busy = state.digitising,
+            onRun = { digitise() }
+        )
+
+        DigitisePanel(run = state.digitise, label = state.digitiseLabel)
 
         Button(
             onClick = {
