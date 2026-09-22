@@ -2000,3 +2000,508 @@ against origin-included, three peaks against two), so golden vectors would
 need generating from a specification rather than from ecgproto. Only its
 shared response function is tested here. And estimate()'s OpenCV half --
 resize, Mat-to-bytes -- is still covered by nothing but the device.
+
+
+================================================================================
+13. FR8 — THE QUALITY GATE, AND WHAT IT CANNOT SEE
+   2026-09-20
+================================================================================
+
+FR8 of the report's requirement list: "the app shall reject or flag a
+digitisation that fails a plausibility check." New this section:
+python/ecgproto/quality.py, python/run_gate.py, python/tests/ (the first
+Python tests in the repository), and results/gate/ — 171 rows over two
+experiments with provenance sidecars.
+
+Read 13.4 before quoting anything. Three failure modes are not caught, one
+of them badly, and the gate's single false-flag source is measured.
+
+--------------------------------------------------------------------------------
+13.1 WHY THIS IS NOT check_calibration, WHICH ALREADY EXISTED
+--------------------------------------------------------------------------------
+
+digitise.check_calibration guards the recovered pitch and has since the B1
+guards went in. It is necessary and it is not FR8, and one measurement
+settles the question. A 3x4 printout rendered by layout.render_12lead and
+fed to the single-strip tracer returns:
+
+  pitch x 8.0000 px/mm, y 8.0001   error 0.00% against a true 8.0
+  anisotropy 0.0000                implied paper speed 26.6 mm/s
+  spacing_cv 0.0000                coverage 1.000
+  PCC against lead II              0.334
+
+Every calibration statistic is correct, because the calibration *was*
+correct. The digitisation was not. A gate on calibration cannot see this
+and no amount of tuning makes it able to; the observable that separates
+the two cases is not in the autocorrelation at all.
+
+So quality.assess() takes the finished DigitiseResult, reuses
+check_calibration as one check among several, and returns
+ACCEPT / FLAG / REJECT — three-valued because FR8 says "reject or flag",
+and because the measurements below show the distinction does real work.
+
+--------------------------------------------------------------------------------
+13.2 EVERY CHECK IS ANCHORED OUTSIDE THE IMAGE, AND ONE IS NEW
+--------------------------------------------------------------------------------
+
+The constraint is inherited, not invented here: GridEstimate's comment
+block already records that confidence sat in 0.45-0.64 across clean,
+rotated, blurred, JPEG-crushed and outright failed estimates, and that
+spacing_cv scored 0.412 on a pitch correct to -0.0% against 0.184 on one
+wrong by +399% — ranking the wrong answer higher. An unresolved 1 mm grid
+is a genuinely regular comb of 5 mm rules, so every statistic computed
+from that comb agrees it is excellent.
+
+  calibration        delegated. Anchor: clinical paper speed 15-60 mm/s,
+                     and the printed grid being square by manufacture.
+  amplitude_pp_mv    Anchor: cardiac physiology. QRS 0.5-2 mV; the
+                     Sokolow-Lyon criterion calls 3.5 mV summed across
+                     two leads pathological, so one lead beyond that is
+                     already extreme. Reject outside 0.05-6.0 mV.
+  heart_rate_bpm     Anchor: human cardiac physiology, 25-300 bpm. A
+                     backstop, not a measurement — see 13.5.
+  coverage           Anchor: a plotted trace is continuous by
+                     construction, so a column without ink is a column
+                     whose ink was not found.
+  traces_per_column  NEW, and the only thing that catches 13.1. Anchor:
+                     the printed layout convention — one lead region
+                     carries one trace. Measured 1.0 on every
+                     single-strip render at 4, 8 and 16 px/mm, and 4.0
+                     on a 3x4 sheet (three cell rows plus the rhythm
+                     strip). Counted in millimetres, not pixels, so it
+                     does not change meaning with camera distance.
+
+Two further checks report themselves UNAVAILABLE rather than passing,
+because a gate that silently skips a test reads as one that passed it:
+
+  implied_gain       BLOCKED. mm/mV is assumed by digitise, never
+                     recovered, so an implied gain computed from it is
+                     that assumption handed back — an internal
+                     self-consistency statistic of exactly the kind
+                     ruled out above. The external anchor exists on the
+                     paper: printouts carry a 1 mV calibration pulse.
+                     Detecting it is unbuilt. This is the requested gain
+                     check, and it cannot be honestly built before that
+                     detector exists.
+  region_duration    BLOCKED on FR4. The 2.5 s per lead region of a 3x4
+                     layout is a strong anchor, but a region's duration
+                     needs its width in pixels, and cell boundaries come
+                     from lead segmentation. The whole-sheet analogue is
+                     available and is what the paper-speed check already
+                     uses.
+
+--------------------------------------------------------------------------------
+13.3 FALSE REJECTS: ZERO. FALSE FLAGS: ONE RECORD, AND IT IS THE RATE CHECK
+--------------------------------------------------------------------------------
+
+results/gate/knowngood.csv. 12 test-fold records, lead II, rendered as
+single strips at 8, 12 and 16 px/mm, plus the three reference printouts.
+
+  known-good strips        36   mean PCC 0.980
+    false rejects           0/36   (0.0%)
+    flagged                 3/36   (8.3%)
+  low-resolution (4 px/mm) 12   mean PCC 0.881
+    false rejects           0/12   (0.0%)
+    flagged                 1/12   (8.3%)
+  reference printouts      3/3 accepted, pitch error 0.55 / 0.36 / 0.13%
+
+All four flags are the same record (93) and the same check: implied
+230.8 bpm against a FLAG_BPM ceiling of 220. It is not a digitisation
+error. implied_bpm returns 230.8 on the ground-truth waveform too —
+identical to one decimal place on the reconstruction — so the flag is a
+property of the signal's morphology, not of anything the pipeline did to
+it. PCC on those rows is 0.978 to 0.995.
+
+That is a finding about the check, not about record 93: a rate check
+computed from the recovered waveform flags on grounds that carry no
+information about digitisation quality. It costs an 8.3% false-flag rate
+here. It is kept, narrowly, for the reason in 13.5.
+
+--------------------------------------------------------------------------------
+13.4 CATCH RATES, WITH THE PCC OF WHAT WAS JUDGED
+--------------------------------------------------------------------------------
+
+results/gate/inject.csv, 120 rows, 12 records at 8 px/mm. "acted" means
+rejected or flagged, i.e. not silently accepted, which is what FR8 asks
+for. PIPELINE_RAISED is counted apart from every gate verdict: digitise
+raises on a pitch that did not resolve, and crediting the gate with that
+would be crediting it with work it did not do.
+
+  mode                        n  rej flag raise  acted   PCC of judged
+  clean                      12    0    1     0     8%   0.978
+  rotated_0.5deg             12    0   12     0   100%   0.857
+  rotated_1.0deg             12    2   10     0   100%   0.675
+  rotated_2.0deg             12    0    0    12     0%   —
+  rotated_5.0deg             12    0    0    12     0%   —
+  pitch_x5.0                 12   12    0     0   100%   0.005
+  pitch_x5.0_no_duration     12    0   12     0   100%   0.005
+  pitch_x0.2                 12   12    0     0   100%   0.003
+  pitch_x0.2_no_duration     12    3    9     0   100%   0.003
+  layout_3x4_no_segmentation 12   12    0     0   100%   0.273
+
+No row was accepted unremarked except one clean row, which is the record
+93 false flag inverted. Attribution, from the per-check columns:
+
+  layout_3x4      traces_per_column rejected 12/12. The amplitude check
+                  caught only 1 of 12 outright (record 9, 8.354 mV
+                  peak-to-peak) and flagged 6 more, so the new check is
+                  doing essentially all of the work here, as designed.
+  pitch_x5.0      calibration rejected 12/12 on implied paper speed.
+  rotated_1.0deg  calibration rejected 2/12 on anisotropy — the y axis
+                  locked onto the 5 mm family at 31.75 px/mm against
+                  8.00 on x — and flagged the other 10.
+  rotated_2, 5    the y axis returns NaN and digitise refuses before the
+                  gate runs. A legitimate refusal; not FR8's.
+
+THE THREE THINGS NOT CAUGHT, stated plainly.
+
+1. A 0.5 degree rotation is flagged, never rejected, and the flag comes
+   from spacing_cv — an INTERNAL statistic, the one this module's own
+   docstring rules out as a rejection criterion. No externally anchored
+   check noticed a 0.5 degree rotation at all. PCC 0.857 against 0.978
+   clean, so the damage is real and the gate's only warning about it
+   rests on a statistic measured to be unreliable elsewhere. Not closed
+   by reaching for that statistic: reported.
+
+2. A 1 degree rotation costs PCC 0.675 and is rejected in 2 cases of 12.
+   The other 10 are flagged. A flag satisfies FR8's wording; whether a
+   PCC 0.675 waveform should be rejected outright is a question about
+   what the downstream consumer tolerates, and that consumer does not
+   exist yet.
+
+3. Worst of the three. With expected_duration_s withheld — the normal
+   condition for a photograph of a stranger's ECG, where nobody can tell
+   the app how long the strip was meant to be — the paper-speed anchor
+   skips itself and a 5x pitch error at PCC 0.005 is only FLAGGED, never
+   rejected. The amplitude check flags it (peak-to-peak lands near
+   0.2 mV, inside the reject band) and the skipped-check warning flags
+   it, and that is all. Rejecting it would mean raising REJECT_PP_MV's
+   floor to 0.20 mV, which real low-amplitude leads occupy, so it is not
+   externally justifiable. Recorded as a limitation of externally
+   anchored checking, not worked around.
+
+--------------------------------------------------------------------------------
+13.5 WHAT THE HEART-RATE CHECK IS FOR, GIVEN 13.3
+--------------------------------------------------------------------------------
+
+It earns its 8.3% false-flag rate on exactly one axis: it is the only
+time-axis anchor that survives when the recording duration is unknown.
+In the _no_duration rows it rejected 3 of 12 on pitch_x0.2 where
+calibration could only flag. On pitch_x5.0_no_duration it contributed 1
+flag of 12. That is thin, and it is measured rather than assumed.
+
+Its detector is crude and documented as such: absolute value about the
+median, peaks 240 ms apart minimum. It over-read a known 95.2 bpm record
+as 164.4 by counting T waves. The bounds are set wide deliberately so
+that the detector's own error cannot reject a good digitisation while a
+factor-of-five scale error must — 25-300 bpm to reject. A 5x error on a
+50 bpm rhythm implies 250 bpm and stays inside even that, so the check
+is a backstop and is not offered as more.
+
+--------------------------------------------------------------------------------
+13.6 TESTS, AND A MUTATION CHECK THAT THEY BITE
+--------------------------------------------------------------------------------
+
+python/tests/ — the first Python tests committed. 31 tests, unittest
+rather than pytest because the repository commits no test dependency and
+there is no reason for this suite to be the first.
+
+  python -m unittest discover -s tests      (from python/)
+  python tests/mutate_quality.py
+
+A gate is unusually easy to test badly: asserting that bad input is
+rejected is satisfied by a function that rejects everything. Every
+failure case is therefore paired with a good case that must be accepted,
+and both sides of every band are pinned.
+
+mutate_quality.py breaks quality.py fifteen ways and requires the suite
+to fail each time. First run: 11 of 15 caught, four survivors, and three
+were genuine holes worth the detail:
+
+  - FLAG_PP_MV loosened to (0.0, 3.5) SURVIVED, because the band tests
+    passed their own bounds in and nothing forced the shipped constants
+    to be the ones in effect. Closed by testing the bands through
+    assess().
+  - "bands >= expected + 1" weakened to "+ 2" SURVIVED: the stacked
+    fixture has four bands, so the threshold was free to sit anywhere
+    between two and four. Closed by a two-band case, which is the
+    failure's actual onset.
+  - The 240 ms refractory period cut tenfold SURVIVED, and this one is
+    the fixture's fault in an instructive way: a triangular spike has
+    one local maximum however close peaks are allowed to be, so a clean
+    spike train has nothing for a refractory period to exclude. Closed
+    by giving every beat a T wave at 200 ms, which is what the exclusion
+    exists for. Correct code 60.0 bpm; mutant 300.0.
+
+  14 of 15 after that. The remaining survivor is reported, not closed:
+  deleting the c.available guard from the verdict combination changes
+  nothing reachable today, because every unavailable check is built with
+  Verdict.ACCEPT. It is an equivalent mutant. The guard stays as the
+  enforcement of an invariant a future check could break; writing a test
+  for an unreachable branch would be testing the test.
+
+--------------------------------------------------------------------------------
+13.7 NOT DONE
+--------------------------------------------------------------------------------
+
+- Not ported to Kotlin. Python only, deliberately.
+- peak_fraction, the deskew parameters and the classical path are
+  untouched. Nothing here required changing them and nothing did.
+- No parameter of the control condition was tuned to improve a catch
+  rate. The thresholds come from the clinical and layout anchors stated
+  in 13.2, and where an anchor does not exist the check reports itself
+  unavailable rather than borrowing one.
+- The gate runs after digitise(), not inside it. digitise(strict=True)
+  still raises on a rejected calibration, which is a different and
+  earlier refusal; run_gate.py uses strict=False throughout so that the
+  gate rather than an exception is the thing being characterised.
+- The 3x4 catch rests on render_12lead's synthetic output. It has not
+  been tested against an ecg-image-kit sheet fed to the single-strip
+  tracer, and the three reference printouts are scored here on their
+  calibration only, there being no per-lead ground truth for them.
+- Perspective distortion is not among the injected failures. It belongs
+  to FR1/FR2 and the anisotropy check already covers its calibration
+  symptom; a properly projected fixture is not in the repository.
+
+
+================================================================================
+14. THE TRACER ON THE DEVICE (FR5-FR7), AND A PITCH SENSITIVITY NOBODY HAD
+    MEASURED
+   2026-09-20
+================================================================================
+
+The app now digitises. Load a strip, press Digitise, and it traces the ink,
+calibrates to millivolts and seconds, gates the result and -- on the bundled
+strips -- scores its own reconstruction against the waveform the image was
+rendered from. Per-stage latency for a completed digitisation, which is what
+FR11 asks for and which nothing could supply before, is on screen.
+
+New: TraceExtractor.kt, QualityGate.kt, Fidelity.kt, DigitisePipeline.kt,
+DigitisePanels.kt, TruthWaveform.kt, three single-strip assets with committed
+ground truth, three Kotlin test classes, and results/gate/pitchsens.csv.
+
+READ 14.4 FIRST IF YOU READ ONLY ONE PART. It says that the pitch accuracy
+FR3 was signed off at is not good enough for FR6 to work, and that the
+knowngood measurements in section 13 were taken under a condition that does
+not occur.
+
+--------------------------------------------------------------------------------
+14.1 WHAT WAS PORTED, AND THE ONE LINE THAT MATTERED MOST
+--------------------------------------------------------------------------------
+
+`binarise_trace`, `trace_positions`, the span trim, `_interpolate_gaps`,
+`baseline_from_trace`, `pixels_to_mv` and the resampling tail of `digitise()`.
+Split the way SkewEstimator was split in 12.5: everything that can carry a
+porting bug is a pure function over arrays and runs under
+`testDebugUnitTest` in under a second; only `binarise` touches OpenCV and is
+therefore device-only, like ImageWarp.
+
+Two channel traps, both of which produce output that is wrong without looking
+wrong:
+
+  1. The Python indexes `image[:, :, 2]` for red because desktop OpenCV reads
+     FILES as BGR. A Mat from an Android Bitmap is RGBA, so red is channel 0.
+     Reading 2 there takes blue, and on a red-gridded printout that inverts
+     which ink survives -- the grid comes through as the trace. It would not
+     look like a channel bug, it would look like a tracer that had gone mad.
+  2. `Core.subtract(Scalar, Mat, Mat)` does not exist in the Java bindings, so
+     `255 - red` is `Core.bitwise_not`. On CV_8U the complement IS 255 - x
+     exactly, so this is the same arithmetic and not an approximation of it.
+
+And the sign convention, which is the single most dangerous line in the port:
+`mv = (baselinePx - yPx) / pxPerMv`. Rows grow down, millivolts grow up.
+Reversed, it yields a waveform correct in every respect except upside down --
+RMSE and SNR call that a large error, PCC calls it a tidy -1.0, which reads
+as a result rather than as a fault. It has its own test, independent of the
+golden vector.
+
+--------------------------------------------------------------------------------
+14.2 THE FIXTURE SET WAS HALF MISSING, AND THAT WAS THE BLOCKER
+--------------------------------------------------------------------------------
+
+All three bundled assets are 3x4 sheets. They are correct fixtures for FR3 --
+grid pitch is a property of the grid and does not care how many leads share
+the page -- and they are invalid for the tracer, which takes the ink centroid
+of a whole column and on a sheet averages four stacked leads into a waveform
+belonging to none of them. Section 13 measured that at PCC 0.273 with pitch
+correct to 0.00% and every calibration statistic clean.
+
+So porting the tracer against only those assets would have produced a screen
+showing a confident wrong curve. `python/make_strip_fixtures.py` renders the
+missing half: lead II of PTB-XL record 9 (fold 10, so never a training
+record) as one continuous 10 s strip at 150, 200 and 300 dpi, with the source
+waveform committed beside it as `strip_ii_truth.csv`.
+
+All three carry the SAME waveform at three scales on purpose, so a difference
+between them is a resolution effect and not a difference in the signal.
+
+The manifest also records what the DESKTOP pipeline gets from the very same
+committed PNG files, so the handset's number has something to be compared
+against. Without that a porting bug would present as a result.
+
+--------------------------------------------------------------------------------
+14.3 PORT FIDELITY, AND THE MUTATION CHECK ON IT
+--------------------------------------------------------------------------------
+
+`make_port_fixtures.py` now emits a tracer section, a band-count section and a
+fidelity section, and three new Kotlin test classes assert the compiled Kotlin
+reproduces them at 1e-12 relative. 39 tests, green.
+
+The mask both sides work from is built from an integer formula rather than
+stored, like the LCG plane before it. One detail of it earned its comment: the
+blank columns are TWO wide, not one. At one wide every `max_gap_px` down to
+and including 1 bridges them, so the re-blanking half of `_interpolate_gaps`
+-- the half that refuses to invent signal across a long gap -- is never
+reached, and a port could omit it entirely and pass. That was not a
+hypothetical; the first version of the fixture had one-wide gaps and the first
+mutation run proved the hole.
+
+`python/mutate_kotlin_tracer.py` breaks the two Kotlin files sixteen ways and
+requires the suite to fail each time. First run: 12 of 16. Three survivors
+were real holes and are closed:
+
+  - trim accepting a SINGLE inked column survived, because the only refusal
+    test passed an all-NaN array and a guard written as `lo < 0` alone handles
+    that while letting one column through.
+  - band count by MEAN instead of median survived, because every mask in the
+    suite was uniform down its columns and the two agree there. Closed with a
+    printed-label case: ink in a few columns must not condemn a good strip.
+  - the band threshold weakened from `>= expected + 1` to `+ 2` survived,
+    because the stacked fixture has four bands and the threshold was free to
+    sit anywhere between two and four. Closed with a two-band case, which is
+    the failure's actual onset.
+
+15 of 16 now. The survivor is reported, not closed: replacing the
+`slope * (t - xLo) + mv[lo]` form of the resampler -- the way `np.interp`
+spells it -- with the algebraically identical fractional-index form agrees to
+better than 1e-12 on this fixture. Both are correct. Tightening the tolerance
+to separate them would make the suite fail on unrelated arithmetic noise.
+
+--------------------------------------------------------------------------------
+14.4 HALF A PERCENT OF PITCH ERROR COSTS A THIRD OF PCC
+--------------------------------------------------------------------------------
+
+This was found by accident and is the most important thing in the section.
+
+The strip fixtures render at 150/200/300 dpi, i.e. 5.906, 7.874 and
+11.811 px/mm. Scoring the desktop pipeline on them gave PCC 0.675, 0.628 and
+0.603 -- against the 0.966 that section 13 reports for a clean strip. The
+difference is not the tracer and not the PNG round trip, which is
+bit-identical. Supply the TRUE pitch to the very same images and PCC is 0.967,
+0.985 and 0.985.
+
+The whole loss is the recovered pitch, and the error responsible is +0.544%,
++0.555% and +0.455%.
+
+MECHANISM. A pitch error is a time-base error. px_per_s = px_per_mm * 25, so
++0.5% stretches a 10 s strip by 50 ms, which at 100 Hz is five samples of
+drift by the end of the record -- comparable to the width of a QRS complex.
+The last beats are then compared against the wrong beats, and PCC has no
+tolerance for that whatever. Note the gain ratio falls with it (0.867 to
+0.507), so gain degradation is NOT purely an amplitude phenomenon: time
+misalignment corrupts the fitted slope too, and reading gain as evidence of a
+calibration fault alone would be wrong.
+
+WHY IT IS +0.5% AND NOT ZERO. At an integer px/mm the printed rules land on
+exact pixel columns and the estimator returns the truth to 0.000%. At
+7.874 px/mm successive 1 mm rules land at 7.874, 15.748, 23.622 ... and
+rasterise to integer columns, so the gaps between them are a sequence of 8s
+and 7s whose MEDIAN -- which is what `_pitch_1d` takes -- is pulled toward the
+nearest integer. Sub-sample refinement recovers part of it, leaving about half
+a percent. This is a property of our synthetic renderer's hard-edged rules; a
+photograph's grid lines are anti-aliased over several pixels and the bias may
+differ, which is one more reason the closed loop has to be broken.
+
+THE SENSITIVITY CURVE. results/gate/pitchsens.csv, 256 rows, 8 records at four
+scales, with an exact fractional pitch error injected onto the GridEstimate so
+that only the pitch varies:
+
+  pitch error    PCC    gain   gate acted
+     0.000%     0.960   0.867      6%
+    +0.050%     0.959   0.865      9%
+    +0.100%     0.939   0.847      6%
+    +0.250%     0.795   0.717      9%
+    +0.500%     0.564   0.507      9%
+    +1.000%     0.371   0.333      3%
+    -0.500%     0.519   0.471      6%
+   estimated    0.658   0.594      6%   (mean error +0.386%)
+
+TWO CONSEQUENCES, both uncomfortable.
+
+1. FR3's acceptance criterion is too loose for FR6 and FR7 to deliver. "Pitch
+   within 1%" was signed off as MET on the strength of +0.61 / +0.32 / +0.08%
+   on the device. Read against this curve those map to roughly PCC 0.5, 0.75
+   and 0.95. The pitch accuracy actually required for a usable reconstruction
+   over a 10 s strip is about 0.1%, which is five to six times tighter than
+   what is currently achieved at 150 and 200 dpi.
+
+2. THE GATE IS COMPLETELY BLIND TO IT. 3 to 9% acted across every row of that
+   table, including the +1% case, and that is the same background rate the
+   clean rows show -- so the gate is not detecting this at all. It cannot: at
+   +0.5% the implied paper speed is 25.1 mm/s against a nominal 25, which is
+   exactly what a correct estimate looks like. No externally anchored check
+   can separate them, and this is a sharper instance of the same limitation
+   section 13.4 recorded for a 0.5 degree rotation. Reported rather than
+   patched with an internal statistic.
+
+AND A CORRECTION TO SECTION 13. `knowngood` renders at 8, 12 and 16 px/mm --
+every one an integer, every one a scale at which the estimator is exactly
+right by construction. Its 0.980 mean PCC and 0/36 false-reject rate are
+therefore measured under a condition that does not occur in practice. The
+false-reject rate stands (the gate accepted good input, which is what it
+claims). The 0.980 does not stand as a figure for what this pipeline achieves
+on a realistically-scaled printout; 0.63 to 0.68 is closer, and the difference
+is entirely calibration.
+
+--------------------------------------------------------------------------------
+14.5 WHAT THE DEVICE GATE CANNOT DO THAT THE PYTHON GATE CAN
+--------------------------------------------------------------------------------
+
+Reported on screen as "Not checked" rather than omitted, because a gate that
+silently skips a test reads as one that passed it.
+
+  anisotropy      `GridEstimator.kt` projects onto COLUMNS ONLY and returns a
+                  single pitch, so the vertical scale is an assumption of
+                  isotropy, not a measurement. Duplicating the one value into
+                  both axes would make anisotropy identically zero and report
+                  a perfectly square grid for a page photographed at any
+                  angle -- the most dangerous kind of clean bill of health. So
+                  the Kotlin gate takes `axesIndependentlyMeasured = false`
+                  and declares the check unavailable. The Python measures both
+                  axes; this is a gap in the port, and it is the obvious next
+                  thing to close.
+  implied gain    No anchor in either language. mm/mV is assumed, never
+                  recovered, so an implied gain is that assumption handed
+                  back. Needs the 1 mV calibration pulse detector.
+  heart rate      Not ported. It depends on SciPy's find_peaks distance
+                  filtering, whose tie-breaking by peak height is fiddly to
+                  reproduce exactly, and section 13.3 measured it
+                  false-flagging 8.3% of known-good input on a record where
+                  the GROUND TRUTH waveform produced the same value. Not worth
+                  a porting hazard for one flag in twelve.
+  paper speed     Available only when the recording duration is known, which
+                  for the bundled strips it is and for a photograph it is not.
+
+--------------------------------------------------------------------------------
+14.6 NOT DONE
+--------------------------------------------------------------------------------
+
+- NOTHING HERE HAS RUN ON THE DEVICE. It compiles, the APK builds, and 39
+  host-side unit tests pass. Every behavioural claim about the phone in this
+  section is a claim about what the code will do, not a measurement. The
+  desktop numbers in 14.4 are measurements.
+- FR4 lead segmentation still does not exist, so the sheets remain
+  undigitisable and the gate's rejection of them is the correct outcome rather
+  than a limitation being worked around.
+- FR10 export is not built. The waveform is on screen and cannot leave the
+  device.
+- No camera. FR1 is still the file picker and the bundled assets.
+- Deskew is not part of DigitisePipeline. It has its own screen and its own
+  ground-truth mechanism, and folding it in would make the pipeline total
+  depend on whether a rotation had been injected.
+- `python/ecgproto/grid_reference.py` is still stale, still carrying the green
+  channel and `0.25 * window_max`. Untouched by this work.
+- The gate's amplitude and coverage thresholds were not retuned in response to
+  14.4, and must not be: the failure there is a calibration fault that the
+  amplitude band happens to be insensitive to, and widening bands to catch it
+  would cost false rejects without addressing the cause.
