@@ -1,0 +1,5 @@
+frame,usable,reference,px_per_mm,duration_s,coverage,amplitude_pp_mv,note,px_per_mm_anchor,pcc_asis,rmse_mv_asis,snr_db_asis,gain_ratio,pcc_lag_only,lag_samples,overlap_lag_s,pcc_best,px_per_mm_best,anchor_error_pct,overlap_best_s,rmse_mv_best,snr_db_best,gain_ratio_best
+REFERENCE,True,ecg00001.png,11.704,10.0,1.0,1.2499,the clean original; every row below is scored against this,,,,,,,,,,,,,,,
+20260921_113331,True,ecg00001.png,,10.0,1.0,1.434,,20.644,0.0897,0.1984,-4.642,0.1313,0.3565,-170,9.66,0.4072,20.2621,1.885,9.728,0.1621,-2.789,0.5739
+20260921_113332,True,ecg00001.png,,10.0,0.9749,1.2641,,20.596,0.1587,0.1707,-3.335,0.1955,0.3082,-170,9.66,0.4411,22.4084,-8.088,9.19,0.1329,-1.202,0.5014
+20260921_113327,True,ecg00001.png,,10.0,1.0,1.0645,,20.776,0.1319,0.1554,-2.517,0.1349,0.4641,-200,9.6,0.472,20.7033,0.351,9.614,0.1183,-0.32,0.4711

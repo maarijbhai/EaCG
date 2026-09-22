@@ -1,0 +1,33 @@
+{
+  "experiment": "pitch",
+  "utc": "2026-09-22T09:35:09+00:00",
+  "git_commit": "8039ea902d02194f633a06db9af147bee035a2a8",
+  "git_dirty": true,
+  "params": {
+    "rate": 500,
+    "rois": "photo_rois.json"
+  },
+  "module_defaults": {
+    "digitise.DEFAULT_PEAK_FRACTION": 0.05,
+    "digitise.MAX_ANISOTROPY": 0.15,
+    "digitise.MAX_SPACING_CV": 0.25,
+    "digitise.PAPER_SPEED_RANGE_MM_S": [
+      15.0,
+      60.0
+    ],
+    "digitise.MM_PER_S": 25.0,
+    "digitise.MM_PER_MV": 10.0,
+    "run_photo.PINNED_PERCENTILE": 96.5,
+    "run_photo.DETREND_PX": 61,
+    "run_photo.PERSPECTIVE_SLICES": 3
+  },
+  "caveat": "FR1 and FR4 do not exist. The page crop and the lead regions came from photo_rois.json, measured by hand. No row is an end-to-end result. The source photographs are in data/a30_pics/ and are not committed, because data/ is gitignored.",
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "scipy": "1.16.2",
+    "opencv": "5.0.0",
+    "platform": "Windows-11-10.0.26100-SP0"
+  },
+  "n_rows": 9
+}

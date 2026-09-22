@@ -1,0 +1,4 @@
+frame_a,frame_b,both_usable,px_per_mm_a,px_per_mm_b,pitch_disagreement_pct,duration_a_s,duration_b_s,coverage_a,coverage_b,pcc_asis,pcc_aligned,align_scale_pct,align_at_bound,align_lag_samples,overlap_s,scale_error_vs_grid_pct
+20260921_113327,20260921_113331,True,20.1366,19.9582,-0.886,10.316,10.342,1.0,1.0,0.847,0.9316,0.25,False,30,10.256,1.136
+20260921_113327,20260921_113332,True,20.1366,20.9392,3.985,10.316,9.836,1.0,0.9749,0.6217,0.8062,1.0,False,244,9.738,-2.985
+20260921_113331,20260921_113332,True,19.9582,20.9392,4.915,10.342,9.836,1.0,0.9749,0.7487,0.8007,0.5,False,210,9.788,-4.415

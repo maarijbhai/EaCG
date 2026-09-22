@@ -1,0 +1,172 @@
+{
+  "_what": "Hand-measured regions of interest in photographs of a real ECG printout.",
+  "_why": [
+    "These exist because FR1 (page detection and perspective rectification) and",
+    "FR4 (lead segmentation) do not. Every box below is work a finished pipeline",
+    "would have to do for itself, done once by a human instead, so that FR3, FR5,",
+    "FR6, FR7 and FR8 can be measured on real photographs *now* rather than after",
+    "two unbuilt stages land. Treat a number produced with these ROIs as a",
+    "measurement of the downstream chain on real ink, never as an end-to-end",
+    "result: the hardest part of the problem has been removed by hand.",
+    "",
+    "Fractions are of the DESKEWED image, and the deskew is the shipped default",
+    "(deskew.estimate_skew with response_fn=digitise.redness, then rotate by",
+    "-angle with expand=True). Fractions rather than pixels because the expand",
+    "grows the canvas by an amount that depends on the recovered angle, so pixel",
+    "boxes measured in one frame do not transfer to another.",
+    "",
+    "The source images live in data/a30_pics/ and are NOT committed: data/ is",
+    "gitignored. This file records what was measured on them so the numbers can",
+    "be recomputed by anyone holding the same photographs."
+  ],
+  "_source": {
+    "device": "Samsung SM-A307FN (Galaxy A30s), the thesis target device",
+    "captured_utc": "2026-09-21",
+    "directory": "data/a30_pics",
+    "printout": "one real clinical 12-lead printout, 3x4 plus a full-width lead II rhythm strip, pale pink grid, a 1 mV calibration pulse printed at the start of each row",
+    "printed_from": "A print of ecg-image-kit/sample-data/ecg-images/ecg00001.png, confirmed by digitising that PNG and scoring it against these photographs (results/photo/source.csv). It is a public-domain scanned ECG image with NO waveform ground truth -- the kit's ecg-time-series/ folder is empty. 'ecg00001' is a filename, not a PTB-XL ecg_id. Fidelity against a waveform is therefore impossible for this page; use --experiment source, which scores against the clean original instead."
+  },
+  "_boxes": {
+    "paper": "gridded paper above the first trace row, used for grid-response measurements that must not see trace ink",
+    "rhythm": "the bottom full-width lead II rhythm strip, the only lead printed as one continuous 10 s trace and therefore the only valid FR5-FR7 input on this page",
+    "cells": "column 1 of the 3x4 block: leads I, II and III, each a 2.5 s window. The x range starts right of the calibration pulse and the printed lead label, both of which would otherwise be traced as signal."
+  },
+  "frames": {
+    "20260921_113331": {
+      "usable": true,
+      "note": "Validated. Paper-band 5 mm comb cv 0.0117; duration anchor gives 20.644 px/mm; all three cells edge-clean. Best repeatability pair with _113327 at PCC 0.847 as-digitised.",
+      "paper": [
+        0.075,
+        0.1,
+        0.925,
+        0.175
+      ],
+      "rhythm": [
+        0.055,
+        0.585,
+        0.945,
+        0.725
+      ],
+      "cells": {
+        "I": [
+          0.075,
+          0.185,
+          0.27,
+          0.305
+        ],
+        "II": [
+          0.075,
+          0.31,
+          0.27,
+          0.435
+        ],
+        "III": [
+          0.075,
+          0.44,
+          0.27,
+          0.565
+        ]
+      }
+    },
+    "20260921_113332": {
+      "usable": true,
+      "note": "Validated. Paper-band comb cv 0.0074; duration anchor 20.596 px/mm. Cells I and II carry slight edge contamination (50 and 15 inked edge pixels); the rhythm strip is edge-clean. Otsu never reaches the correct basin on this frame at any crop tested -- ink stays at 16.9-18.1% where the trace is 3.4%.",
+      "paper": [
+        0.075,
+        0.1,
+        0.925,
+        0.175
+      ],
+      "rhythm": [
+        0.055,
+        0.585,
+        0.945,
+        0.725
+      ],
+      "cells": {
+        "I": [
+          0.075,
+          0.185,
+          0.27,
+          0.305
+        ],
+        "II": [
+          0.075,
+          0.31,
+          0.27,
+          0.435
+        ],
+        "III": [
+          0.075,
+          0.44,
+          0.27,
+          0.565
+        ]
+      }
+    },
+    "20260921_113327": {
+      "usable": true,
+      "note": "Validated, and it was wrongly marked unusable on first reading. An earlier slice-based perspective estimate of 52% was an estimator failure, not perspective: with a comb-regularity guard this is the ONLY frame whose across-page spread is measurable at all, and it is the smallest, 3.48%. Duration anchor 20.776 px/mm. Its rhythm-region comb does fail badly (11.148 px/mm, -44.6% against the duration anchor), which makes it the clearest case for not trusting a comb measured over trace ink. Cells not measured.",
+      "paper": [
+        0.075,
+        0.1,
+        0.925,
+        0.175
+      ],
+      "rhythm": [
+        0.055,
+        0.585,
+        0.945,
+        0.725
+      ],
+      "cells": {
+        "I": [
+          0.075,
+          0.185,
+          0.27,
+          0.305
+        ],
+        "II": [
+          0.075,
+          0.31,
+          0.27,
+          0.435
+        ],
+        "III": [
+          0.075,
+          0.44,
+          0.27,
+          0.565
+        ]
+      },
+      "cells_note": "Copied from _113331 and NOT individually verified; the two frames are framed almost identically. Check edge cleanliness before quoting a per-cell number from this frame."
+    },
+    "20260921_113130": {
+      "usable": false,
+      "note": "12 MP. Paper-band comb not recoverable. Not resolution-limited: at ~14.7 px/mm it clears the 3 px/mm floor comfortably, and it fails on blur and oblique lighting. EXIF orientation 6.",
+      "paper": null,
+      "rhythm": null,
+      "cells": {}
+    },
+    "20260921_113036": {
+      "usable": false,
+      "note": "12 MP, no 5 mm comb recoverable. EXIF orientation 6.",
+      "paper": null,
+      "rhythm": null,
+      "cells": {}
+    },
+    "20260921_113053": {
+      "usable": false,
+      "note": "12 MP, no 5 mm comb recoverable. EXIF orientation 3.",
+      "paper": null,
+      "rhythm": null,
+      "cells": {}
+    }
+  },
+  "_measured": [
+    "Every claim in the per-frame notes comes from results/photo/*.csv.",
+    "Where a note and a CSV disagree, the CSV is right: these notes are a",
+    "reading aid, not a source. Several first-pass figures quoted during",
+    "development did not survive a standardised ROI and are gone."
+  ]
+}

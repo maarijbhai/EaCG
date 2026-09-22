@@ -1,0 +1,10 @@
+frame,usable,megapixels,skew_deg,shipped_px_per_mm_x,shipped_px_per_mm_y,shipped_n_peaks_x,shipped_n_peaks_y,shipped_failed,paper_comb_5mm_px,paper_comb_cv,paper_px_per_mm,paper_n_peaks,rhythm_px_per_mm,rhythm_comb_cv,vertical_gradient_pct,inked_width_px,implied_duration_paper_s,duration_error_paper_pct,implied_duration_rhythm_s,duration_error_rhythm_pct,px_per_mm_implied_by_10s,perspective_slices_ok,perspective_spread_pct,slice_px_per_mm,pair_px_per_mm_a,pair_px_per_mm_b,pair_disagreement_pct
+20260921_113331,True,25.3,0.5,,,0,0,True,99.7909,0.0117,19.9582,5,21.9064,0.003,9.761,5161,10.3436,3.436,9.4237,-5.763,20.644,1,,,,,
+20260921_113332,True,25.74,1.0,,,0,0,True,104.6959,0.0074,20.9392,5,22.9219,0.0034,9.469,5149,9.8361,-1.639,8.9853,-10.147,20.596,1,,,,,
+20260921_113327,True,25.74,1.0,,,0,0,True,100.6832,0.0107,20.1366,5,11.1477,0.3091,-44.64,5194,10.3175,3.175,18.637,86.37,20.776,3,3.482,20.1982;20.2162;19.5205,,,
+20260921_113130,False,12.22,0.5,,,0,0,True,,,,,,,,,,,,,,,,,,,
+20260921_113036,False,12.11,0.2435,,,0,1,True,,,,,,,,,,,,,,,,,,,
+20260921_113053,False,12.18,-0.39,,,0,1,True,,,,,,,,,,,,,,,,,,,
+20260921_113331 vs 20260921_113332,True,,,,,,,,,,,,,,,,,,,,,,,,19.9582,20.9392,4.915
+20260921_113331 vs 20260921_113327,True,,,,,,,,,,,,,,,,,,,,,,,,19.9582,20.1366,0.894
+20260921_113332 vs 20260921_113327,True,,,,,,,,,,,,,,,,,,,,,,,,20.9392,20.1366,-3.833
