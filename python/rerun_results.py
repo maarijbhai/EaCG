@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import time
@@ -49,6 +50,13 @@ FIXED_ARGV = {
 
 #: Parameters recorded for provenance that are not command-line flags.
 NOT_FLAGS = {"rois"}
+
+
+def known_flags(script: Path) -> set[str]:
+    """The long options a script's argparse accepts, from its --help."""
+    out = subprocess.run([sys.executable, "-B", script.name, "--help"],
+                         cwd=script.parent, capture_output=True, text=True).stdout
+    return set(re.findall(r"(--[a-z][a-z0-9-]*)", out))
 
 
 def argv_for(params: dict) -> list[str]:
@@ -94,9 +102,21 @@ def main(argv=None) -> int:
             print(f"skip {sc.relative_to(REPO)}: no script mapping or no params")
             continue
         fixed = FIXED_ARGV.get((sc.parent.name, meta["experiment"]))
+        params = dict(meta["params"])
+        # A sidecar can record flags its script has since dropped: the grid
+        # suite recorded --thresholds, --synth-px-per-mm and --detrend-window,
+        # which run_gridchannel.py now fixes as constants. Passing them
+        # would be a usage error, so each is dropped with a notice -- the
+        # script's constant is then what runs, and the notice says so.
+        accepted = known_flags(a.repo / "python" / script)
+        for k in list(params):
+            if "--" + k.replace("_", "-") not in accepted and k not in NOT_FLAGS:
+                print(f"  note: {script} no longer takes --{k.replace('_', '-')}; "
+                      f"recorded value {params[k]!r} not passed")
+                del params[k]
         cmd = [sys.executable, "-B", "-u", script,
                *(fixed if fixed is not None else
-                 ["--experiment", meta["experiment"], *argv_for(meta["params"])])]
+                 ["--experiment", meta["experiment"], *argv_for(params)])]
         print(f"{sc.parent.name}/{meta['experiment']}: {' '.join(cmd[3:])}", flush=True)
         if a.dry_run:
             continue
