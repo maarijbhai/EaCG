@@ -300,7 +300,11 @@ def load_oriented(name: str) -> np.ndarray:
     already-straightened image returns ~0 for every response and compares
     nothing.
     """
-    path = PHOTOS / f"{name}.jpg"
+    return read_oriented(PHOTOS / f"{name}.jpg")
+
+
+def read_oriented(path: Path) -> np.ndarray:
+    """`load_oriented` for any path. Shared with `score_kit_photo.py`."""
     image = cv2.imread(str(path), cv2.IMREAD_COLOR)
     if image is None:
         raise FileNotFoundError(f"cannot read {path}")

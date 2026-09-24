@@ -1,0 +1,5 @@
+{
+  "_what": "Photographs of printed make_kit_target.py sheets, and the four sheet corners clicked in each.",
+  "_why": "FR1 (page detection) does not exist; these corners stand in for it. Corners are of the PRINTED IMAGE (where the grid meets white paper), TL TR BR BL, in the photograph's pixels after EXIF rotation. Rough clicks are fine: page.refine_corners moves them onto the sheet edges. The photographs live in data/kit_photos/ and are not committed.",
+  "photos": {}
+}

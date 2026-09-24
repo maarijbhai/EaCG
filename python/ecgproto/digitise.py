@@ -528,11 +528,17 @@ def digitise(
     max_gap_px: int = 12,
     expected_duration_s: float | None = None,
     strict: bool = True,
+    mask: np.ndarray | None = None,
 ) -> DigitiseResult:
     """Trace a **single continuous strip** and return it in millivolts.
 
     See the module docstring: on a 3x4 printout this silently produces
     nonsense. One strip at a time.
+
+    `mask` is an already-computed trace mask the same shape as `image`. It
+    defaults to `binarise_trace(image)`; pass one when the strip carries ink
+    that is not trace -- a lead name, "25mm/s" -- and it has been removed,
+    as `segment.isolate_trace` does.
 
     `mm_per_s` and `mm_per_mv` are the *paper* calibration, which is a
     property of the machine that printed the ECG and is not recoverable
@@ -566,7 +572,7 @@ def digitise(
             "calibration rejected: " + "; ".join(calibration.reasons)
         )
 
-    mask = binarise_trace(image)
+    mask = binarise_trace(image) if mask is None else np.asarray(mask, bool)
     y_px = trace_positions(mask)
 
     inked = np.flatnonzero(np.isfinite(y_px))
