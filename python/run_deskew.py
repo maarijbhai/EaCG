@@ -95,7 +95,7 @@ def git_commit() -> tuple[str, bool]:
             ["git", "rev-parse", "HEAD"], cwd=REPO, text=True
         ).strip()
         dirty = bool(subprocess.check_output(
-            ["git", "status", "--porcelain"], cwd=REPO, text=True
+            ["git", "status", "--porcelain", "--untracked-files=no"], cwd=REPO, text=True
         ).strip())
         return sha, dirty
     except Exception:

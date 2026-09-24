@@ -115,7 +115,7 @@ def git_commit() -> str:
         if rev.returncode != 0:
             return "unknown"
         status = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain", "--untracked-files=no"],
             cwd=REPO_ROOT, capture_output=True, text=True, timeout=10,
         )
         dirty = "+dirty" if status.stdout.strip() else ""
