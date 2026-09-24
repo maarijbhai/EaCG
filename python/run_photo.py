@@ -215,7 +215,7 @@ def git_commit() -> tuple[str, bool]:
         sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO,
                              capture_output=True, text=True, check=True
                              ).stdout.strip()
-        dirty = bool(subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=REPO,
+        dirty = bool(subprocess.run(["git", "status", "--porcelain", "--untracked-files=no", "--", "python"], cwd=REPO,
                                     capture_output=True, text=True, check=True
                                     ).stdout.strip())
         return sha, dirty

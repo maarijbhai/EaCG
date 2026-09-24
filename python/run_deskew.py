@@ -89,13 +89,20 @@ DAMAGE_THRESHOLD_DEG = 0.1
 
 
 def git_commit() -> tuple[str, bool]:
-    """Current commit and whether the tree is dirty."""
+    """Current commit and whether the code that ran was uncommitted.
+
+    Dirty means uncommitted changes to tracked files under python/. Not the
+    whole tree: every run rewrites its own results/ files, so a whole-tree
+    check marked every sidecar dirty from the second experiment of a session
+    onward -- all of them committed before 2026-09-24 say so -- and the flag
+    carried no information.
+    """
     try:
         sha = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=REPO, text=True
         ).strip()
         dirty = bool(subprocess.check_output(
-            ["git", "status", "--porcelain", "--untracked-files=no"], cwd=REPO, text=True
+            ["git", "status", "--porcelain", "--untracked-files=no", "--", "python"], cwd=REPO, text=True
         ).strip())
         return sha, dirty
     except Exception:
