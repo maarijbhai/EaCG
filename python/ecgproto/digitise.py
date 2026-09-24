@@ -319,10 +319,12 @@ def estimate_grid_pitch(
     """
     response = redness(image)
     px_x, peaks_x, conf_x, cv_x = _pitch_1d(
-        response.sum(axis=0), min_pitch_px, max_pitch_px, peak_fraction
+        detrend(response.mean(axis=0)), min_pitch_px, max_pitch_px,
+        peak_fraction
     )
     px_y, peaks_y, conf_y, cv_y = _pitch_1d(
-        response.sum(axis=1), min_pitch_px, max_pitch_px, peak_fraction
+        detrend(response.mean(axis=1)), min_pitch_px, max_pitch_px,
+        peak_fraction
     )
     # The worse axis, not the mean: one bad axis is enough to poison
     # `px_per_mm`, and averaging would hide it behind a good one.
@@ -337,6 +339,40 @@ def estimate_grid_pitch(
         n_peaks_y=peaks_y,
         spacing_cv=worst_cv,
     )
+
+
+#: Moving-average window, in samples, subtracted from a grid projection
+#: before its autocorrelation. The same 41 as `GridEstimator.kt`'s
+#: DETREND_WINDOW, and the same shrinking window at the ends, so the two
+#: ports agree -- this was the last structural difference between them.
+#:
+#: Why it is here at all, measured rather than argued. A photograph's
+#: projection carries a broad illumination envelope that subtracting the
+#: mean does not remove, and on all six 2026-09-21 frames it flattened every
+#: comb peak below DEFAULT_PEAK_FRACTION: the shipped call returned NaN on
+#: both axes (`results/photo/pitch.csv`, `shipped_failed`), while
+#: `run_photo.py` recovered the 5 mm comb immediately once it detrended.
+#: On renders it is close to inert -- the Kotlin docstring records under
+#: 0.15 percentage points on every fixture.
+DETREND_WINDOW = 41
+
+
+def detrend(profile: np.ndarray, window: int = DETREND_WINDOW) -> np.ndarray:
+    """Subtract a centred moving average; the window shrinks at the ends.
+
+    Line for line `GridEstimator.projectionProfile`'s high-pass: element x
+    loses the mean of profile[max(0, x-h) : min(n, x+h+1)], h = window//2.
+    """
+    p = np.asarray(profile, dtype=np.float64)
+    n = len(p)
+    if window <= 1 or n == 0:
+        return p.copy()
+    h = window // 2
+    c = np.concatenate(([0.0], np.cumsum(p)))
+    idx = np.arange(n)
+    a = np.maximum(0, idx - h)
+    b = np.minimum(n, idx + h + 1)
+    return p - (c[b] - c[a]) / (b - a)
 
 
 def _pitch_1d(
