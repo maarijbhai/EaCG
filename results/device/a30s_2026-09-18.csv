@@ -1,0 +1,7 @@
+measured_local_date,device,build,stage,fixture,megapixels,metric,value,unit,true_value,error_pct,note
+2026-09-18,Samsung SM-A307FN (Galaxy A30s),debug,FR3 grid estimate,gt_norm_150dpi,,px_per_mm,5.941,px/mm,5.90551,0.61,read off the results panel
+2026-09-18,Samsung SM-A307FN (Galaxy A30s),debug,FR3 grid estimate,gt_mi_200dpi,,px_per_mm,7.899,px/mm,7.87402,0.32,read off the results panel
+2026-09-18,Samsung SM-A307FN (Galaxy A30s),debug,FR3 grid estimate,gt_sttc_300dpi,8.41,px_per_mm,11.82,px/mm,11.81102,0.08,read off the results panel
+2026-09-18,Samsung SM-A307FN (Galaxy A30s),debug,FR3 grid estimate,gt_sttc_300dpi,8.41,latency,205,ms,,,single observation; no warm-up discarded
+2026-09-18,Samsung SM-A307FN (Galaxy A30s),debug,load (decode + grid + preview),gt_sttc_300dpi,8.41,latency,428,ms,,,single observation
+2026-09-18,Samsung SM-A307FN (Galaxy A30s),debug,FR2 inject-estimate-correct (harness included),gt_sttc_300dpi,8.41,latency,3500,ms,,,approximate; includes the injecting warp and previews (HARNESS) -- NOT a pipeline figure (limitation 9)

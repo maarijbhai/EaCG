@@ -1,0 +1,10 @@
+{
+  "experiment": "first target-device measurements",
+  "measured": "2026-09-18, local time",
+  "transcribed": "2026-09-24, from CHANGES.txt section 12.4 and 12.7 (commits 75ffb06, 202d46e)",
+  "git_commit_of_app": "not recorded at the time; at or after 9d4acab (the grid port reconciliation), without which these fixtures return NaN, and before 75ffb06",
+  "device": "Samsung SM-A307FN (Galaxy A30s), Exynos 7904, 3 GB RAM",
+  "build": "debug",
+  "method": "Read off the app's own results panel by a human and typed into CHANGES.txt. NOT machine-logged: single observations, no warm-up discarded, no run-to-run spread. The 3500 ms figure is approximate and harness-inclusive.",
+  "caveat": "Committed so that these numbers can be cited from results/ like every other measurement, and so that their weakness is recorded beside them. Superseded by any machine-logged device CSV (e.g. an exported PhotoPipeline run)."
+}
