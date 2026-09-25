@@ -451,7 +451,7 @@ ECG:
 | INT8 destroys sub-pixel tracer precision | medium | Test FP16; report the trade. Measure on photographs. |
 | Latency budget blown by 12 per-lead passes | medium | Rhythm-strip-only learned tracer as the documented fallback. |
 | Domain gap too large (renders → photographs) | medium | Kit augmentation; report both numbers; the gap is a result. |
-| Kit's pale minor grid (254,223,219) unrecoverable from a photograph | **known, measured** | Do not depend on 1 mm rules. Use 5 mm comb plus an external anchor. |
+| Kit's pale minor grid, RGB (254,223,219) = BGR (219,223,254), unrecoverable from a photograph | **not measured on a kit print** (corrected 2026-09-24). The photographs behind this claim are of `ecg00001.png`, a different page with its own grid. On *simulated* photographs of the kit sheets the 1 mm rules survive in the redness autocorrelation (comb contrast 0.07-0.57), but the peak-height rule still locks onto 2x or 5x -- a selection failure, not missing information. | Resolve harmonic locks by testing sub-multiples (`digitise._resolve_harmonic`), and keep the 10 s duration anchor as the external check. |
 | Scope creep into classification | medium | It is optional. Phase 4 only if Phases 0–3 are measured and written up. |
 | Time | high | Phases 0 and 1 plus more photographs would make a complete, defensible thesis with no neural network at all. Treat Phase 3 as the upside, not the core. |
 

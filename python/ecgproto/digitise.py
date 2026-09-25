@@ -44,6 +44,9 @@ class GridEstimate:
     n_peaks_x: int
     n_peaks_y: int
     spacing_cv: float = float("nan")   # see below; the usable discriminator
+    #: 1, or the factor `_resolve_harmonic` divided a harmonic lock by.
+    harmonic_x: int = 1
+    harmonic_y: int = 1
 
     @property
     def px_per_mm(self) -> float:
@@ -267,6 +270,7 @@ def estimate_grid_pitch(
     min_pitch_px: float = 3.0,
     max_pitch_px: float = 80.0,
     peak_fraction: float = DEFAULT_PEAK_FRACTION,
+    resolve_harmonics: bool = True,
 ) -> GridEstimate:
     """Recover pixels-per-millimetre from the printed grid, per axis.
 
@@ -303,10 +307,13 @@ def estimate_grid_pitch(
       removes them. This is what `DEFAULT_PEAK_FRACTION` was lowered for.
       The margin is source-dependent by a factor of eight -- the synthetic
       renders here put both families at 0.78 to 0.83 -- so no fixed height
-      threshold is safe for every printer. A selection rule that tests a
-      candidate fundamental against its own harmonics, rather than against
-      an absolute height, would not have this failure mode; that is a
-      change to the control condition and has not been made.
+      threshold is safe for every printer. `_resolve_harmonic` now tests
+      each candidate fundamental against its own sub-multiples and walks a
+      2x or 5x lock down to the 1 mm pitch when the finer comb is evidenced
+      (`resolve_harmonics=True`, the default, as in `GridEstimator.kt`).
+      Pass False for the original height-threshold rule, which is kept as
+      the control. It cannot help when the 1 mm rules are genuinely absent
+      from the image; that case still needs an outside anchor.
     * **Rotation.** The projection smears line energy across columns once
       the grid is more than about a degree off-axis, flattening the peaks.
       Deskew first.
@@ -318,13 +325,13 @@ def estimate_grid_pitch(
       photocopy and the profile is then mostly trace, not grid.
     """
     response = redness(image)
-    px_x, peaks_x, conf_x, cv_x = _pitch_1d(
+    px_x, peaks_x, conf_x, cv_x, div_x = _pitch_1d_full(
         detrend(response.mean(axis=0)), min_pitch_px, max_pitch_px,
-        peak_fraction
+        peak_fraction, resolve_harmonics
     )
-    px_y, peaks_y, conf_y, cv_y = _pitch_1d(
+    px_y, peaks_y, conf_y, cv_y, div_y = _pitch_1d_full(
         detrend(response.mean(axis=1)), min_pitch_px, max_pitch_px,
-        peak_fraction
+        peak_fraction, resolve_harmonics
     )
     # The worse axis, not the mean: one bad axis is enough to poison
     # `px_per_mm`, and averaging would hide it behind a good one.
@@ -338,6 +345,8 @@ def estimate_grid_pitch(
         n_peaks_x=peaks_x,
         n_peaks_y=peaks_y,
         spacing_cv=worst_cv,
+        harmonic_x=div_x,
+        harmonic_y=div_y,
     )
 
 
@@ -387,23 +396,42 @@ def _pitch_1d(
     is the coefficient of variation of the spacings between successive
     peaks -- see `GridEstimate` for why it, and not the peak height, is the
     value worth thresholding on.
+
+    This is the original height-threshold rule, with no harmonic
+    resolution: the control, and the "spacing" the harmonic test starts
+    from. `estimate_grid_pitch` calls `_pitch_1d_full`.
+    """
+    return _pitch_1d_full(profile, min_pitch_px, max_pitch_px, peak_fraction,
+                          resolve_harmonics=False)[:4]
+
+
+def _pitch_1d_full(
+    profile: np.ndarray,
+    min_pitch_px: float,
+    max_pitch_px: float,
+    peak_fraction: float,
+    resolve_harmonics: bool,
+) -> tuple[float, int, float, float, int]:
+    """`_pitch_1d`, optionally with `_resolve_harmonic`, plus its divisor.
+
+    The harmonic is resolved on the raw median spacing *before* the range
+    check, as `GridEstimator.estimate` does. The order matters on a
+    photograph: at ~20 px/mm a 5 mm lock is a 100 px spacing, outside
+    `max_pitch_px`, and checking first would return NaN for a lock the test
+    can undo.
     """
     profile = np.asarray(profile, dtype=np.float64)
     profile = profile - profile.mean()
     if not np.any(profile):
-        return float("nan"), 0, 0.0, float("nan")
+        return float("nan"), 0, 0.0, float("nan"), 1
 
-    # FFT autocorrelation, zero-padded to avoid circular wraparound.
-    n = 1 << int(np.ceil(np.log2(len(profile) * 2)))
-    spectrum = np.fft.rfft(profile, n=n)
-    ac = np.fft.irfft(spectrum * np.conj(spectrum), n=n)[: len(profile)]
+    ac = _acf(profile)
     if ac[0] <= 0:
-        return float("nan"), 0, 0.0, float("nan")
-    ac = ac / ac[0]
+        return float("nan"), 0, 0.0, float("nan"), 1
 
     hi = min(int(max_pitch_px * 6), len(ac) - 1)
     if hi <= int(min_pitch_px) + 2:
-        return float("nan"), 0, 0.0, float("nan")
+        return float("nan"), 0, 0.0, float("nan"), 1
 
     peaks, props = sps.find_peaks(ac[:hi], height=peak_fraction * ac[:hi].max())
     # `keep` is held rather than recomputed further down: after `peaks` is
@@ -421,8 +449,9 @@ def _pitch_1d(
         # One peak (or none) is not a comb; fall back to its lag if plausible.
         if len(peaks) == 1 and min_pitch_px <= peaks[0] <= max_pitch_px:
             # A single peak has no spacings to be regular about.
-            return float(_refine(ac, peaks[0])), 1, float(ac[peaks[0]]), float("nan")
-        return float("nan"), int(len(peaks)), 0.0, float("nan")
+            return (float(_refine(ac, peaks[0])), 1, float(ac[peaks[0]]),
+                    float("nan"), 1)
+        return float("nan"), int(len(peaks)), 0.0, float("nan"), 1
 
     refined = np.array([_refine(ac, p) for p in peaks], dtype=np.float64)
     # Include the origin: the lag of the first peak is itself one period.
@@ -433,11 +462,155 @@ def _pitch_1d(
         else float("nan")
     )
 
+    divisor = 1
+    if resolve_harmonics:
+        pitch, divisor = _resolve_harmonic_acf(ac, pitch, min_pitch_px)
+
     if not (min_pitch_px <= pitch <= max_pitch_px):
-        return float("nan"), int(len(peaks)), 0.0, spacing_cv
+        return float("nan"), int(len(peaks)), 0.0, spacing_cv, divisor
 
     heights = props["peak_heights"][keep] if len(props) else ac[peaks]
-    return pitch, int(len(peaks)), float(np.mean(heights)), spacing_cv
+    return pitch, int(len(peaks)), float(np.mean(heights)), spacing_cv, divisor
+
+
+# --------------------------------------------------------------------------
+# Harmonic resolution. `GridEstimator.kt` ports this line for line, and
+# `make_photo_port_fixtures.py` holds the two to the same answer.
+# --------------------------------------------------------------------------
+
+#: Smallest "novelty" -- see `_novelty` -- at which a sub-multiple of the
+#: measured spacing is accepted as the true fundamental. Measured over
+#: synthetic renders at 3-16 px/mm, the three kit fixtures and simulated
+#: photographs of the four kit sheets (2026-09-24): wherever the spacing was
+#: already right, every sub-multiple scored at most 0.044; where it had
+#: locked onto twice the pitch, the half scored 0.198 to 0.409. 0.10 sits
+#: between with room on both sides.
+HARMONIC_NOVELTY = 0.10
+
+#: Sub-multiples tried. 2 and 5 are the ones ECG paper produces -- a comb
+#: read at every other rule, and the 5 mm majors read as the pitch -- and 3
+#: and 4 cost nothing to test and would catch a comb read at every third or
+#: fourth rule.
+HARMONIC_DIVISORS = (2, 3, 4, 5)
+
+#: How many periods of the measured spacing the novelty is averaged over.
+HARMONIC_PERIODS = 5
+
+
+def _acf(profile: np.ndarray) -> np.ndarray:
+    """Autocorrelation of the mean-subtracted profile, normalised by lag 0.
+
+    FFT, zero-padded to avoid circular wraparound. Returned unnormalised if
+    lag 0 is not positive, so a caller can tell a flat profile apart.
+    """
+    p = np.asarray(profile, dtype=np.float64)
+    p = p - p.mean()
+    n = 1 << int(np.ceil(np.log2(len(p) * 2)))
+    s = np.fft.rfft(p, n=n)
+    ac = np.fft.irfft(s * np.conj(s), n=n)[: len(p)]
+    return ac / ac[0] if ac[0] > 0 else ac
+
+
+def _acf_at(ac: np.ndarray, lags: np.ndarray) -> np.ndarray:
+    """Linear interpolation of the autocorrelation at fractional lags.
+
+    Lags whose right neighbour is past the end are skipped, not clamped.
+    """
+    lags = np.asarray(lags, dtype=np.float64)
+    i = np.floor(lags).astype(int)
+    f = lags - i
+    ok = i + 1 < len(ac)
+    return ac[i[ok]] * (1.0 - f[ok]) + ac[i[ok] + 1] * f[ok]
+
+
+def _novelty(ac: np.ndarray, pitch: float, m: int) -> float:
+    """Evidence that pitch/m, not pitch, is the fundamental.
+
+    The autocorrelation is sampled at the multiples of q = pitch/m that are
+    NOT multiples of pitch -- the lags a finer comb would add -- and compared
+    with the mid-points between multiples of q. A genuine finer comb has
+    peaks at the new lags and troughs between; a spurious one has a trough
+    or nothing at the new lags. Only the new lags are used because at the
+    old ones the peaks are there regardless, and counting them would make
+    every sub-multiple look half-right.
+    """
+    q = pitch / m
+    span = min(len(ac) - 2, HARMONIC_PERIODS * pitch)
+    k = np.arange(1, int(span / q) + 1)
+    new = k[k % m != 0]
+    if new.size == 0:
+        return float("nan")
+    fresh = _acf_at(ac, new * q)
+    troughs = _acf_at(ac, (k - 0.5) * q)
+    if fresh.size == 0 or troughs.size == 0:
+        return float("nan")
+    return float(np.mean(fresh) - np.mean(troughs))
+
+
+def _refine_fundamental(ac: np.ndarray, q: float) -> float:
+    """Re-measure a corrected fundamental from many peaks, not one division.
+
+    Dividing a median spacing by the divisor leaves that spacing's error
+    divided by less than it could be. The peak nearest each multiple j*q
+    (searched within a quarter period) is refined parabolically and the
+    pitch taken as the least-squares slope of lag against j through the
+    origin, which weights the long lags where a fixed lag error is the
+    smallest fraction of a period.
+    """
+    span = min(len(ac) - 2, HARMONIC_PERIODS * 5 * q)
+    js, lags = [], []
+    for j in range(1, int(span / q) + 1):
+        lo = max(1, int(np.floor(j * q - q / 4)))
+        hi = min(len(ac) - 2, int(np.ceil(j * q + q / 4)))
+        if hi <= lo:
+            break
+        i = lo + int(np.argmax(ac[lo:hi + 1]))
+        if i in (lo, hi):
+            continue                          # no interior maximum
+        js.append(j)
+        lags.append(_refine(ac, i))
+    if len(js) < 2:
+        return q
+    js, lags = np.asarray(js, float), np.asarray(lags, float)
+    return float(np.dot(js, lags) / np.dot(js, js))
+
+
+def _resolve_harmonic(profile: np.ndarray, pitch: float,
+                      min_pitch_px: float) -> tuple[float, int]:
+    """`_resolve_harmonic_acf` on a projection profile."""
+    return _resolve_harmonic_acf(_acf(profile), pitch, min_pitch_px)
+
+
+def _resolve_harmonic_acf(ac: np.ndarray, pitch: float,
+                          min_pitch_px: float) -> tuple[float, int]:
+    """Replace a harmonic lock with the fundamental. Returns (pitch, divisor).
+
+    Repeatedly tries each divisor in HARMONIC_DIVISORS and moves to the one
+    with the largest novelty above HARMONIC_NOVELTY, so a spacing locked at
+    10x (two corrections, 2 then 5) is walked all the way down. Leaves the
+    pitch alone -- divisor 1 -- when no finer comb is evidenced, which is
+    also what it must do when the 1 mm rules are genuinely not in the image:
+    it cannot invent a comb that is not there, and that case still needs an
+    outside anchor (limitation 15).
+    """
+    if not np.isfinite(pitch):
+        return pitch, 1
+    total = 1
+    while True:
+        best, best_n = None, HARMONIC_NOVELTY
+        for m in HARMONIC_DIVISORS:
+            if pitch / m < min_pitch_px:
+                continue
+            n = _novelty(ac, pitch, m)
+            if np.isfinite(n) and n > best_n:
+                best, best_n = m, n
+        if best is None:
+            break
+        pitch /= best
+        total *= best
+    if total > 1:
+        pitch = _refine_fundamental(ac, pitch)
+    return float(pitch), total
 
 
 def _refine(ac: np.ndarray, lag: int) -> float:
@@ -451,9 +624,53 @@ def _refine(ac: np.ndarray, lag: int) -> float:
     return float(lag + 0.5 * (y0 - y2) / denom)
 
 
+#: Quantile of the inverted red channel taken as the ink level by
+#: `midpoint_threshold`. `TraceExtractor.INK_QUANTILE`.
+INK_QUANTILE = 0.999
+
+#: Smallest gap, in grey levels, between the paper level and the threshold.
+#: On a blank or near-blank crop the ink quantile sits on paper noise and the
+#: midpoint would land inside it. `TraceExtractor.MIN_INK_CONTRAST`.
+MIN_INK_CONTRAST = 16
+
+
+def midpoint_threshold(inverted: np.ndarray) -> int:
+    """Threshold halfway between paper and ink on the inverted red channel.
+
+    Paper is the median level and ink the `INK_QUANTILE` level, both by
+    nearest rank over the 256-bin histogram -- the smallest level whose
+    cumulative count reaches the fraction -- so this and
+    `TraceExtractor.midpointThreshold` agree exactly, with no interpolation
+    to differ over.
+
+    Why not Otsu, measured: on the 2026-09-21 photographs Otsu's threshold
+    jumps between two basins as the crop changes -- 109 -> 125, ink 12.09%
+    -> 4.47%, between rhythm-strip crops 44 rows apart -- because the trace
+    mode is small beside paper-plus-grid (`results/photo/otsu.csv`). The
+    paper median and the ink tail barely move with how much blank paper is
+    included, so neither does their midpoint.
+    """
+    v = np.asarray(inverted)
+    if v.dtype != np.uint8:
+        raise ValueError(f"need uint8 levels, got {v.dtype}")
+    hist = np.bincount(v.ravel(), minlength=256)
+    n = int(hist.sum())
+    if n == 0:
+        raise ValueError("empty image")
+    cum = np.cumsum(hist)
+
+    def level(fraction: float) -> int:
+        return int(np.searchsorted(cum, fraction * n, side="left"))
+
+    paper = level(0.5)
+    ink = level(INK_QUANTILE)
+    return max(paper + MIN_INK_CONTRAST, (paper + ink) // 2)
+
+
 def binarise_trace(
     image: np.ndarray,
     threshold: int | None = None,
+    method: str = "midpoint",
 ) -> np.ndarray:
     """Boolean mask of trace ink, shape (H, W).
 
@@ -465,15 +682,23 @@ def binarise_trace(
     photocopy the grid is neutral and dark and this function will return it
     as trace. Replacing this stage is expected work for real images.
 
-    Threshold defaults to Otsu on the inverted red channel.
+    With no explicit `threshold`, `method` picks it on the inverted red
+    channel: "midpoint" (`midpoint_threshold`, the default, as in
+    `TraceExtractor.binarise`) or "otsu", the original rule, kept as the
+    control.
     """
     red = image[:, :, 2] if image.ndim == 3 else image
     inverted = (255 - red).astype(np.uint8)
 
-    if threshold is None:
+    if threshold is None and method == "otsu":
         _, mask = cv2.threshold(
             inverted, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
         )
+    elif threshold is None:
+        if method != "midpoint":
+            raise ValueError(f"unknown threshold method {method!r}")
+        t = midpoint_threshold(inverted)
+        _, mask = cv2.threshold(inverted, t, 255, cv2.THRESH_BINARY)
     else:
         _, mask = cv2.threshold(inverted, int(threshold), 255, cv2.THRESH_BINARY)
 

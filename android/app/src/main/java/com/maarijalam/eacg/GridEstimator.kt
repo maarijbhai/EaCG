@@ -69,7 +69,9 @@ object GridEstimator {
         val pxPerMm: Double,
         val peakCount: Int,
         val objective: Double,
-        val elapsedMs: Long
+        val elapsedMs: Long,
+        /** 1, or the factor [resolveHarmonic] divided a harmonic lock by. */
+        val harmonicDivisor: Int = 1
     ) {
         val valid: Boolean get() = !pxPerMm.isNaN()
 
@@ -82,7 +84,8 @@ object GridEstimator {
         val t0 = System.nanoTime()
         val profile = projectionProfile(bitmap)
         val acf = autocorrelation(profile)
-        val (pitch, peaks, obj) = pitchFromAcf(acf)
+        val (spacing, peaks, obj) = pitchFromAcf(acf)
+        val (pitch, divisor) = resolveHarmonic(acf, spacing, MIN_PX_PER_MM)
         val ms = (System.nanoTime() - t0) / 1_000_000
 
         val ok = !pitch.isNaN() && pitch in MIN_PX_PER_MM..MAX_PX_PER_MM
@@ -90,8 +93,101 @@ object GridEstimator {
             pxPerMm = if (ok) pitch else Double.NaN,
             peakCount = peaks,
             objective = obj,
-            elapsedMs = ms
+            elapsedMs = ms,
+            harmonicDivisor = divisor
         )
+    }
+
+    // ----------------------------------------------------------------------
+    // Harmonic resolution. Port of `digitise._resolve_harmonic` and its
+    // helpers, pure Kotlin over the autocorrelation, so the port tests can
+    // feed it the Python's own autocorrelation and demand the same answer.
+    // The rule and its measurements are documented on the Python side.
+    // ----------------------------------------------------------------------
+
+    const val HARMONIC_NOVELTY = 0.10
+    val HARMONIC_DIVISORS = intArrayOf(2, 3, 4, 5)
+    const val HARMONIC_PERIODS = 5
+
+    /** `_acf_at`: linear interpolation; lags past the end are skipped. */
+    private fun acfMean(acf: DoubleArray, lags: DoubleArray): Double {
+        var s = 0.0
+        var n = 0
+        for (lag in lags) {
+            val i = kotlin.math.floor(lag).toInt()
+            if (i + 1 >= acf.size) continue
+            val f = lag - i
+            s += acf[i] * (1.0 - f) + acf[i + 1] * f
+            n++
+        }
+        return if (n == 0) Double.NaN else s / n
+    }
+
+    /** `_novelty`: evidence that pitch/m, not pitch, is the fundamental. */
+    internal fun novelty(acf: DoubleArray, pitch: Double, m: Int): Double {
+        val q = pitch / m
+        val span = minOf((acf.size - 2).toDouble(), HARMONIC_PERIODS * pitch)
+        val kMax = (span / q).toInt()
+        val fresh = ArrayList<Double>()
+        val troughs = DoubleArray(kMax) { (it + 1 - 0.5) * q }
+        for (k in 1..kMax) if (k % m != 0) fresh.add(k * q)
+        if (fresh.isEmpty()) return Double.NaN
+        return acfMean(acf, fresh.toDoubleArray()) - acfMean(acf, troughs)
+    }
+
+    /** `digitise._refine`: parabolic sub-sample peak. */
+    private fun refineLag(acf: DoubleArray, lag: Int): Double {
+        if (lag <= 0 || lag >= acf.size - 1) return lag.toDouble()
+        val y0 = acf[lag - 1]; val y1 = acf[lag]; val y2 = acf[lag + 1]
+        val den = y0 - 2.0 * y1 + y2
+        if (den == 0.0) return lag.toDouble()
+        return lag + 0.5 * (y0 - y2) / den
+    }
+
+    /** `_refine_fundamental`: slope of peak lag against multiple. */
+    internal fun refineFundamental(acf: DoubleArray, q: Double): Double {
+        val span = minOf((acf.size - 2).toDouble(), HARMONIC_PERIODS * 5 * q)
+        var sjj = 0.0
+        var sjl = 0.0
+        var found = 0
+        for (j in 1..(span / q).toInt()) {
+            val lo = maxOf(1, kotlin.math.floor(j * q - q / 4).toInt())
+            val hi = minOf(acf.size - 2, kotlin.math.ceil(j * q + q / 4).toInt())
+            if (hi <= lo) break
+            var best = lo
+            for (i in lo..hi) if (acf[i] > acf[best]) best = i
+            if (best == lo || best == hi) continue
+            sjj += j.toDouble() * j
+            sjl += j * refineLag(acf, best)
+            found++
+        }
+        return if (found < 2) q else sjl / sjj
+    }
+
+    /**
+     * `_resolve_harmonic`: walk a harmonic lock down to the fundamental.
+     * Returns (pitch, total divisor); (pitch, 1) when no finer comb is
+     * evidenced -- including when the 1 mm rules are simply not in the
+     * image, which this cannot fix and must not pretend to.
+     */
+    fun resolveHarmonic(acf: DoubleArray, spacing: Double, minPitch: Double): Pair<Double, Int> {
+        if (!spacing.isFinite()) return spacing to 1
+        var pitch = spacing
+        var total = 1
+        while (true) {
+            var best = -1
+            var bestN = HARMONIC_NOVELTY
+            for (m in HARMONIC_DIVISORS) {
+                if (pitch / m < minPitch) continue
+                val n = novelty(acf, pitch, m)
+                if (n.isFinite() && n > bestN) { best = m; bestN = n }
+            }
+            if (best < 0) break
+            pitch /= best
+            total *= best
+        }
+        if (total > 1) pitch = refineFundamental(acf, pitch)
+        return pitch to total
     }
 
     /**

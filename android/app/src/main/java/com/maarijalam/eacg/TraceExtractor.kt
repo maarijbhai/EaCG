@@ -84,6 +84,63 @@ object TraceExtractor {
     const val DEFAULT_MAX_GAP_PX = 12
 
     // ----------------------------------------------------------------------
+    // FR5. The threshold rule: pure Kotlin, covered by the port tests.
+    // ----------------------------------------------------------------------
+
+    /** How [binarise] picks its threshold when none is given. */
+    enum class ThresholdMethod { MIDPOINT, OTSU }
+
+    /** `digitise.INK_QUANTILE`. */
+    const val INK_QUANTILE = 0.999
+
+    /** `digitise.MIN_INK_CONTRAST`, grey levels. */
+    const val MIN_INK_CONTRAST = 16
+
+    /**
+     * `digitise.midpoint_threshold`: halfway between the paper level and the
+     * ink level of the inverted red channel, from its 256-bin histogram.
+     *
+     * Paper is the median, ink the 99.9th percentile, both by nearest rank
+     * -- the smallest level whose cumulative count reaches the fraction --
+     * so the two ports agree exactly, with no interpolation to differ over.
+     * Why this and not Otsu is measured in the Python docstring: Otsu's
+     * threshold jumps between two basins as the crop changes, this one does
+     * not.
+     */
+    fun midpointThreshold(hist: LongArray): Int {
+        require(hist.size == 256) { "need a 256-bin histogram, got ${hist.size}" }
+        var n = 0L
+        for (c in hist) n += c
+        require(n > 0) { "empty histogram" }
+        fun level(fraction: Double): Int {
+            val target = fraction * n
+            var cum = 0L
+            for (i in 0 until 256) {
+                cum += hist[i]
+                if (cum >= target) return i
+            }
+            return 255
+        }
+        val paper = level(0.5)
+        val ink = level(INK_QUANTILE)
+        return maxOf(paper + MIN_INK_CONTRAST, (paper + ink) / 2)
+    }
+
+    /** 256-bin histogram of a CV_8UC1 Mat. */
+    fun histogram(gray: Mat): LongArray {
+        val bytes = ByteArray((gray.total() * gray.channels()).toInt())
+        val m = if (gray.isContinuous) gray else gray.clone()
+        try {
+            m.get(0, 0, bytes)
+        } finally {
+            if (m !== gray) m.release()
+        }
+        val h = LongArray(256)
+        for (b in bytes) h[b.toInt() and 0xFF]++
+        return h
+    }
+
+    // ----------------------------------------------------------------------
     // FR5. The OpenCV half: device-only, not covered by the port tests.
     // ----------------------------------------------------------------------
 
@@ -101,13 +158,19 @@ object TraceExtractor {
      *
      * The logic itself: both white paper and the red grid have a saturated
      * red channel while the neutral dark trace does not, so `255 - R` is
-     * large only on trace ink. Otsu picks the threshold. A single 3x3
+     * large only on trace ink. [midpointThreshold] picks the threshold by
+     * default; Otsu, the original rule, is kept selectable as the
+     * control. A single 3x3
      * opening removes isolated speckle without eating a trace one or two
      * pixels wide.
      *
      * Caller owns the returned Mat.
      */
-    fun binarise(rgba: Mat, threshold: Int? = null): Mat {
+    fun binarise(
+        rgba: Mat,
+        threshold: Int? = null,
+        method: ThresholdMethod = ThresholdMethod.MIDPOINT
+    ): Mat {
         // `extractChannel` rather than `split`, and the difference is real on
         // this hardware: split allocates all four single-channel planes, which
         // on the 8.4 MP sheet fixture is four 8.4 MB natives where one is
@@ -126,10 +189,15 @@ object TraceExtractor {
                 // rather than an approximation of it.
                 Core.bitwise_not(red, inverted)
                 val mask = Mat()
-                if (threshold == null) {
+                if (threshold == null && method == ThresholdMethod.OTSU) {
                     Imgproc.threshold(
                         inverted, mask, 0.0, 255.0,
                         Imgproc.THRESH_BINARY or Imgproc.THRESH_OTSU
+                    )
+                } else if (threshold == null) {
+                    val t = midpointThreshold(histogram(inverted))
+                    Imgproc.threshold(
+                        inverted, mask, t.toDouble(), 255.0, Imgproc.THRESH_BINARY
                     )
                 } else {
                     Imgproc.threshold(
