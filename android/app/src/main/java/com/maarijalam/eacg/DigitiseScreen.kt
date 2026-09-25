@@ -417,6 +417,11 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
 
         DigitisePanel(run = state.digitise, label = state.digitiseLabel)
 
+        // A photograph of a printed sheet, end to end: corners, rectify,
+        // locate the rhythm strip, calibrate, trace, gate, score, export.
+        // Its own state, because it has its own image and its own truth.
+        PhotoScoreSection()
+
         Button(
             onClick = {
                 picker.launch(

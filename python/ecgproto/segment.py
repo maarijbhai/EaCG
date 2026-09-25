@@ -163,7 +163,7 @@ def isolate_trace(mask: np.ndarray,
     # genuine piece of trace fills columns nothing else does.
     covered = np.zeros(m.shape[1], dtype=bool)
     keep = np.zeros(n, dtype=bool)
-    for i in 1 + np.argsort(-stats[1:, cv2.CC_STAT_WIDTH]):
+    for i in 1 + np.argsort(-stats[1:, cv2.CC_STAT_WIDTH], kind="stable"):
         x, w = stats[i, cv2.CC_STAT_LEFT], stats[i, cv2.CC_STAT_WIDTH]
         if w < min_w:
             break
@@ -208,6 +208,36 @@ class StripLocation:
         return image[self.y0:self.y1, self.x0:self.x1]
 
 
+def find_peaks_distance(x: np.ndarray, distance: int) -> np.ndarray:
+    """`scipy.signal.find_peaks(x, distance=distance)`, with ties made stable.
+
+    scipy visits peaks tallest first and drops any within `distance` of one
+    already kept, ordering them with numpy's default quicksort -- which is
+    not stable, so between two equal heights the survivor is an accident of
+    the sort. A port cannot reproduce that, and `StripLocator.findPeaks`
+    does not try: it sorts stably, so among equal heights the rightmost is
+    visited first. This does the same, and is identical to scipy wherever
+    no two local maxima are tied. Measured on the port fixture's integer-
+    valued test vector, scipy kept 20 peaks and the stable rule 22.
+    """
+    peaks = sps.find_peaks(x)[0]
+    if distance <= 1 or peaks.size < 2:
+        return peaks
+    keep = np.ones(peaks.size, dtype=bool)
+    for j in np.argsort(x[peaks], kind="stable")[::-1]:
+        if not keep[j]:
+            continue
+        k = j - 1
+        while k >= 0 and peaks[j] - peaks[k] < distance:
+            keep[k] = False
+            k -= 1
+        k = j + 1
+        while k < peaks.size and peaks[k] - peaks[j] < distance:
+            keep[k] = False
+            k += 1
+    return peaks[keep]
+
+
 def locate_rhythm_strip(
     image: np.ndarray,
     mask: np.ndarray | None = None,
@@ -228,14 +258,20 @@ def locate_rhythm_strip(
     rows[:edge] = 0.0
     rows[h - edge:] = 0.0
     win = max(5, int(h * SMOOTH_FRACTION)) | 1
-    smooth = np.convolve(rows, np.ones(win) / win, mode="same")
+    # Sum, then divide once: on integer row counts the sum is exact, so a
+    # flat top stays exactly flat and `StripLocator.convolveSameBox` agrees
+    # to the bit. Scaling each term by 1/win first left rounding noise that
+    # the two ports resolved into different peaks on the same plateau.
+    smooth = np.convolve(rows, np.ones(win), mode="same") / win
 
-    peaks, _ = sps.find_peaks(smooth, distance=max(1, int(h * MIN_ROW_SPACING_FRACTION)))
+    peaks = find_peaks_distance(smooth, max(1, int(h * MIN_ROW_SPACING_FRACTION)))
     if len(peaks) < n_rows:
         raise RuntimeError(
             f"found {len(peaks)} trace rows, expected {n_rows}; is the image "
             "cropped to the page, and is it a 3x4 sheet with a rhythm strip?")
-    peaks = np.sort(peaks[np.argsort(smooth[peaks])[::-1]][:n_rows])
+    # Stable, so equal heights keep the upper row -- as `sortedByDescending`
+    # does in StripLocator.kt. `argsort(...)[::-1]` reversed the tie order.
+    peaks = np.sort(peaks[np.argsort(-smooth[peaks], kind="stable")][:n_rows])
 
     band, above = int(peaks[-1]), int(peaks[-2])
     y0 = above + int(np.argmin(smooth[above:band]))

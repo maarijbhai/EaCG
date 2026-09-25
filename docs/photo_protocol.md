@@ -223,9 +223,17 @@ gives is the number this whole exercise exists to produce.**
 
 ## 7. What has and has not been measured
 
-**Not measured: anything from a real photograph.** No print has been made and
-no photograph taken. Every figure quoted in this document comes from either the
-closed-loop renders or from *simulated* photographs — a rendered page put
+**Superseded in part (2026-09-24).** Six real photographs now exist, of a
+print of ecg-image-kit's `ecg00001.png` -- a page with no waveform ground truth
+(CLAUDE.md limitation 15, `results/photo/`). What follows was written before
+them and still holds for the single-strip targets: no print of a
+`make_print_target.py` page has been photographed. For the full-sheet route
+with ground truth, see §8.
+
+**Not measured, when this was written: anything from a real photograph.** No
+print had been made and no photograph taken. Every figure quoted in this
+document comes from either the closed-loop renders or from *simulated*
+photographs — a rendered page put
 through a synthetic perspective warp, blur, illumination gradient, sensor noise
 and JPEG compression.
 
@@ -239,3 +247,98 @@ What the simulation did establish is that the *failure modes are reachable*:
 the 5× harmonic lock in §3 is real behaviour of `estimate_grid_pitch` on a
 degraded image, and it is silent. Whether a real camera provokes it, and at
 what lighting, is exactly what shots 1–9 are for.
+
+---
+
+## 8. Full 3x4 sheets with ground truth — the route to use now
+
+`make_kit_target.py` renders a PTB-XL fold-10 record as an ecg-image-kit
+clinical sheet (3x4 plus a full-width lead II rhythm strip, 1 mV pulses, lead
+names) at true scale, and keeps the record's waveform and every plotted
+pixel beside it. A photograph of that print is the first image in this
+project with **both** a real camera **and** a waveform to score against.
+Four are generated: PTB-XL 9, 38, 40 and 57, in `out/kit_targets/`.
+
+What differs from §0–§7, and why:
+
+- **No crop marks.** The sheet's own grid runs to its edge; the four corners
+  are where the pink grid meets white paper. Leave **at least 1 cm of white
+  paper visible on every side** in the photograph: `page.refine_corners`
+  finds each edge as the place where the grid rules crossing it stop, and it
+  needs bare paper beyond the edge to see that.
+- **Rough clicks are fine.** The refinement moves each click onto the edge to
+  within half a pixel on simulated photographs, from up to 10 px away. You
+  do not need the zoomed precision §5 asks for.
+- **Scoring is automatic past the corners.** The rhythm strip is located, the
+  printed text and calibration pulse are cut away, and three calibrations
+  are scored side by side (`grid`, `comb`, and the 10 s `duration` anchor).
+
+### 8.1 Print and verify
+
+1. Open each `out/kit_targets/<name>/<name>.pdf`. **Two pages: print both,
+   one job**, colour, A4, landscape, **Actual size / 100%** — the rules of §1
+   all apply.
+2. On page 2, measure the **100 mm bar** with a ruler (±0.5 mm). If it is
+   wrong, the job was scaled: reprint, do not photograph. Write the measured
+   value on the back of page 1.
+
+### 8.2 Photograph — on the Galaxy A30s
+
+Same set-up as §3 and §4 (flat, matte surface, even diffuse light, HDR and
+flash off, focus on the grid). Per sheet:
+
+| # | shot | why |
+|---|---|---|
+| 1–3 | square on, whole sheet plus the white border, three times | the repeatability floor for this sheet |
+| 4 | tilted ~15° out of plane | mild perspective, what a hand-held capture really gets |
+| 5 | (optional) single side lamp | the lighting failure of §3 |
+
+Four sheets x 3–5 shots is 12–20 photographs, about fifteen minutes.
+
+### 8.3 Score on the desktop
+
+1. Copy the originals (cable, not a messenger app) into `data/kit_photos/`.
+2. Register each once, clicking the four sheet corners
+   (top-left, top-right, bottom-right, bottom-left):
+
+   ```
+   cd python
+   python score_kit_photo.py --add 20261001_101500.jpg --target ptbxl9_kit_500hz_300dpi --pick
+   ```
+
+   The corners go into `python/kit_photos.json`, which is committed; the
+   photographs are not.
+3. Score everything registered:
+
+   ```
+   python score_kit_photo.py
+   ```
+
+   writes `results/kitphoto/score.csv` and a sidecar, plus overlays in
+   `out/kitphoto/<photo>/` — look at `known_overlay.png` (blue: where the kit
+   plotted the trace; red: where the tracer found it) before believing a
+   number.
+
+### 8.4 Score the same photographs on the phone
+
+The photographs are already in the phone's gallery. In the app, **Photograph
+of a printed sheet**: pick the photograph, choose its PTB-XL number, tap the
+four corners, **Score photograph**, then **Export CSV**. The CSV lands in
+`Downloads/EaCG/` with the corners, the per-stage timings and each
+calibration's waveform and scores in its header; copy it to
+`data/device_exports/`. The phone downsamples to 2560 px on the long side
+(about 9 px/mm on this sheet), so its numbers are for that resolution and
+the desktop's are for the full frame — compare like with like.
+
+### 8.5 Reading the rows
+
+- `mode=known` hands the tracer the true scale and crop: it measures FR5–FR6
+  on real ink. `trace_rmse_mm` is the tracer's position error in millimetres
+  against the kit's own plotted pixels — no calibration involved at all.
+- `mode=pipeline` is everything automatic past the corners. Read
+  `pitch_error_pct` beside `pcc_asis`: limitation 14 says a 0.5% scale error
+  alone costs a third of PCC.
+- `corner_shift_px_max` large (tens of px) means a click was far off or a
+  corner is not where you think; `edge_fit_rmse_px_max` above ~2 px means an
+  edge is not straight — a curled page.
+
