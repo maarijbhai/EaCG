@@ -1,8 +1,8 @@
 {
   "experiment": "repeat",
-  "utc": "2026-09-22T13:52:00+00:00",
-  "git_commit": "8039ea902d02194f633a06db9af147bee035a2a8",
-  "git_dirty": true,
+  "utc": "2026-09-25T12:31:03+00:00",
+  "git_commit": "97fbc6786ef0fd33e7b86e5f77e61154e6b6c57e",
+  "git_dirty": false,
   "params": {
     "rate": 500,
     "rois": "photo_rois.json"
@@ -21,7 +21,8 @@
     "run_photo.DETREND_PX": 61,
     "run_photo.PERSPECTIVE_SLICES": 3,
     "run_photo.SLICE_MAX_CV": 0.05,
-    "run_photo.ALIGN_HALF_RANGE": 0.1
+    "run_photo.ALIGN_HALF_RANGE": 0.1,
+    "run_photo.MIN_OVERLAP_S": 8.5
   },
   "caveat": "FR1 and FR4 do not exist. The page crop and the lead regions came from photo_rois.json, measured by hand. No row is an end-to-end result. The source photographs are in data/a30_pics/ and are not committed, because data/ is gitignored.",
   "versions": {

@@ -1,8 +1,8 @@
 {
   "experiment": "finerobust",
-  "utc": "2026-09-17T09:00:45+00:00",
-  "git_commit": "970672c8d8f11b5d71f6ad4f787b933fa91d29d1",
-  "git_dirty": true,
+  "utc": "2026-09-25T10:29:24+00:00",
+  "git_commit": "97fbc6786ef0fd33e7b86e5f77e61154e6b6c57e",
+  "git_dirty": false,
   "params": {
     "root": "C:\\dev\\ECG-App\\data\\ptb-xl\\1.0.3",
     "n": 10,

@@ -1,12 +1,12 @@
 condition,px_per_mm_x,px_per_mm_y,true_px_per_mm,pitch_error_x_pct,anisotropy,confidence,spacing_cv,implied_mm_per_s,calibration_ok,reasons,warnings
-clean,7.9021,7.9249,7.874,0.4,0.0029,0.238,0.4598,27.84,True,,autocorrelation peak spacings are irregular (cv 0.460 > 0.250)
-rotated_1.0deg,39.3694,nan,7.874,400.0,nan,0.2487,0.2717,5.66,False,"an axis failed to resolve (x=39.36935372580166, y=nan) | implied paper speed 5.7 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)",autocorrelation peak spacings are irregular (cv 0.272 > 0.250)
-rotated_3.0deg,39.1877,nan,7.874,397.7,nan,0.061,0.7605,5.83,False,"an axis failed to resolve (x=39.18772708469896, y=nan) | implied paper speed 5.8 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)",autocorrelation peak spacings are irregular (cv 0.761 > 0.250)
-rotated_6.0deg,nan,nan,7.874,nan,nan,0.0,nan,nan,False,"an axis failed to resolve (x=nan, y=nan)",
-blur_2.0,39.3707,39.372,7.874,400.0,0.0,0.8411,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)",
-blur_5.0,39.3742,39.3813,7.874,400.1,0.0002,0.846,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)",
-jpeg_q10,39.2539,39.3911,7.874,398.5,0.0035,0.6579,0.0053,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)",
-render_8.0px_per_mm,8.0,8.0,8.0,-0.0,0.0,0.6189,0.0001,26.0,True,,
-render_4.0px_per_mm,4.0,4.0,4.0,-0.0,0.0,0.5167,0.0009,26.0,True,,
-render_2.5px_per_mm,nan,nan,2.5,nan,nan,0.0,0.9396,nan,False,"an axis failed to resolve (x=nan, y=nan)",autocorrelation peak spacings are irregular (cv 0.940 > 0.250)
-render_2.0px_per_mm,nan,nan,2.0,nan,nan,0.0,0.1773,nan,False,"an axis failed to resolve (x=nan, y=nan)",
+clean,7.9018,7.9221,7.874,0.4,0.0026,0.2385,0.3583,27.84,True,,autocorrelation peak spacings are irregular (cv 0.358 > 0.250)
+rotated_1.0deg,39.3595,39.3592,7.874,399.9,0.0,0.5592,0.0023,5.67,False,"implied paper speed 5.7 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)",
+rotated_3.0deg,39.3166,7.8649,7.874,399.3,1.3332,0.5526,0.4326,5.81,False,"anisotropy 1.333 exceeds 0.150 (x=39.317, y=7.865 px/mm) -- perspective, or one axis locked onto a harmonic | implied paper speed 5.8 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)",autocorrelation peak spacings are irregular (cv 0.433 > 0.250)
+rotated_6.0deg,39.1637,39.1477,7.874,397.4,0.0004,0.6309,0.0049,6.04,False,"implied paper speed 6.0 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)",
+blur_2.0,39.3704,39.3675,7.874,400.0,0.0001,0.8448,0.0006,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)",
+blur_5.0,39.3725,39.3723,7.874,400.0,0.0,0.861,0.0004,5.59,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)",
+jpeg_q10,39.2612,39.3947,7.874,398.6,0.0034,0.6653,0.0053,5.6,False,"implied paper speed 5.6 mm/s outside [15, 60] -- pitch is probably wrong by an integer factor (nominal 25 mm/s)",
+render_8.0px_per_mm,8.0,7.9999,8.0,-0.0,0.0,0.6199,0.0001,26.0,True,,
+render_4.0px_per_mm,4.0,4.0001,4.0,-0.0,0.0,0.5173,0.0011,26.0,True,,
+render_2.5px_per_mm,nan,nan,2.5,nan,nan,0.0,0.9045,nan,False,"an axis failed to resolve (x=nan, y=nan)",autocorrelation peak spacings are irregular (cv 0.904 > 0.250)
+render_2.0px_per_mm,nan,nan,2.0,nan,nan,0.0,0.1778,nan,False,"an axis failed to resolve (x=nan, y=nan)",

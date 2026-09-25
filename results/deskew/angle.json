@@ -1,8 +1,8 @@
 {
   "experiment": "angle",
-  "utc": "2026-09-17T08:48:50+00:00",
-  "git_commit": "970672c8d8f11b5d71f6ad4f787b933fa91d29d1",
-  "git_dirty": true,
+  "utc": "2026-09-25T10:23:15+00:00",
+  "git_commit": "97fbc6786ef0fd33e7b86e5f77e61154e6b6c57e",
+  "git_dirty": false,
   "params": {
     "root": "C:\\dev\\ECG-App\\data\\ptb-xl\\1.0.3",
     "n": 12,
@@ -28,6 +28,22 @@
     "measure": "ssd",
     "interp": "lanczos",
     "sim_interp": "lanczos"
+  },
+  "module_defaults": {
+    "deskew.COARSE_HALF_RANGE_DEG": 10.0,
+    "deskew.COARSE_STEP_DEG": 0.5,
+    "deskew.COARSE_MAX_DIM": 900,
+    "deskew.FINE_HALF_RANGE_DEG": 0.5,
+    "deskew.FINE_STEP_DEG": 0.05,
+    "deskew.FINE_MAX_DIM": 900,
+    "deskew.DEFAULT_INTERPOLATION": "lanczos",
+    "digitise.DEFAULT_PEAK_FRACTION": 0.05,
+    "digitise.MAX_ANISOTROPY": 0.15,
+    "digitise.MAX_SPACING_CV": 0.25,
+    "digitise.PAPER_SPEED_RANGE_MM_S": [
+      15.0,
+      60.0
+    ]
   },
   "versions": {
     "python": "3.13.5",
