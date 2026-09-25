@@ -707,7 +707,9 @@ def experiment_otsu(rois: dict) -> list[dict]:
             inv = (255 - cv2.split(strip)[2]).astype(np.uint8)
             otsu_t, _ = cv2.threshold(inv, 0, 255,
                                       cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            m_otsu = dig.binarise_trace(strip)
+            # Explicitly Otsu: the default is the midpoint rule now, and this
+            # column exists to show why Otsu was replaced.
+            m_otsu = dig.binarise_trace(strip, method="otsu")
             m_pin, pin_t = pinned_mask(strip)
             rows.append({
                 "frame": name,
