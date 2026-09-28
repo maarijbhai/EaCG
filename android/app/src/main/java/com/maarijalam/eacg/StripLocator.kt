@@ -31,6 +31,8 @@ object StripLocator {
     const val CLOSE_FRACTION = 0.035
     const val PULSE_SEARCH_FRACTION = 0.03
     const val PULSE_START_FRACTION = 0.005
+    /** `segment.PULSE_LEADIN_FRACTION`: a thin lead-in the rising edge may follow. */
+    const val PULSE_LEADIN_FRACTION = 0.015
     const val PULSE_TAIL_FACTOR = 3.0
     const val TRACE_MIN_WIDTH_FRACTION = 0.03
     const val BRIDGE_FRACTION = 0.002
@@ -295,23 +297,30 @@ object StripLocator {
             for (r in 0 until trace.rows) if (trace.data[r * width + cc] != 0.toByte()) s++
             counts[cc] = s.toDouble()
         }
-        val searchN = min(width, max(2, (width * PULSE_SEARCH_FRACTION).toInt()))
-        val startN = min(width, max(1, (width * PULSE_START_FRACTION).toInt()))
+        // A thin lead-in (a grid fragment, a pen landing) may precede the
+        // rising edge: skip it, as `segment.locate_rhythm_strip` does.
+        val base = medianPositive(counts)
+        val leadMax = (width * PULSE_LEADIN_FRACTION).toInt()
+        var lead = 0
+        while (lead < min(leadMax, width) && counts[lead] <= PULSE_TAIL_FACTOR * base) lead++
+        if (lead >= leadMax) lead = 0
+        val searchEnd = min(width, lead + max(2, (width * PULSE_SEARCH_FRACTION).toInt()))
+        val startEnd = min(width, lead + max(1, (width * PULSE_START_FRACTION).toInt()))
         var searchMax = 0.0
-        for (i in 0 until searchN) searchMax = max(searchMax, counts[i])
+        for (i in lead until searchEnd) searchMax = max(searchMax, counts[i])
         var startMax = 0.0
-        for (i in 0 until startN) startMax = max(startMax, counts[i])
+        for (i in lead until startEnd) startMax = max(startMax, counts[i])
 
         var pulseX1 = -1
         var t0X = x0.toDouble()
         if (searchMax > 0.0) {
             // Clusters of tall columns; the falling edge is the SECOND.
             val clusters = ArrayList<IntArray>()
-            var i = 0
-            while (i < searchN) {
+            var i = lead
+            while (i < searchEnd) {
                 if (counts[i] < 0.5 * searchMax) { i++; continue }
                 var e = i
-                while (e < searchN && counts[e] >= 0.5 * searchMax) e++
+                while (e < searchEnd && counts[e] >= 0.5 * searchMax) e++
                 clusters.add(intArrayOf(i, e - 1))
                 i = e
             }
@@ -320,7 +329,6 @@ object StripLocator {
                 val last = clusters[1][1]
                 t0X = x0 + 0.5 * (first + last)
                 pulseX1 = x0 + last + 1
-                val base = medianPositive(counts)
                 var j = last + 1
                 while (j < width && counts[j] > PULSE_TAIL_FACTOR * base) j++
                 x0 += j

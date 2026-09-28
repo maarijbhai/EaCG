@@ -157,6 +157,21 @@ def main() -> int:
     m = synth_sheet()
     emit_mask(lines, "synth", m)
     emit_location(lines, "synth", m)
+    # The same sheet with a calibration pulse at the start of the rhythm row
+    # and a short thin fragment before it -- what a grid remnant at the strip
+    # edge looks like on a photograph. Exercises the lead-in branch of the
+    # pulse test (segment.PULSE_LEADIN_FRACTION), which synth alone does not.
+    lm = m.copy()
+    band = slice(291, 329)
+    lm[band, 0:62] = False
+    lm[317:320, 18:25] = True            # the lead-in fragment
+    lm[295:320, 27:29] = True            # rising edge
+    lm[295:297, 27:46] = True            # flat top
+    lm[295:320, 44:46] = True            # falling edge
+    row61 = int(np.flatnonzero(m[band, 62])[0]) + band.start if m[band, 62].any() else 318
+    lm[min(317, row61):max(320, row61 + 1), 46:62] = True   # back to the trace
+    emit_mask(lines, "leadin", lm)
+    emit_location(lines, "leadin", lm)
     if KIT.exists():
         sheet = cv2.imread(str(KIT), cv2.IMREAD_COLOR)
         small = cv2.resize(sheet, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_AREA)

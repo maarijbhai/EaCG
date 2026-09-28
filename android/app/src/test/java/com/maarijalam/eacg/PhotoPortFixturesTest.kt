@@ -111,6 +111,17 @@ class PhotoPortFixturesTest {
     @Test
     fun locatesTheSyntheticSheetExactlyAsThePythonDoes() = checkLocation("synth")
 
+    /**
+     * A pulse behind a thin lead-in, as a grid remnant at the strip edge made
+     * on the first A30s photograph. Without the lead-in rule the pulse is
+     * missed and traced as signal; the fixture was checked to fail that way.
+     */
+    @Test
+    fun findsThePulseBehindAThinLeadInAsThePythonDoes() {
+        checkLocation("leadin")
+        assertEquals(46, ints("leadin.pulse_x1")[0])
+    }
+
     @Test
     fun locatesTheRealKitSheetExactlyAsThePythonDoes() {
         if ("kit38" in row("cases")) checkLocation("kit38")

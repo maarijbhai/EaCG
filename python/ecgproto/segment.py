@@ -93,6 +93,16 @@ PULSE_SEARCH_FRACTION = 0.03
 #: first ink of the run when a pulse is printed.
 PULSE_START_FRACTION = 0.005
 
+#: How far past the first ink the pulse's rising edge may start, as a
+#: fraction of the strip width, provided every column before it is thin
+#: (baseline-sized, see PULSE_TAIL_FACTOR). 1.5% is about 4 mm. On the
+#: first A30s photograph of PTB-XL 40 a grid fragment 20 px long sat at the
+#: strip's left edge with the rising edge 27 px in -- 1% of the width -- so
+#: the pulse was never declared, it was traced as signal, and the duration
+#: anchor counted its width: a 0.34 s lag and about +3% on the anchor. A
+#: lead-in cannot be waveform: the printer draws the pulse first.
+PULSE_LEADIN_FRACTION = 0.015
+
 #: A column right of the pulse's falling edge still belongs to the edge
 #: while its ink count exceeds this many times the strip's median column
 #: count. The edge is anti-aliased over a pixel or two; a trace column at
@@ -314,8 +324,17 @@ def locate_rhythm_strip(
 
     counts = trace.sum(axis=0).astype(np.float64)
     width = x1 - x0
-    search = counts[:max(2, int(width * PULSE_SEARCH_FRACTION))]
-    start = counts[:max(1, int(width * PULSE_START_FRACTION))]
+    base = float(np.median(counts[counts > 0])) if np.any(counts > 0) else 0.0
+    # A thin lead-in (a grid fragment, a pen landing) may precede the
+    # rising edge; skip it, then look for the pulse from where it ends.
+    lead = 0
+    lead_max = int(width * PULSE_LEADIN_FRACTION)
+    while lead < min(lead_max, width) and counts[lead] <= PULSE_TAIL_FACTOR * base:
+        lead += 1
+    if lead >= lead_max:
+        lead = 0                          # no tall column early on: no lead-in
+    search = counts[lead:lead + max(2, int(width * PULSE_SEARCH_FRACTION))]
+    start = counts[lead:lead + max(1, int(width * PULSE_START_FRACTION))]
     pulse_x1 = None
     t0_x = float(x0)
     tall_idx = np.flatnonzero(search >= 0.5 * search.max()) if search.max() > 0 \
@@ -328,7 +347,7 @@ def locate_rhythm_strip(
     # the search window (PTB-XL 38 does, 3 px after the edge), and taking
     # the last would start the recording at that deflection.
     if len(clusters) >= 2 and start.max() >= 0.5 * search.max():
-        first, last = int(clusters[1][0]), int(clusters[1][-1])
+        first, last = lead + int(clusters[1][0]), lead + int(clusters[1][-1])
         # The recording starts where the pulse falls back to baseline: the
         # centre of the falling edge, not its right-hand side, because the
         # edge is a line of finite width.
