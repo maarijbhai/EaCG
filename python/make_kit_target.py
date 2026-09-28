@@ -124,6 +124,52 @@ DEFAULT_DPI = 300
 #: actually means "dark": trace 12, major grid 255, minor grid 254.
 TRACE_MAX_ANY_CHANNEL = 120
 
+#: What the 1 mm rules are redrawn in, RGB. The kit's red palette draws them
+#: at (254,223,219), within 2-36 levels of white, and a real printer drops
+#: them: the first photographed kit sheet (PTB-XL 40, 2026-09-28, an A30s
+#: frame) carries the 5 mm rules and no 1 mm rules at all, so the grid
+#: estimator read the 5 mm pitch -- correctly, for the paper it was given --
+#: and calibrated 5.12x wrong. Clinical paper prints its minor rules visibly,
+#: so this is a correction toward realism, not a convenience. Chosen well
+#: inside what an office printer reproduces while staying clearly lighter
+#: than the (255,0,0) majors, and far above the trace on 255-R: 13 levels
+#: of inverted red, where the trace sits at 200+ and the paper near 0.
+MINOR_GRID_RGB = (242, 160, 160)
+
+#: Largest distance, in RGB levels, from the white-to-minor-colour line at
+#: which a pixel still counts as a blend of paper and minor rule. Measured
+#: on the kit's own renders, those blends sit within 2 of the line; the
+#: trace, the major rules and their anti-aliased edges sit 20 or more away.
+MINOR_BLEND_TOLERANCE = 6.0
+
+
+def recolour_minor_grid(sheet: np.ndarray, minor_rgb_kit, target_rgb
+                        ) -> tuple[np.ndarray, int]:
+    """Redraw the kit's minor rules in `target_rgb`. Returns (sheet, pixels).
+
+    Every pixel the kit wrote as a blend of white paper and its minor colour
+    -- p = white - a * (white - minor), 0 < a <= 1, which covers the rule and
+    its anti-aliased edge -- is moved to the same blend of white and the
+    target, so line width and anti-aliasing are kept exactly and only the
+    colour changes. Anything off that line (trace, major rules, text, their
+    blends with the minor rule) is left untouched. Geometry is unchanged, so
+    `plotted_pixels` and the truth stay valid.
+    """
+    white = np.array([255.0, 255.0, 255.0])
+    # The sheet is BGR; the kit records its colours as RGB.
+    m = np.asarray(minor_rgb_kit, dtype=np.float64)[::-1]
+    t = np.asarray(target_rgb, dtype=np.float64)[::-1]
+    d = white - m
+    p = sheet.reshape(-1, 3).astype(np.float64)
+    a = (white - p) @ d / (d @ d)
+    resid = np.linalg.norm((white - p) - a[:, None] * d[None, :], axis=1)
+    blend = (a > 0.02) & (a <= 1.05) & (resid <= MINOR_BLEND_TOLERANCE)
+    a = np.clip(a[blend], 0.0, 1.0)
+    out = p.copy()
+    out[blend] = white - a[:, None] * (white - t)[None, :]
+    return (np.round(out).astype(np.uint8).reshape(sheet.shape),
+            int(blend.sum()))
+
 
 def numpy_shim() -> None:
     """Make ecg-image-kit importable under NumPy 2.x.
@@ -407,6 +453,12 @@ def one_record(ecg_id: int, args) -> Path:
             f"kit x_grid {x_grid} px/5mm implies {x_grid/5:.4f} px/mm but "
             f"dpi/25.4 is {px_per_mm:.4f}; the sheet is not at true scale")
 
+    minor_px = 0
+    if args.minor_grid != "kit":
+        target = tuple(int(v) for v in args.minor_grid.split(","))
+        sheet, minor_px = recolour_minor_grid(
+            sheet, kit_cfg["grid_line_color_minor"], target)
+
     sheet, geom = fit_to_page(sheet, px_per_mm, args.page)
     cv2.imwrite(str(out_dir / f"{name}.png"), sheet)
 
@@ -433,7 +485,11 @@ def one_record(ecg_id: int, args) -> Path:
     np.save(out_dir / f"{name}_truth.npy", signal.astype(np.float64))
     params = {"dpi": args.dpi, "page": args.page, "rate": args.rate,
               "rhythm_lead": args.rhythm_lead, "kit": str(args.kit),
-              "print_header": bool(args.print_header)}
+              "print_header": bool(args.print_header),
+              # The kit_config's grid_line_color_minor is what the kit drew;
+              # this is what was printed. See MINOR_GRID_RGB.
+              "minor_grid_rgb_printed": args.minor_grid,
+              "minor_grid_pixels_recoloured": minor_px}
     (out_dir / f"{name}.json").write_text(
         json.dumps(provenance(ecg_id, meta, kit_cfg, geom, params), indent=2),
         encoding="utf-8")
@@ -460,6 +516,9 @@ def main(argv: list[str] | None = None) -> int:
                    choices=sorted(PAGE_SIZES_MM))
     p.add_argument("--rate", type=int, choices=(100, 500), default=500)
     p.add_argument("--rhythm-lead", default="II")
+    p.add_argument("--minor-grid", default=",".join(map(str, MINOR_GRID_RGB)),
+                   help="R,G,B to redraw the 1 mm rules in, or 'kit' to keep "
+                        "the kit's near-white (254,223,219), which printers drop")
     p.add_argument("--print-header", action="store_true",
                    help="let the kit print its ID/Name header band")
     p.add_argument("--root", type=Path, default=ptbxl.DEFAULT_ROOT)

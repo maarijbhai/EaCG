@@ -266,9 +266,20 @@ What differs from §0–§7, and why:
   paper visible on every side** in the photograph: `page.refine_corners`
   finds each edge as the place where the grid rules crossing it stop, and it
   needs bare paper beyond the edge to see that.
-- **Rough clicks are fine.** The refinement moves each click onto the edge to
-  within half a pixel on simulated photographs, from up to 10 px away. You
-  do not need the zoomed precision §5 asks for.
+- **Rough clicks are fine -- within limits.** The refinement moves each click
+  onto the edge to within half a pixel on simulated photographs, from up to
+  10 px away, but it only searches ±1.5% of each edge's length either side
+  of the line you give it: about 30-40 px on a phone-sized decode, less
+  than half a 5 mm square. The first real phone attempt (2026-09-28) was
+  tapped 92 px out, outside that window, and every number after it was
+  wrong; the app now uses draggable corners with a magnifier (§8.4).
+- **The 1 mm rules are redrawn darker.** ecg-image-kit's red palette draws
+  them in RGB (254,223,219), which an office printer drops entirely: the
+  first photographed sheet showed only the 5 mm rules, and the grid
+  estimator -- correctly, for that paper -- read a 5 mm pitch.
+  `make_kit_target.py` now redraws them in `MINOR_GRID_RGB` (242,160,160),
+  as clinical paper prints them; geometry and truth are unchanged. **Sheets
+  printed before 2026-09-28 have no usable 1 mm grid: reprint them.**
 - **Scoring is automatic past the corners.** The rhythm strip is located, the
   printed text and calibration pulse are cut away, and three calibrations
   are scored side by side (`grid`, `comb`, and the 10 s `duration` anchor).
@@ -281,11 +292,18 @@ What differs from §0–§7, and why:
 2. On page 2, measure the **100 mm bar** with a ruler (±0.5 mm). If it is
    wrong, the job was scaled: reprint, do not photograph. Write the measured
    value on the back of page 1.
+3. On page 1, check by eye that **the 1 mm rules are visible** inside every
+   5 mm square. If they are not, the printer dropped them (see above) and
+   the sheet cannot test grid calibration.
 
 ### 8.2 Photograph — on the Galaxy A30s
 
 Same set-up as §3 and §4 (flat, matte surface, even diffuse light, HDR and
-flash off, focus on the grid). Per sheet:
+flash off, focus on the grid). One sheet at a time, on a surface that
+contrasts with white paper -- not on the stack of other printouts -- with
+**white paper visible beyond the grid on all four sides**. The first attempt
+ran the grid out of frame at the bottom-left, and the refinement cannot find
+an edge it cannot see beyond. Per sheet:
 
 | # | shot | why |
 |---|---|---|
@@ -322,13 +340,20 @@ Four sheets x 3–5 shots is 12–20 photographs, about fifteen minutes.
 ### 8.4 Score the same photographs on the phone
 
 The photographs are already in the phone's gallery. In the app, **Photograph
-of a printed sheet**: pick the photograph, choose its PTB-XL number, tap the
-four corners, **Score photograph**, then **Export CSV**. The CSV lands in
-`Downloads/EaCG/` with the corners, the per-stage timings and each
-calibration's waveform and scores in its header; copy it to
-`data/device_exports/`. The phone downsamples to 2560 px on the long side
-(about 9 px/mm on this sheet), so its numbers are for that resolution and
-the desktop's are for the full frame — compare like with like.
+of a printed sheet**: pick the photograph and choose its PTB-XL number.
+Four blue circles appear; **drag each onto its corner of the printed grid**
+(where the pink grid meets white paper). While you drag, a magnifier drawn
+from the full-resolution photograph shows exactly where the corner sits --
+line its crosshair up with the corner, within half a 5 mm square. A red
+warning appears if a corner is at the edge of the photograph: retake it.
+Then **Score photograph**; the refined sheet outline is drawn in green, and
+an edge-fit warning appears if the fit is worse than 3 px. Then **Export
+CSV**. The CSV lands in `Downloads/EaCG/` with the corners, the per-stage
+timings and each calibration's waveform and scores in its header; copy it
+to `data/device_exports/` and run `python ingest_device_exports.py`. The
+phone decodes to 3200 px on the long side (about 10 px/mm on this sheet), so
+its numbers are for that resolution and the desktop's are for the full
+frame — compare like with like.
 
 ### 8.5 Reading the rows
 
