@@ -57,15 +57,9 @@ private const val PHOTO_MAX_DIM = 3200
 
 private val CORNER_NAMES = listOf("top-left", "top-right", "bottom-right", "bottom-left")
 
-private const val PLACE_HINT = "Drag each blue circle onto a corner of the printed grid, " +
-    "where the pink grid meets white paper. The magnifier shows where it sits."
-
-/**
- * Above this edge-fit residual the refined corners are not to be trusted.
- * Simulated photographs fit under 1 px; the first A30s photograph, with a
- * corner at the frame edge and taps 92 px out, fitted at 16.
- */
-private const val EDGE_RMSE_WARN_PX = 3.0
+private const val PLACE_HINT = "Drag each blue circle to where the grid lines END at that " +
+    "corner -- the outermost tips of the lines, which is often part-way through a square, " +
+    "not the last whole square. Use the magnifier to place it exactly."
 
 /**
  * Score a photograph of a printed kit sheet on the handset.
@@ -126,8 +120,8 @@ fun PhotoScoreSection(modifier: Modifier = Modifier) {
             try {
                 val truth = state.target?.let { TruthWaveform.load(context, it.truthAsset) }
                 val run = PhotoPipeline.run(bmp, rough, state.target, truth)
-                val warn = if (run.edgeRmseMaxPx > EDGE_RMSE_WARN_PX)
-                    "  Edge fit is poor (%.1f px): check the corners, and that white paper shows beyond every edge."
+                val warn = if (run.cornersFromHand)
+                    "  Edge refinement fit poorly (%.1f px), so your corners were used as placed: make sure each sits exactly where the grid lines end."
                         .format(java.util.Locale.US, run.edgeRmseMaxPx)
                 else ""
                 state = state.copy(busy = false, run = run,
@@ -147,8 +141,8 @@ fun PhotoScoreSection(modifier: Modifier = Modifier) {
             Text("Photograph of a printed sheet", style = MaterialTheme.typography.titleSmall)
             Text(
                 "Pick the photograph, choose which printed record it shows, then " +
-                    "drag the four corners onto the printed grid's corners. Within half " +
-                    "a large grid square is close enough; they are refined to the edge.",
+                    "drag the four corners to where the grid lines end. Place them " +
+                    "exactly: if the sheet's edges cannot be refined, your placement is used as it is.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -243,7 +237,8 @@ private fun PhotoResults(run: PhotoPipeline.Run, target: KitTargets.Target?) {
             Image(it.asImageBitmap(), contentDescription = "located rhythm strip",
                 modifier = Modifier.fillMaxWidth().height(70.dp), contentScale = ContentScale.FillBounds)
         }
-        Stat("corners moved (max)", "%.1f px".format(run.cornerShiftMaxPx))
+        Stat("corners used", if (run.cornersFromHand) "as placed" else "refined")
+        Stat("refinement would move (max)", "%.1f px".format(run.cornerShiftMaxPx))
         Stat("edge fit residual (max)", "%.2f px".format(run.edgeRmseMaxPx))
         Stat("rectified", "${run.rectW} x ${run.rectH}")
         run.truePxPerMm?.let { Stat("true px/mm (from sheet size)", "%.4f".format(it)) }

@@ -74,7 +74,9 @@ object Exporter {
         meta("photo", photoLabel)
         meta("target", target?.name ?: "none")
         meta("ecg_id", target?.ecgId)
-        meta("corners_refined_px", run.corners.joinToString(" ") { "%.2f".us(it) })
+        run.handCorners?.let { h -> meta("corners_hand_px", h.joinToString(" ") { "%.2f".us(it) }) }
+        meta("corners_used", if (run.cornersFromHand) "hand (refinement fit too poor)" else "refined")
+        meta("corners_used_px", run.corners.joinToString(" ") { "%.2f".us(it) })
         meta("corner_shift_max_px", "%.2f".us(run.cornerShiftMaxPx))
         meta("edge_fit_rmse_max_px", "%.3f".us(run.edgeRmseMaxPx))
         meta("rectified_px", "${run.rectW}x${run.rectH}")

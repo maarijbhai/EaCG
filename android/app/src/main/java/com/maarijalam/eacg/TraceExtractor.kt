@@ -160,16 +160,29 @@ object TraceExtractor {
      * red channel while the neutral dark trace does not, so `255 - R` is
      * large only on trace ink. [midpointThreshold] picks the threshold by
      * default; Otsu, the original rule, is kept selectable as the
-     * control. A single 3x3
-     * opening removes isolated speckle without eating a trace one or two
-     * pixels wide.
+     * control. An [openKernel] x [openKernel] opening then removes speckle
+     * and short fragments of grid rule.
+     *
+     * The opening deletes EVERYTHING narrower than its kernel, trace
+     * included, so the kernel has to be smaller than the trace is thick.
+     * 3, the default, suits the bundled fixtures and a full-resolution
+     * photograph. It does not suit a photograph decoded to 3200 px: on the
+     * first A30s sheet (PTB-XL 40, ~10 px/mm) the trace is 2-3 px thick and
+     * a 3x3 opening erased its thin stretches, the strip was found short and
+     * the duration anchor came out -35.6% with good corners. A 2x2 opening
+     * gave +5.8% -- the same as full resolution with 3x3 -- and the gate
+     * accepted it ([PhotoPipeline.OPEN_KERNEL]). Replacing the opening with
+     * a connected-component area filter was tried and was worse: it keeps
+     * the grid rules as well as the trace, since both are long connected
+     * lines, and aligned PCC fell from 0.97 to 0.62 at the known scale.
      *
      * Caller owns the returned Mat.
      */
     fun binarise(
         rgba: Mat,
         threshold: Int? = null,
-        method: ThresholdMethod = ThresholdMethod.MIDPOINT
+        method: ThresholdMethod = ThresholdMethod.MIDPOINT,
+        openKernel: Int = 3
     ): Mat {
         // `extractChannel` rather than `split`, and the difference is real on
         // this hardware: split allocates all four single-channel planes, which
@@ -205,11 +218,14 @@ object TraceExtractor {
                         Imgproc.THRESH_BINARY
                     )
                 }
-                val kernel = Mat.ones(Size(3.0, 3.0), CvType.CV_8U)
-                try {
-                    Imgproc.morphologyEx(mask, mask, Imgproc.MORPH_OPEN, kernel)
-                } finally {
-                    kernel.release()
+                if (openKernel > 1) {
+                    val k = openKernel.toDouble()
+                    val kernel = Mat.ones(Size(k, k), CvType.CV_8U)
+                    try {
+                        Imgproc.morphologyEx(mask, mask, Imgproc.MORPH_OPEN, kernel)
+                    } finally {
+                        kernel.release()
+                    }
                 }
                 return mask
             } finally {

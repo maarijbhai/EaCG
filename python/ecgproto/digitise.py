@@ -671,6 +671,7 @@ def binarise_trace(
     image: np.ndarray,
     threshold: int | None = None,
     method: str = "midpoint",
+    open_kernel: int = 3,
 ) -> np.ndarray:
     """Boolean mask of trace ink, shape (H, W).
 
@@ -702,10 +703,16 @@ def binarise_trace(
     else:
         _, mask = cv2.threshold(inverted, int(threshold), 255, cv2.THRESH_BINARY)
 
-    # A single 3x3 opening removes isolated speckle without eating the
-    # one-or-two-pixel-wide trace itself.
-    kernel = np.ones((3, 3), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
+    # An open_kernel x open_kernel opening removes speckle and short grid
+    # fragments -- and everything else narrower than the kernel, trace
+    # included. 3 suits renders and full-resolution photographs; a photograph
+    # decoded to ~10 px/mm has a 2-3 px trace, and 3x3 erased its thin
+    # stretches: duration anchor -35.6% on the first A30s sheet at 3200 px,
+    # +5.8% with 2x2 (`TraceExtractor.binarise` has the measurements). An
+    # area filter in place of the opening was worse: it keeps the grid rules.
+    if open_kernel > 1:
+        kernel = np.ones((open_kernel, open_kernel), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
     return mask.astype(bool)
 
 

@@ -47,6 +47,64 @@ object PhotoPipeline {
     const val MM_PER_S = 25.0
     const val FS_OUT = 500.0
 
+    /**
+     * Opening kernel for this path's binarisation. The photograph is decoded
+     * to 3200 px, ~10 px/mm on the sheet, where the trace is 2-3 px thick and
+     * the default 3x3 erases it; see [TraceExtractor.binarise]. Measured on
+     * the first A30s photograph (PTB-XL 40) with good corners at 3200 px:
+     * duration anchor -35.6% with 3x3, +5.8% with 2x2.
+     */
+    const val OPEN_KERNEL = 2
+
+    /**
+     * Above this edge-fit residual the refined corners are not used, and the
+     * hand-placed ones are. [PageCorners] finds each sheet edge as the step
+     * from grid to paper, which assumes the 1 mm rules make the grid region
+     * visibly darker; on a print whose minor rules did not come out, every
+     * 5 mm rule is an equally good "edge". On the first A30s photograph it
+     * snapped one to two columns inside the sheet, at 15-28 px RMS, while
+     * simulated photographs fit under 1 px. Placed with [CornerEditor]'s
+     * magnifier, the hand corners are good to a few pixels.
+     */
+    const val EDGE_RMSE_TRUST_PX = 3.0
+
+    /** Harmonic factors a grid comb can lock onto on ECG paper: itself, every
+     *  other rule, and the 5 mm majors read as the pitch. */
+    val ANCHOR_HARMONICS = intArrayOf(1, 2, 5)
+
+    /**
+     * How close grid/k must come to the duration anchor, as a fraction, for k
+     * to be accepted. The anchor was within 6% of truth on the first A30s
+     * photograph once the trace survived; the candidate factors are at least
+     * 2x apart, so 10% picks k unambiguously -- and refuses a comb locked on
+     * something that is not a harmonic at all, like the 2.5x that photograph's
+     * dashed 5 mm rules produced at full resolution.
+     */
+    const val ANCHOR_TOLERANCE = 0.10
+
+    /**
+     * The grid pitch with its harmonic factor chosen by the duration anchor,
+     * or null when no factor brings it within [ANCHOR_TOLERANCE].
+     *
+     * The anchor only picks an integer; the value is still the grid's. That
+     * keeps the two calibrations independent in what they measure while
+     * letting the external one settle the ambiguity the grid cannot settle
+     * from inside the image -- a 5 mm grid misread as 1 mm looks exactly like
+     * a 1 mm grid at a fifth of the scale.
+     */
+    fun resolveAgainstAnchor(gridPxPerMm: Double, anchorPxPerMm: Double): Pair<Double, Int>? {
+        if (!gridPxPerMm.isFinite() || gridPxPerMm <= 0.0) return null
+        if (!anchorPxPerMm.isFinite() || anchorPxPerMm <= 0.0) return null
+        var bestK = 0
+        var bestD = Double.POSITIVE_INFINITY
+        for (k in ANCHOR_HARMONICS) {
+            val d = kotlin.math.abs(kotlin.math.ln(gridPxPerMm / k / anchorPxPerMm))
+            if (d < bestD) { bestD = d; bestK = k }
+        }
+        if (bestD > kotlin.math.ln(1.0 + ANCHOR_TOLERANCE)) return null
+        return gridPxPerMm / bestK to bestK
+    }
+
     class Calibrated(
         val name: String,
         val pxPerMm: Double,
@@ -85,7 +143,11 @@ object PhotoPipeline {
         val calibrations: List<Calibrated>,
         val stripPreview: Bitmap?,
         val timings: Timings,
-        val error: String?
+        val error: String?,
+        /** The corners as placed by hand, before refinement. */
+        val handCorners: DoubleArray? = null,
+        /** True when [corners] are the hand ones: refinement fit too poorly. */
+        val cornersFromHand: Boolean = false
     )
 
     suspend fun run(
@@ -98,7 +160,8 @@ object PhotoPipeline {
         fun ms(a: Long, b: Long) = (b - a) / 1_000_000
 
         val refined = PageCorners.refine(PageCorners.darkness(photo), roughCorners)
-        val c = refined.corners
+        val fromHand = refined.edgeRmsePx.max() > EDGE_RMSE_TRUST_PX
+        val c = if (fromHand) roughCorners.copyOf() else refined.corners
         val tCorners = System.nanoTime()
 
         // score_photo.rectify: output size from the photograph's own edges.
@@ -132,7 +195,7 @@ object PhotoPipeline {
         val tRect = System.nanoTime()
 
         try {
-            val pageMaskMat = TraceExtractor.binarise(rect)
+            val pageMaskMat = TraceExtractor.binarise(rect, openKernel = OPEN_KERNEL)
             val location = try {
                 StripLocator.locate(TraceExtractor.maskOf(pageMaskMat))
             } catch (e: IllegalStateException) {
@@ -147,7 +210,8 @@ object PhotoPipeline {
                     truePx, null, emptyList(), null,
                     Timings(ms(t0, tCorners), ms(tCorners, tRect), ms(tRect, tLocate),
                         0, 0, 0, ms(t0, tLocate)),
-                    "could not find four trace rows on the rectified page"
+                    "could not find four trace rows on the rectified page",
+                    handCorners = roughCorners.copyOf(), cornersFromHand = fromHand
                 )
             }
 
@@ -156,7 +220,7 @@ object PhotoPipeline {
             val stripMat = Mat(rect, Rect(location.x0, location.y0,
                 location.x1 - location.x0, location.y1 - location.y0)).clone()
             val stripMask = try {
-                val bin = TraceExtractor.binarise(stripMat)
+                val bin = TraceExtractor.binarise(stripMat, openKernel = OPEN_KERNEL)
                 try {
                     StripLocator.isolateTrace(TraceExtractor.maskOf(bin))
                 } finally {
@@ -175,11 +239,21 @@ object PhotoPipeline {
             val anchor = location.recordingWidthPx / (RECORDING_S * MM_PER_S)
             val cals = ArrayList<Calibrated>()
             var fidelityNs = 0L
-            for ((name, px) in listOf("duration" to anchor, "grid" to grid.pxPerMm)) {
+            // "grid" is the comb as measured -- the control, kept even when it
+            // is wrong. "grid_anchored" is the same comb with its harmonic
+            // factor chosen by the duration anchor, or nothing if no factor fits.
+            val anchored = resolveAgainstAnchor(grid.pxPerMm, anchor)
+            val candidates = listOf(
+                Triple("duration", anchor, "calibration failed (NaN)"),
+                Triple("grid", grid.pxPerMm, "calibration failed (NaN)"),
+                Triple("grid_anchored", anchored?.first ?: Double.NaN,
+                    "grid pitch %.3f px/mm is not 1, 2 or 5 times the anchor's %.3f within %.0f%%"
+                        .format(java.util.Locale.US, grid.pxPerMm, anchor, 100 * ANCHOR_TOLERANCE))
+            )
+            for ((name, px, failure) in candidates) {
                 val err = truePx?.let { 100.0 * (px / it - 1.0) }
                 if (!px.isFinite() || px <= 0.0) {
-                    cals += Calibrated(name, px, err, null, null, null, 0,
-                        "calibration failed (NaN)", 0)
+                    cals += Calibrated(name, px, err, null, null, null, 0, failure, 0)
                     continue
                 }
                 val a = System.nanoTime()
@@ -235,7 +309,9 @@ object PhotoPipeline {
                     fidelityMs = fidelityNs / 1_000_000,
                     totalMs = ms(t0, tEnd)
                 ),
-                error = null
+                error = null,
+                handCorners = roughCorners.copyOf(),
+                cornersFromHand = fromHand
             )
         } finally {
             rect.release()

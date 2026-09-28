@@ -49,7 +49,7 @@ def main() -> int:
         cals = sorted({k.split(".")[1] for k in m if k.startswith("cal.")})
         common = {k: m.get(k, "") for k in (
             "local_time", "device", "photo", "target", "ecg_id",
-            "corner_shift_max_px", "edge_fit_rmse_max_px", "rectified_px",
+            "corners_used", "corner_shift_max_px", "edge_fit_rmse_max_px", "rectified_px",
             "px_per_mm_true", "strip_box_px", "pulse_found",
             "ms_corners", "ms_rectify", "ms_locate", "ms_strip", "ms_grid",
             "ms_pipeline", "ms_harness")}
