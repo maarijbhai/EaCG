@@ -1,0 +1,36 @@
+{
+  "experiment": "score",
+  "utc": "2026-09-28T20:54:01+00:00",
+  "git_commit": "171a5ac6945df05ed9ea0e1ede1469c09cfae17e",
+  "git_dirty": false,
+  "params": {
+    "registry": "kit_photos.json"
+  },
+  "module_defaults": {
+    "digitise.DEFAULT_PEAK_FRACTION": 0.05,
+    "digitise.MAX_ANISOTROPY": 0.15,
+    "digitise.MAX_SPACING_CV": 0.25,
+    "digitise.PAPER_SPEED_RANGE_MM_S": [
+      15.0,
+      60.0
+    ],
+    "digitise.MM_PER_S": 25.0,
+    "digitise.MM_PER_MV": 10.0,
+    "run_photo.PINNED_PERCENTILE": 96.5,
+    "run_photo.DETREND_PX": 61,
+    "run_photo.PERSPECTIVE_SLICES": 3,
+    "run_photo.SLICE_MAX_CV": 0.05,
+    "run_photo.ALIGN_HALF_RANGE": 0.1,
+    "run_photo.MIN_OVERLAP_S": 8.5
+  },
+  "caveat": "FR1 does not exist: the sheet corners were clicked by a human (or, for selftest, generated). 'known' rows hand the tracer the true scale and crop; 'pipeline' rows use segment.locate_rhythm_strip and the calibration named in the row. Truth is the PTB-XL record the sheet was printed from, lead II, 500 Hz.",
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "scipy": "1.16.2",
+    "opencv": "5.0.0",
+    "platform": "Windows-11-10.0.26100-SP0"
+  },
+  "generated_by": "python/score_kit_photo.py",
+  "n_rows": 4
+}
