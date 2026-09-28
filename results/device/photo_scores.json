@@ -1,0 +1,10 @@
+{
+  "generated_by": "python/ingest_device_exports.py",
+  "utc": "2026-09-28T16:18:52+00:00",
+  "source": "CSV files written by the app (Exporter.kt) and copied into data/device_exports/, which is not committed",
+  "files": [
+    "eacg_ptbxl40_kit_500hz_300dpi_20260928_104959.csv"
+  ],
+  "n_rows": 2,
+  "caveat": "The phone downsamples to 2560 px on the long side; compare with desktop rows scored at the same resolution."
+}
