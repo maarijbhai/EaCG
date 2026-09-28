@@ -57,6 +57,38 @@ object Fidelity {
     }
 
     /**
+     * Linear interpolation across NaN gaps, the ends held flat.
+     * `run_photo.fill_nan`, which `score_kit_photo.score_signal` applies
+     * before every comparison.
+     *
+     * A traced strip keeps a gap longer than the tracer's own interpolation
+     * limit as NaN, and one NaN makes every sum above NaN. The first A30s
+     * photograph scored PCC, RMSE and gain all NaN for exactly this: 328
+     * missing samples in 3076. Filled here, in the scoring harness only, so
+     * the exported waveform still shows where the ink was lost.
+     */
+    fun fillNan(x: DoubleArray): DoubleArray {
+        val ok = x.indices.filter { !x[it].isNaN() }
+        if (ok.isEmpty()) return x.copyOf()
+        val out = x.copyOf()
+        var k = 0
+        for (i in out.indices) {
+            if (!out[i].isNaN()) continue
+            while (k + 1 < ok.size && ok[k + 1] < i) k++
+            val lo = ok[k]
+            out[i] = when {
+                i < ok.first() -> x[ok.first()]
+                i > ok.last() -> x[ok.last()]
+                else -> {
+                    val hi = ok[k + 1]
+                    x[lo] + (x[hi] - x[lo]) * (i - lo).toDouble() / (hi - lo)
+                }
+            }
+        }
+        return out
+    }
+
+    /**
      * Pearson correlation. `evaluate.pcc`.
      *
      * Returns NaN when either input is constant, rather than 0: a flat trace

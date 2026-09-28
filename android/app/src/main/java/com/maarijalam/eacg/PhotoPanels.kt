@@ -4,16 +4,11 @@ import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -33,10 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -51,8 +43,8 @@ private data class PhotoState(
     val bitmap: Bitmap? = null,
     val preview: Bitmap? = null,
     val label: String? = null,
-    /** Taps in BITMAP pixels, TL TR BR BL order, up to four (x, y) pairs. */
-    val taps: List<Pair<Double, Double>> = emptyList(),
+    /** Corner handles in BITMAP pixels, TL TR BR BL, x then y; null until loaded. */
+    val corners: DoubleArray? = null,
     val target: KitTargets.Target? = null,
     val busy: Boolean = false,
     val status: String? = null,
@@ -65,6 +57,16 @@ private const val PHOTO_MAX_DIM = 3200
 
 private val CORNER_NAMES = listOf("top-left", "top-right", "bottom-right", "bottom-left")
 
+private const val PLACE_HINT = "Drag each blue circle onto a corner of the printed grid, " +
+    "where the pink grid meets white paper. The magnifier shows where it sits."
+
+/**
+ * Above this edge-fit residual the refined corners are not to be trusted.
+ * Simulated photographs fit under 1 px; the first A30s photograph, with a
+ * corner at the frame edge and taps 92 px out, fitted at 16.
+ */
+private const val EDGE_RMSE_WARN_PX = 3.0
+
 /**
  * Score a photograph of a printed kit sheet on the handset.
  *
@@ -73,9 +75,10 @@ private val CORNER_NAMES = listOf("top-left", "top-right", "bottom-right", "bott
  * pipeline, so the two can be compared number for number and the phone's
  * latency measured on the work it would really do.
  *
- * Four taps stand in for FR1 -- roughly on the corners of the PRINTED IMAGE,
- * where the pink grid meets white paper -- and are then refined to sub-pixel
- * by [PageCorners], so a finger's error does not become a scale error.
+ * Four dragged corners stand in for FR1 -- on the corners of the PRINTED
+ * IMAGE, where the pink grid meets white paper, placed with a magnifier by
+ * [CornerEditor] -- and are then refined to sub-pixel by [PageCorners], so
+ * a finger's error does not become a scale error.
  */
 @Composable
 fun PhotoScoreSection(modifier: Modifier = Modifier) {
@@ -94,7 +97,7 @@ fun PhotoScoreSection(modifier: Modifier = Modifier) {
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
             state = state.copy(busy = true, status = "Loading photograph", run = null,
-                exported = null, taps = emptyList())
+                exported = null, corners = null)
             runCatching {
                 // 3200 px rather than the picker's default 2560: about 10 px/mm on a
                 // printed A4 sheet against 8.6, and 31 MB of native heap.
@@ -107,7 +110,8 @@ fun PhotoScoreSection(modifier: Modifier = Modifier) {
             }.onSuccess { (bmp, small) ->
                 state = state.copy(bitmap = bmp, preview = small, busy = false,
                     label = "picked, ${bmp.width} x ${bmp.height}",
-                    status = "Tap the ${CORNER_NAMES[0]} corner of the printed grid")
+                    corners = CornerGeometry.initialCorners(bmp.width, bmp.height),
+                    status = PLACE_HINT)
             }.onFailure { e ->
                 state = state.copy(busy = false, status = "Load failed: ${e.message}")
             }
@@ -116,17 +120,18 @@ fun PhotoScoreSection(modifier: Modifier = Modifier) {
 
     fun score() {
         val bmp = state.bitmap ?: return
-        if (state.taps.size != 4) return
+        val rough = state.corners?.copyOf() ?: return
         scope.launch {
             state = state.copy(busy = true, status = "Scoring", run = null, exported = null)
             try {
                 val truth = state.target?.let { TruthWaveform.load(context, it.truthAsset) }
-                val rough = DoubleArray(8).also { a ->
-                    state.taps.forEachIndexed { i, (x, y) -> a[2 * i] = x; a[2 * i + 1] = y }
-                }
                 val run = PhotoPipeline.run(bmp, rough, state.target, truth)
+                val warn = if (run.edgeRmseMaxPx > EDGE_RMSE_WARN_PX)
+                    "  Edge fit is poor (%.1f px): check the corners, and that white paper shows beyond every edge."
+                        .format(java.util.Locale.US, run.edgeRmseMaxPx)
+                else ""
                 state = state.copy(busy = false, run = run,
-                    status = run.error ?: "Scored in ${run.timings.pipelineMs} ms (pipeline)")
+                    status = (run.error ?: "Scored in ${run.timings.pipelineMs} ms (pipeline).") + warn)
             } catch (c: CancellationException) {
                 throw c
             } catch (e: Throwable) {
@@ -142,8 +147,8 @@ fun PhotoScoreSection(modifier: Modifier = Modifier) {
             Text("Photograph of a printed sheet", style = MaterialTheme.typography.titleSmall)
             Text(
                 "Pick the photograph, choose which printed record it shows, then " +
-                    "tap the four corners of the printed grid: top-left, top-right, " +
-                    "bottom-right, bottom-left. Rough taps are fine; they are refined.",
+                    "drag the four corners onto the printed grid's corners. Within half " +
+                    "a large grid square is close enough; they are refined to the edge.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -166,57 +171,44 @@ fun PhotoScoreSection(modifier: Modifier = Modifier) {
                 }
             }
 
-            state.preview?.let { preview ->
-                val bmp = state.bitmap!!
-                Box(
-                    Modifier.fillMaxWidth()
-                        .aspectRatio(bmp.width.toFloat() / bmp.height)
-                        .pointerInput(bmp, state.taps.size) {
-                            detectTapGestures { p ->
-                                if (state.taps.size >= 4 || state.busy) return@detectTapGestures
-                                // The box has the bitmap's aspect, so the map is linear.
-                                val x = p.x / size.width * bmp.width
-                                val y = p.y / size.height * bmp.height
-                                val taps = state.taps + (x.toDouble() to y.toDouble())
-                                state = state.copy(taps = taps, run = null,
-                                    status = if (taps.size < 4)
-                                        "Tap the ${CORNER_NAMES[taps.size]} corner"
-                                    else "Four corners set; score when ready")
-                            }
-                        }
-                ) {
-                    Image(preview.asImageBitmap(), contentDescription = "photograph",
-                        contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
-                    Canvas(Modifier.fillMaxSize()) {
-                        val pts = state.taps.map { (x, y) ->
-                            Offset((x / bmp.width * size.width).toFloat(),
-                                (y / bmp.height * size.height).toFloat())
-                        }
-                        for (i in pts.indices) {
-                            drawCircle(Color.Red, 9f, pts[i])
-                            if (i > 0) drawLine(Color.Red, pts[i - 1], pts[i], 3f)
-                        }
-                        if (pts.size == 4) drawLine(Color.Red, pts[3], pts[0], 3f)
-                        state.run?.let { r ->
-                            val c = r.corners
-                            val q = (0 until 4).map {
-                                Offset((c[2 * it] / bmp.width * size.width).toFloat(),
-                                    (c[2 * it + 1] / bmp.height * size.height).toFloat())
-                            }
-                            for (i in 0 until 4) drawLine(Color.Green, q[i], q[(i + 1) % 4], 3f)
-                        }
-                    }
+            val bmp = state.bitmap
+            val preview = state.preview
+            val corners = state.corners
+            if (bmp != null && preview != null && corners != null) {
+                CornerEditor(
+                    photo = bmp,
+                    preview = preview,
+                    corners = corners,
+                    onCornersChange = { c ->
+                        state = state.copy(corners = c, run = null, exported = null,
+                            status = PLACE_HINT)
+                    },
+                    enabled = !state.busy,
+                    refined = state.run?.corners
+                )
+                val nearEdge = CornerGeometry.cornersNearFrameEdge(corners, bmp.width, bmp.height)
+                if (nearEdge.isNotEmpty()) {
+                    Text(
+                        "The ${nearEdge.joinToString(" and ") { CORNER_NAMES[it] }} " +
+                            "corner is at the edge of the photograph. Refinement needs white " +
+                            "paper beyond every edge of the grid: if the sheet runs out of " +
+                            "frame, retake the photograph with a border all round.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(
-                        onClick = { state = state.copy(taps = emptyList(), run = null,
-                            status = "Tap the ${CORNER_NAMES[0]} corner") },
-                        enabled = !state.busy && state.taps.isNotEmpty(),
+                        onClick = {
+                            state = state.copy(run = null, exported = null, status = PLACE_HINT,
+                                corners = CornerGeometry.initialCorners(bmp.width, bmp.height))
+                        },
+                        enabled = !state.busy,
                         contentPadding = PaddingValues(horizontal = 10.dp)
                     ) { Text("Reset corners") }
                     Button(
                         onClick = { score() },
-                        enabled = !state.busy && state.taps.size == 4,
+                        enabled = !state.busy,
                         modifier = Modifier.weight(1f)
                     ) { Text(if (state.busy) "Working ..." else "Score photograph") }
                 }

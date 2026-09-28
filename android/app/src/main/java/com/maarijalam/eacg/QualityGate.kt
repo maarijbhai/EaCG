@@ -273,8 +273,8 @@ object QualityGate {
                 "printed grid is square by manufacture",
                 if (anisotropy > MAX_ANISOTROPY)
                     "anisotropy %.3f exceeds %.3f (x=%.3f, y=%.3f px/mm) -- perspective, or one axis locked onto a harmonic"
-                        .format(anisotropy, MAX_ANISOTROPY, pxPerMmX, pxPerMmY)
-                else "anisotropy %.4f".format(anisotropy),
+                        .us(anisotropy, MAX_ANISOTROPY, pxPerMmX, pxPerMmY)
+                else "anisotropy %.4f".us(anisotropy),
                 anisotropy
             ))
         }
@@ -288,8 +288,8 @@ object QualityGate {
                 "clinical paper speed 15-60 mm/s",
                 if (bad)
                     "implied paper speed %.1f mm/s outside [%.0f, %.0f] -- pitch is probably wrong by an integer factor (nominal %.0f mm/s)"
-                        .format(implied, PAPER_SPEED_LO, PAPER_SPEED_HI, mmPerS)
-                else "implied %.1f mm/s within range".format(implied),
+                        .us(implied, PAPER_SPEED_LO, PAPER_SPEED_HI, mmPerS)
+                else "implied %.1f mm/s within range".us(implied),
                 implied
             ))
         } else {
@@ -315,7 +315,7 @@ object QualityGate {
             "amplitude_pp_mv",
             banded(pp, REJECT_PP_MV_LO, REJECT_PP_MV_HI, FLAG_PP_MV_LO, FLAG_PP_MV_HI),
             "cardiac physiology: QRS 0.5-2 mV, Sokolow-Lyon 3.5 mV pathological",
-            if (pp.isFinite()) "peak-to-peak %.3f mV".format(pp)
+            if (pp.isFinite()) "peak-to-peak %.3f mV".us(pp)
             else "peak-to-peak not computable",
             pp
         ))
@@ -330,7 +330,7 @@ object QualityGate {
                 else -> Verdict.ACCEPT
             },
             "a plotted trace is continuous by construction",
-            "%.3f of columns carried ink".format(cov),
+            "%.3f of columns carried ink".us(cov),
             cov
         ))
 
@@ -355,8 +355,8 @@ object QualityGate {
                     !bands.isFinite() -> "no ink found in any column"
                     bands >= expectedTraces + 1 ->
                         "%.1f ink bands per column, expected %d -- more than one lead in frame; this is not a single strip"
-                            .format(bands, expectedTraces)
-                    else -> "%.1f ink bands per column".format(bands)
+                            .us(bands, expectedTraces)
+                    else -> "%.1f ink bands per column".us(bands)
                 },
                 bands
             ))
@@ -374,3 +374,9 @@ object QualityGate {
         return Report(worst, checks)
     }
 }
+
+/**
+ * Always a decimal point. These strings reach the exported CSV, and the A30s
+ * that exported the first one wrote "0,844" and "3,3 mm/s" in its own locale.
+ */
+private fun String.us(vararg args: Any?): String = String.format(java.util.Locale.US, this, *args)

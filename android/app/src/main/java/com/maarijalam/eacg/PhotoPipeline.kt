@@ -204,7 +204,7 @@ object PhotoPipeline {
                     offset < truth.size - 2) {
                     runCatching {
                         Fidelity.score(truth.copyOfRange(offset, truth.size),
-                            digitised.signalMv)
+                            Fidelity.fillNan(digitised.signalMv))
                     }.getOrNull()
                 } else null
                 fidelityNs += System.nanoTime() - b
