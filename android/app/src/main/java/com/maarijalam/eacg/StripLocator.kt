@@ -32,7 +32,10 @@ object StripLocator {
     const val PULSE_SEARCH_FRACTION = 0.03
     const val PULSE_START_FRACTION = 0.005
     /** `segment.PULSE_LEADIN_FRACTION`: a thin lead-in the rising edge may follow. */
-    const val PULSE_LEADIN_FRACTION = 0.015
+    const val PULSE_LEADIN_FRACTION = 0.05
+    /** `segment.PULSE_MIN_WIDTH_FRACTION`: after a lead-in, a pulse's edges
+     *  must be a flat top apart, which a QRS's are not. */
+    const val PULSE_MIN_WIDTH_FRACTION = 0.012
     const val PULSE_TAIL_FACTOR = 3.0
     const val TRACE_MIN_WIDTH_FRACTION = 0.03
     const val BRIDGE_FRACTION = 0.002
@@ -324,7 +327,9 @@ object StripLocator {
                 clusters.add(intArrayOf(i, e - 1))
                 i = e
             }
-            if (clusters.size >= 2 && startMax >= 0.5 * searchMax) {
+            val wideEnough = lead == 0 || clusters.size < 2 ||
+                clusters[1][0] - clusters[0][1] >= width * PULSE_MIN_WIDTH_FRACTION
+            if (clusters.size >= 2 && startMax >= 0.5 * searchMax && wideEnough) {
                 val first = clusters[1][0]
                 val last = clusters[1][1]
                 t0X = x0 + 0.5 * (first + last)

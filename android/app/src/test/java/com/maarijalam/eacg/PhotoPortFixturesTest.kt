@@ -139,6 +139,20 @@ class PhotoPortFixturesTest {
         assertEquals("at bound", want[4] != 0.0, got.atBound)
     }
 
+    /** The ~8 mm margin corners on the sheet edge leave before the pulse. */
+    @Test
+    fun findsThePulseBehindASheetMarginAsThePythonDoes() {
+        checkLocation("leadlong")
+        assertEquals(48, ints("leadlong.pulse_x1")[0])
+    }
+
+    /** The same lead-in before a spike whose edges nearly touch: not a pulse. */
+    @Test
+    fun doesNotTakeAnEarlyQrsForThePulseAsThePythonDoes() {
+        checkLocation("earlyqrs")
+        assertEquals(-1, ints("earlyqrs.pulse_x1")[0])
+    }
+
     @Test
     fun locatesTheRealKitSheetExactlyAsThePythonDoes() {
         if ("kit38" in row("cases")) checkLocation("kit38")

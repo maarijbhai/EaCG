@@ -95,13 +95,27 @@ PULSE_START_FRACTION = 0.005
 
 #: How far past the first ink the pulse's rising edge may start, as a
 #: fraction of the strip width, provided every column before it is thin
-#: (baseline-sized, see PULSE_TAIL_FACTOR). 1.5% is about 4 mm. On the
+#: (baseline-sized, see PULSE_TAIL_FACTOR). 5% is about 13 mm. On the
 #: first A30s photograph of PTB-XL 40 a grid fragment 20 px long sat at the
 #: strip's left edge with the rising edge 27 px in -- 1% of the width -- so
 #: the pulse was never declared, it was traced as signal, and the duration
-#: anchor counted its width: a 0.34 s lag and about +3% on the anchor. A
-#: lead-in cannot be waveform: the printer draws the pulse first.
-PULSE_LEADIN_FRACTION = 0.015
+#: anchor counted its width: a 0.34 s lag and about +3% on the anchor. With
+#: the corners on the sheet edge the lead-in is the whole ~8 mm margin (85
+#: px, 3%). A lead-in before a pulse cannot be waveform -- the printer draws
+#: the pulse first -- but one before an early QRS can look like it, which
+#: is what PULSE_MIN_WIDTH_FRACTION guards.
+PULSE_LEADIN_FRACTION = 0.05
+
+#: After a lead-in, the pulse's rising and falling edges must be at least
+#: this far apart, as a fraction of the strip width: ~3 mm, against the
+#: pulse's 5 mm (0.2 s). The longer lead-in above is what makes this
+#: necessary. 1.5% was enough for run 3's corners, which cut the sheet's
+#: margin; with corners on the sheet edge the kit's pulse starts ~8 mm in,
+#: behind 85 px of thin grid-rule ink, and was missed again (duration
+#: anchor -4.5% against the truth). A lead-in that long could precede an
+#: early QRS instead of a pulse, and a QRS's two edges sit within about a
+#: millimetre of each other; a pulse's are a flat top apart.
+PULSE_MIN_WIDTH_FRACTION = 0.012
 
 #: A column right of the pulse's falling edge still belongs to the edge
 #: while its ink count exceeds this many times the strip's median column
@@ -346,7 +360,9 @@ def locate_rhythm_strip(
     # leaves the pulse with a steep deflection makes a third cluster within
     # the search window (PTB-XL 38 does, 3 px after the edge), and taking
     # the last would start the recording at that deflection.
-    if len(clusters) >= 2 and start.max() >= 0.5 * search.max():
+    wide_enough = (lead == 0 or len(clusters) < 2 or
+                   clusters[1][0] - clusters[0][-1] >= width * PULSE_MIN_WIDTH_FRACTION)
+    if len(clusters) >= 2 and start.max() >= 0.5 * search.max() and wide_enough:
         first, last = lead + int(clusters[1][0]), lead + int(clusters[1][-1])
         # The recording starts where the pulse falls back to baseline: the
         # centre of the falling edge, not its right-hand side, because the

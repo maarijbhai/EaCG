@@ -172,6 +172,25 @@ def main() -> int:
     lm[min(317, row61):max(320, row61 + 1), 46:62] = True   # back to the trace
     emit_mask(lines, "leadin", lm)
     emit_location(lines, "leadin", lm)
+
+    def rhythm_start(lead_to: int, rise: int, fall: int, top: int) -> np.ndarray:
+        """synth with the rhythm row's start redrawn: a thin lead-in from
+        column 2 to lead_to, then edges at `rise` and `fall` rising to `top`."""
+        q = m.copy()
+        q[band, 0:rise + 40] = False
+        q[317:320, 2:lead_to] = True
+        q[top:320, rise:rise + 2] = True
+        q[top:top + 2, rise:fall + 2] = True
+        q[top:320, fall:fall + 2] = True
+        q[317:320, fall + 2:rise + 40] = True
+        return q
+    # The margin a sheet edge leaves: a lead-in of ~3% before a real pulse.
+    emit_mask(lines, "leadlong", q := rhythm_start(26, 28, 46, 295))
+    emit_location(lines, "leadlong", q)
+    # The same lead-in before a QRS-like spike whose edges nearly touch:
+    # must NOT be taken for a pulse (segment.PULSE_MIN_WIDTH_FRACTION).
+    emit_mask(lines, "earlyqrs", q := rhythm_start(26, 28, 31, 295))
+    emit_location(lines, "earlyqrs", q)
     if KIT.exists():
         sheet = cv2.imread(str(KIT), cv2.IMREAD_COLOR)
         small = cv2.resize(sheet, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_AREA)
