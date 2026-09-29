@@ -24,6 +24,121 @@
         ]
       ],
       "note": "corners placed by Claude from full-resolution crops where the rules end; minor grid did not print"
+    },
+    "ptbxl40_20260929_01": {
+      "file": "ptbxl40_20260929_01.jpg",
+      "target": "ptbxl40_kit_500hz_300dpi",
+      "corners_px": [
+        [
+          1224.2,
+          977.2
+        ],
+        [
+          5224.0,
+          892.5
+        ],
+        [
+          5375.4,
+          3796.6
+        ],
+        [
+          1095.6,
+          3748.8
+        ]
+      ],
+      "note": "square-on, whole sheet, uneven light. Corners found automatically (paper mask, grid region, line fit per edge) and checked by eye: within ~1-3 mm, top-right a little inside. Old print without 1 mm rules."
+    },
+    "ptbxl40_20260929_02": {
+      "file": "ptbxl40_20260929_02.jpg",
+      "target": "ptbxl40_kit_500hz_300dpi",
+      "corners_px": [
+        [
+          807.6,
+          616.9
+        ],
+        [
+          5380.3,
+          634.3
+        ],
+        [
+          5548.8,
+          3922.3
+        ],
+        [
+          595.5,
+          3859.3
+        ]
+      ],
+      "note": "close-up, out of focus. Corners found automatically (paper mask, grid region, line fit per edge) and checked by eye: within ~1-3 mm, top-right a little inside. Old print without 1 mm rules."
+    },
+    "ptbxl40_20260929_03": {
+      "file": "ptbxl40_20260929_03.jpg",
+      "target": "ptbxl40_kit_500hz_300dpi",
+      "corners_px": [
+        [
+          846.4,
+          809.1
+        ],
+        [
+          5337.8,
+          703.9
+        ],
+        [
+          5590.4,
+          3967.2
+        ],
+        [
+          687.3,
+          4006.6
+        ]
+      ],
+      "note": "moderate angle, slightly soft. Corners found automatically (paper mask, grid region, line fit per edge) and checked by eye: within ~1-3 mm, top-right a little inside. Old print without 1 mm rules."
+    },
+    "ptbxl40_20260929_04": {
+      "file": "ptbxl40_20260929_04.jpg",
+      "target": "ptbxl40_kit_500hz_300dpi",
+      "corners_px": [
+        [
+          876.9,
+          726.3
+        ],
+        [
+          5361.4,
+          734.5
+        ],
+        [
+          5542.4,
+          4006.0
+        ],
+        [
+          622.9,
+          3910.9
+        ]
+      ],
+      "note": "near-repeat of 03 (2 s later), slightly soft. Corners found automatically (paper mask, grid region, line fit per edge) and checked by eye: within ~1-3 mm, top-right a little inside. Old print without 1 mm rules."
+    },
+    "ptbxl40_20260929_05": {
+      "file": "ptbxl40_20260929_05.jpg",
+      "target": "ptbxl40_kit_500hz_300dpi",
+      "corners_px": [
+        [
+          600.4,
+          499.4
+        ],
+        [
+          5168.2,
+          381.8
+        ],
+        [
+          5831.7,
+          3740.3
+        ],
+        [
+          130.2,
+          3896.8
+        ]
+      ],
+      "note": "strongly oblique, sharpest; BR grid corner at the frame edge. Corners found automatically (paper mask, grid region, line fit per edge) and checked by eye: within ~1-3 mm, top-right a little inside. Old print without 1 mm rules."
     }
   }
 }

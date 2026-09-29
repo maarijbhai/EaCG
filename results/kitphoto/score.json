@@ -1,7 +1,7 @@
 {
   "experiment": "score",
-  "utc": "2026-09-29T09:46:17+00:00",
-  "git_commit": "db2520a9984bc8c9ef4543134119da76e522c455",
+  "utc": "2026-09-29T13:51:57+00:00",
+  "git_commit": "245aae4319b85c7b32b2ffa888e581021266b1cc",
   "git_dirty": false,
   "params": {
     "registry": "kit_photos.json"
@@ -32,5 +32,5 @@
     "platform": "Windows-11-10.0.26100-SP0"
   },
   "generated_by": "python/score_kit_photo.py",
-  "n_rows": 4
+  "n_rows": 24
 }
