@@ -108,15 +108,21 @@ object PhotoPipeline {
     class Calibrated(
         val name: String,
         val pxPerMm: Double,
-        /** Signed error against the true scale in the rectified frame, %. */
-        val errorPct: Double?,
+        /**
+         * Signed error against the scale the CORNERS imply -- rectified width
+         * over the sheet's printed width. Only as true as the corners; see
+         * [alignment] for an error measured against the truth waveform.
+         */
+        val errorVsCornersPct: Double?,
         val digitised: TraceExtractor.Digitised?,
         val gate: QualityGate.Report?,
         val fidelity: Fidelity.Scores?,
         /** Truth samples skipped before sample 0 of [digitised]. */
         val offsetSamples: Int,
         val error: String?,
-        val traceMs: Long
+        val traceMs: Long,
+        /** Best time-rescale and lag against the truth; harness only. */
+        val alignment: Fidelity.Alignment? = null
     )
 
     class Timings(
@@ -138,7 +144,7 @@ object PhotoPipeline {
         val edgeRmseMaxPx: Double,
         val rectW: Int,
         val rectH: Int,
-        val truePxPerMm: Double?,
+        val pxPerMmFromCorners: Double?,
         val location: StripLocator.Location?,
         val calibrations: List<Calibrated>,
         val stripPreview: Bitmap?,
@@ -274,17 +280,23 @@ object PhotoPipeline {
                 // its own scale. No truth enters the offset.
                 val offsetS = (location.x0 - location.t0X) / (px * MM_PER_S)
                 val offset = (offsetS * (target?.fs ?: FS_OUT)).roundToInt()
-                val fid = if (digitised != null && truth != null && offset >= 0 &&
-                    offset < truth.size - 2) {
-                    runCatching {
-                        Fidelity.score(truth.copyOfRange(offset, truth.size),
-                            Fidelity.fillNan(digitised.signalMv))
-                    }.getOrNull()
-                } else null
+                val scored = digitised != null && truth != null && offset >= 0 &&
+                    offset < truth.size - 2
+                val ref = if (scored) truth!!.copyOfRange(offset, truth.size) else null
+                val fid = if (scored) runCatching {
+                    Fidelity.score(ref!!, Fidelity.fillNan(digitised!!.signalMv))
+                }.getOrNull() else null
+                // As the desktop scorer does: the as-is PCC alone reads ~0 for
+                // a trace that is right in shape but shifted or stretched, and
+                // the corner-derived error is only as true as the corners.
+                val aligned = if (scored) runCatching {
+                    Fidelity.bestAlignment(ref!!, digitised!!.signalMv,
+                        minOverlap = (Fidelity.MIN_OVERLAP_S * (target?.fs ?: FS_OUT)).toInt())
+                }.getOrNull() else null
                 fidelityNs += System.nanoTime() - b
                 cals += Calibrated(name, px, err, digitised, gate, fid, offset,
                     if (digitised == null) "the tracer found no usable trace" else null,
-                    (b - a) / 1_000_000)
+                    (b - a) / 1_000_000, aligned)
             }
             val tEnd = System.nanoTime()
 
@@ -298,7 +310,7 @@ object PhotoPipeline {
                 corners = c,
                 cornerShiftMaxPx = refined.shiftPx.max(),
                 edgeRmseMaxPx = refined.edgeRmsePx.max(),
-                rectW = outW, rectH = outH, truePxPerMm = truePx,
+                rectW = outW, rectH = outH, pxPerMmFromCorners = truePx,
                 location = location, calibrations = cals, stripPreview = preview,
                 timings = Timings(
                     cornersMs = ms(t0, tCorners),

@@ -56,6 +56,179 @@ object Fidelity {
         return Scores(pcc(a, b), rmseMv(a, b), gainRatio(a, b), n)
     }
 
+    /** `run_photo.ALIGN_HALF_RANGE` and `ALIGN_STEP`. */
+    const val ALIGN_HALF_RANGE = 0.10
+    const val ALIGN_STEP = 0.0025
+
+    /**
+     * The best agreement a trace reaches with the truth over a time-rescale
+     * and a lag. `run_photo.best_alignment`.
+     *
+     * [scale] is the factor the trace is resampled by: below 1 it had to be
+     * stretched, so its time base was short and the px/mm that made it too
+     * large -- [pxPerMmErrorPct] is that error, measured against the truth
+     * waveform itself. This is the calibration error the harness can vouch
+     * for. The corner-derived "true" px/mm is only as true as the corners:
+     * on phone run 3 of PTB-XL 40 it put the duration anchor at +8.9% where
+     * this put it at +3%, because the corners sat 6-9 mm inside the sheet.
+     *
+     * [atBound] marks an optimum on the edge of the search, which is not an
+     * optimum; its scale must not be read as a measurement.
+     */
+    class Alignment(
+        val pcc: Double,
+        val scale: Double,
+        val lagSamples: Int,
+        val nCompared: Int,
+        val atBound: Boolean,
+        /** Smallest overlap, samples, at which the result means anything. */
+        val minOverlap: Int = 0
+    ) {
+        /**
+         * Off the search bound AND over most of the recording. A calibration
+         * 5x wrong gives a 2 s trace; the +-10% scale search cannot see a 5x
+         * error and reports a local match of those 2 s at a scale near 1 --
+         * an honest-looking "-0.5% vs truth" for a 400% error, which is what
+         * the ingester printed for phone run 2's grid row before this guard.
+         * `run_photo.MIN_OVERLAP_S` exists for the same trap.
+         */
+        val valid: Boolean get() = !atBound && nCompared >= minOverlap
+        val pxPerMmErrorPct: Double? get() = if (valid) 100.0 * (1.0 / scale - 1.0) else null
+    }
+
+    /** `run_photo.MIN_OVERLAP_S`. */
+    const val MIN_OVERLAP_S = 8.5
+
+    fun bestAlignment(reference: DoubleArray, test: DoubleArray, minOverlap: Int = 0): Alignment {
+        val nScales = Math.rint(2 * ALIGN_HALF_RANGE / ALIGN_STEP).toInt() + 1
+        val scales = DoubleArray(nScales) { (1.0 - ALIGN_HALF_RANGE) + it * ALIGN_STEP }
+        val ref = fillNan(reference)
+        val tst = fillNan(test)
+        var bestV = -1.0
+        var bestS = 1.0
+        var bestLag = 0
+        var bestK = 0
+        for (s in scales) {
+            val n = Math.rint(tst.size / s).toInt()
+            if (n < 100) continue
+            val res = DoubleArray(n) { interpClamped(tst, it * s) }
+            val m = minOf(ref.size, res.size)
+            if (m < 200) continue
+            val lag = argmaxCorrelationLag(ref, res, m)
+            // The Python's slices: lag >= 0 compares ref[lag:] with
+            // res[:len(ref) - lag]; lag < 0 compares ref[:len(res) + lag]
+            // with res[-lag:]. k is the shorter of each pair.
+            val x0: Int; val y0: Int; val k: Int
+            if (lag >= 0) {
+                x0 = lag; y0 = 0
+                k = minOf(ref.size - lag, res.size)
+            } else {
+                x0 = 0; y0 = -lag
+                k = minOf(ref.size, res.size + lag)
+            }
+            if (k < 200) continue
+            val v = pccRange(ref, x0, res, y0, k)
+            if (v.isNaN()) continue
+            if (v > bestV) { bestV = v; bestS = s; bestLag = lag; bestK = k }
+        }
+        val atBound = scales.size > 1 && (
+            kotlin.math.abs(bestS - scales.first()) < ALIGN_STEP / 2 ||
+                kotlin.math.abs(bestS - scales.last()) < ALIGN_STEP / 2)
+        return Alignment(bestV, bestS, bestLag, bestK, atBound, minOverlap)
+    }
+
+    /** `np.interp(x, arange(len(y)), y)`: linear, held flat past either end. */
+    private fun interpClamped(y: DoubleArray, x: Double): Double {
+        if (x <= 0.0) return y[0]
+        val last = y.size - 1
+        if (x >= last) return y[last]
+        val i = kotlin.math.floor(x).toInt()
+        val f = x - i
+        return y[i] + (y[i + 1] - y[i]) * f
+    }
+
+    /**
+     * The lag of `scipy.signal.correlate(a, b, "full")`'s maximum over the
+     * first [m] samples of each, mean-removed: argmax index - (m - 1), first
+     * occurrence, scanning lags from -(m-1) upward as scipy's output does.
+     * By FFT, as scipy's "fft" method is, so it stays cheap on the handset.
+     */
+    private fun argmaxCorrelationLag(ref: DoubleArray, res: DoubleArray, m: Int): Int {
+        var ma = 0.0; var mb = 0.0
+        for (i in 0 until m) { ma += ref[i]; mb += res[i] }
+        ma /= m; mb /= m
+        var size = 1
+        while (size < 2 * m - 1) size = size shl 1
+        val ar = DoubleArray(size); val ai = DoubleArray(size)
+        val br = DoubleArray(size); val bi = DoubleArray(size)
+        for (i in 0 until m) { ar[i] = ref[i] - ma; br[i] = res[i] - mb }
+        fft(ar, ai, false); fft(br, bi, false)
+        // A * conj(B): c[L] = sum_i a[i+L] b[i].
+        for (i in 0 until size) {
+            val re = ar[i] * br[i] + ai[i] * bi[i]
+            val im = ai[i] * br[i] - ar[i] * bi[i]
+            ar[i] = re; ai[i] = im
+        }
+        fft(ar, ai, true)
+        var best = Double.NEGATIVE_INFINITY
+        var bestLag = 0
+        for (lag in -(m - 1)..(m - 1)) {
+            val v = ar[if (lag >= 0) lag else size + lag]
+            if (v > best) { best = v; bestLag = lag }
+        }
+        return bestLag
+    }
+
+    /** In-place iterative radix-2 FFT; [inverse] scales by 1/n. */
+    private fun fft(re: DoubleArray, im: DoubleArray, inverse: Boolean) {
+        val n = re.size
+        var j = 0
+        for (i in 1 until n) {
+            var bit = n shr 1
+            while (j and bit != 0) { j = j xor bit; bit = bit shr 1 }
+            j = j xor bit
+            if (i < j) {
+                var t = re[i]; re[i] = re[j]; re[j] = t
+                t = im[i]; im[i] = im[j]; im[j] = t
+            }
+        }
+        var len = 2
+        while (len <= n) {
+            val ang = 2 * Math.PI / len * (if (inverse) 1 else -1)
+            val wr = kotlin.math.cos(ang); val wi = kotlin.math.sin(ang)
+            var i = 0
+            while (i < n) {
+                var cr = 1.0; var ci = 0.0
+                for (k in 0 until len / 2) {
+                    val ur = re[i + k]; val ui = im[i + k]
+                    val xr = re[i + k + len / 2]; val xi = im[i + k + len / 2]
+                    val vr = xr * cr - xi * ci; val vi = xr * ci + xi * cr
+                    re[i + k] = ur + vr; im[i + k] = ui + vi
+                    re[i + k + len / 2] = ur - vr; im[i + k + len / 2] = ui - vi
+                    val nr = cr * wr - ci * wi
+                    ci = cr * wi + ci * wr; cr = nr
+                }
+                i += len
+            }
+            len = len shl 1
+        }
+        if (inverse) for (i in 0 until n) { re[i] /= n; im[i] /= n }
+    }
+
+    /** Pearson correlation of a[a0 ..< a0+k] and b[b0 ..< b0+k]; NaN if flat. */
+    private fun pccRange(a: DoubleArray, a0: Int, b: DoubleArray, b0: Int, k: Int): Double {
+        var ma = 0.0; var mb = 0.0
+        for (i in 0 until k) { ma += a[a0 + i]; mb += b[b0 + i] }
+        ma /= k; mb /= k
+        var sab = 0.0; var saa = 0.0; var sbb = 0.0
+        for (i in 0 until k) {
+            val da = a[a0 + i] - ma; val db = b[b0 + i] - mb
+            sab += da * db; saa += da * da; sbb += db * db
+        }
+        if (saa <= 0.0 || sbb <= 0.0) return Double.NaN
+        return sab / kotlin.math.sqrt(saa * sbb)
+    }
+
     /**
      * Linear interpolation across NaN gaps, the ends held flat.
      * `run_photo.fill_nan`, which `score_kit_photo.score_signal` applies

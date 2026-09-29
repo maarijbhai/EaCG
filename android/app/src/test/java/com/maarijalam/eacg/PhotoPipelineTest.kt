@@ -34,6 +34,22 @@ class PhotoPipelineTest {
     }
 
     @Test
+    fun aShortTraceGetsNoErrorVsTruth() {
+        // A trace a fifth of the truth's length, as a 5x-wrong calibration
+        // gives: whatever the search finds over it is not a measurement.
+        val fs = 500.0
+        val truth = DoubleArray(5000) { kotlin.math.sin(2 * Math.PI * 1.1 * it / fs) +
+            0.3 * kotlin.math.sin(2 * Math.PI * 7.0 * it / fs) }
+        val short = truth.copyOfRange(0, 1000)
+        val al = Fidelity.bestAlignment(truth, short, minOverlap = (Fidelity.MIN_OVERLAP_S * fs).toInt())
+        assertEquals(false, al.valid)
+        assertNull(al.pxPerMmErrorPct)
+        val full = Fidelity.bestAlignment(truth, truth, minOverlap = (Fidelity.MIN_OVERLAP_S * fs).toInt())
+        assertEquals(true, full.valid)
+        assertEquals(0.0, full.pxPerMmErrorPct!!, 1e-9)
+    }
+
+    @Test
     fun aBrokenAnchorCannotPickAFactor() {
         // Phone run 2 as it came out: anchor -52% of truth. /5 gives 10.08
         // against 4.86, twice it: refused, rather than trusting either.

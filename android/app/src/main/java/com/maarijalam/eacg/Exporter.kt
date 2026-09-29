@@ -77,14 +77,22 @@ object Exporter {
         run.handCorners?.let { h -> meta("corners_hand_px", h.joinToString(" ") { "%.2f".us(it) }) }
         meta("corners_used", if (run.cornersFromHand) "hand (refinement fit too poor)" else "refined")
         meta("corners_used_px", run.corners.joinToString(" ") { "%.2f".us(it) })
-        meta("corner_shift_max_px", "%.2f".us(run.cornerShiftMaxPx))
-        meta("edge_fit_rmse_max_px", "%.3f".us(run.edgeRmseMaxPx))
+        // What the edge refinement found, whether or not it was used.
+        meta("refine_shift_max_px", "%.2f".us(run.cornerShiftMaxPx))
+        meta("refine_edge_rmse_max_px", "%.3f".us(run.edgeRmseMaxPx))
         meta("rectified_px", "${run.rectW}x${run.rectH}")
-        meta("px_per_mm_true", run.truePxPerMm?.let { "%.5f".us(it) })
+        // Rectified width over the sheet's printed width: the scale the
+        // corners imply, true only if they are the sheet's corners. The
+        // cal.*.truth_* fields are measured against the waveform instead.
+        meta("px_per_mm_from_corners", run.pxPerMmFromCorners?.let { "%.5f".us(it) })
         run.location?.let {
             meta("strip_box_px", "${it.x0},${it.y0},${it.x1},${it.y1}")
             meta("strip_t0_px", "%.2f".us(it.t0X))
             meta("pulse_found", it.pulseX1 >= 0)
+            if (target != null && it.pulseX1 < 0) {
+                meta("pulse_warning", "every kit sheet prints a 1 mV pulse and none was " +
+                    "found: it was traced as signal and its width counted in the duration anchor")
+            }
         }
         val t = run.timings
         meta("ms_corners", t.cornersMs)
@@ -97,12 +105,26 @@ object Exporter {
         for (c in run.calibrations) {
             val p = "cal.${c.name}"
             meta("$p.px_per_mm", "%.5f".us(c.pxPerMm))
-            meta("$p.error_pct", c.errorPct?.let { "%.4f".us(it) })
+            meta("$p.error_vs_corners_pct", c.errorVsCornersPct?.let { "%.4f".us(it) })
+            c.alignment?.let { al ->
+                // Against the truth waveform: the error the harness vouches for.
+                // Blank unless the match spans >= 8.5 s and is off the bound.
+                meta("$p.truth_align_valid", al.valid)
+                meta("$p.truth_align_overlap_s", "%.2f".us(al.nCompared / PhotoPipeline.FS_OUT))
+                meta("$p.truth_px_per_mm_error_pct", al.pxPerMmErrorPct?.let { "%.4f".us(it) })
+                meta("$p.truth_align_scale", "%.4f".us(al.scale))
+                meta("$p.truth_align_lag_samples", al.lagSamples)
+                meta("$p.truth_align_at_bound", al.atBound)
+                meta("$p.pcc_aligned", if (al.valid) "%.4f".us(al.pcc) else "")
+            }
             meta("$p.offset_samples", c.offsetSamples)
             meta("$p.verdict", c.gate?.verdict?.name)
             meta("$p.rejections", c.gate?.rejections?.joinToString(";"))
             meta("$p.flags", c.gate?.flags?.joinToString(";"))
-            meta("$p.pcc", c.fidelity?.pcc)
+            meta("$p.pcc_asis", c.fidelity?.pcc)
+            // The span it was computed over: a 2 s trace can score a fair PCC
+            // over its 2 s and mean nothing about the 10 s recording.
+            meta("$p.asis_overlap_s", c.fidelity?.let { "%.2f".us(it.nCompared / PhotoPipeline.FS_OUT) })
             meta("$p.rmse_mv", c.fidelity?.rmseMv)
             meta("$p.gain_ratio", c.fidelity?.gainRatio)
             meta("$p.trace_ms", c.traceMs)

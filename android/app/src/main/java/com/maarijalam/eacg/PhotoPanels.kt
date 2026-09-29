@@ -239,15 +239,37 @@ private fun PhotoResults(run: PhotoPipeline.Run, target: KitTargets.Target?) {
         }
         Stat("corners used", if (run.cornersFromHand) "as placed" else "refined")
         Stat("refinement would move (max)", "%.1f px".format(run.cornerShiftMaxPx))
-        Stat("edge fit residual (max)", "%.2f px".format(run.edgeRmseMaxPx))
+        Stat("refinement edge fit (max)", "%.2f px".format(run.edgeRmseMaxPx))
         Stat("rectified", "${run.rectW} x ${run.rectH}")
-        run.truePxPerMm?.let { Stat("true px/mm (from sheet size)", "%.4f".format(it)) }
-        run.location?.let { Stat("pulse cut", if (it.pulseX1 >= 0) "yes" else "no") }
+        run.pxPerMmFromCorners?.let { Stat("px/mm implied by corners", "%.4f".format(it)) }
+        run.location?.let { loc ->
+            Stat("pulse cut", if (loc.pulseX1 >= 0) "yes" else "no")
+            if (target != null && loc.pulseX1 < 0) {
+                Text("The printed 1 mV pulse was not found, so it was traced as signal " +
+                    "and counted in the duration anchor: expect a lag and a longer anchor.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error)
+            }
+        }
 
         for (c in run.calibrations) {
             Text("Calibration: ${c.name}", style = MaterialTheme.typography.labelMedium)
             Stat("px/mm", "%.4f".format(c.pxPerMm) +
-                (c.errorPct?.let { "  (%+.3f%%)".format(it) } ?: ""))
+                (c.errorVsCornersPct?.let { "  (%+.2f%% vs corners)".format(it) } ?: ""))
+            c.alignment?.let { al ->
+                if (al.valid) {
+                    Stat("error vs truth waveform", "%+.2f%%".format(al.pxPerMmErrorPct))
+                    Stat("PCC (aligned)", "%.4f".format(al.pcc))
+                } else {
+                    Stat("error vs truth waveform", "not measurable")
+                    Text("No alignment with the truth over 8.5 s or more " +
+                        "(best: %.1f s%s). The calibration is too far off for the ±10%% search to measure."
+                            .format(al.nCompared / PhotoPipeline.FS_OUT,
+                                if (al.atBound) ", at the search bound" else ""),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
             c.error?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             c.gate?.let { g ->
                 Stat("gate", g.verdict.name)

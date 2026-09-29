@@ -247,6 +247,21 @@ def main() -> int:
             fmt(dig._novelty(ac, spacing, m)) for m in dig.HARMONIC_DIVISORS))
     lines.append("harm.cases " + " ".join(hcases))
 
+    # ---- truth alignment (run_photo.best_alignment) -----------------------
+    # A reference and a copy stretched 3%, delayed and noised: the scale and
+    # lag the search reports, and the PCC it reaches, must match exactly.
+    import run_photo as rp
+    ref = synth.synthetic_ecg(duration_s=4.0, fs=500.0, heart_rate_bpm=72.0,
+                              noise_mv=0.0, seed=3)
+    rng = np.random.default_rng(5)
+    t = np.arange(int(len(ref) * 0.97)) / 0.97
+    test = np.interp(t, np.arange(len(ref)), ref)[60:] + rng.normal(0, 0.02, len(t) - 60)
+    test[400:430] = np.nan               # a gap, filled as the harness fills it
+    pcc, scale, lag, n, at_bound = rp.best_alignment(ref, test)
+    lines.append("align.ref " + " ".join(fmt(v) for v in ref))
+    lines.append("align.test " + " ".join("NaN" if np.isnan(v) else fmt(v) for v in test))
+    lines.append(f"align.out {fmt(pcc)} {fmt(scale)} {lag} {n} {int(at_bound)}")
+
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"{len(lines)} lines -> {OUT.relative_to(REPO)}")
     return 0

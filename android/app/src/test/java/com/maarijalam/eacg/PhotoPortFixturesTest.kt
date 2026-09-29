@@ -122,6 +122,23 @@ class PhotoPortFixturesTest {
         assertEquals(46, ints("leadin.pulse_x1")[0])
     }
 
+    /**
+     * `run_photo.best_alignment` on a reference and a copy stretched 3%,
+     * delayed, noised and gapped: the same scale and lag exactly, the same
+     * PCC to rounding. The FFT differs from scipy's in its last bits; the
+     * argmax it feeds must not.
+     */
+    @Test
+    fun alignsToTheTruthExactlyAsThePythonDoes() {
+        val want = doubles("align.out")
+        val got = Fidelity.bestAlignment(doubles("align.ref"), doubles("align.test"))
+        assertEquals("scale", want[1], got.scale, 1e-12)
+        assertEquals("lag", want[2].toInt(), got.lagSamples)
+        assertEquals("n", want[3].toInt(), got.nCompared)
+        assertEquals("pcc", want[0], got.pcc, 1e-9)
+        assertEquals("at bound", want[4] != 0.0, got.atBound)
+    }
+
     @Test
     fun locatesTheRealKitSheetExactlyAsThePythonDoes() {
         if ("kit38" in row("cases")) checkLocation("kit38")
