@@ -193,6 +193,14 @@ def main() -> int:
     emit_mask(lines, "gapfill", gm)
     emit_location(lines, "gapfill", gm)
 
+    # The trace's last stretch broken into two narrow pieces past the last
+    # kept one: they continue it at its height, so they must be kept.
+    tm = m.copy()
+    tm[band, 740:745] = False
+    tm[band, 760:765] = False
+    emit_mask(lines, "tailfill", tm)
+    emit_location(lines, "tailfill", tm)
+
     # The margin a sheet edge leaves: a lead-in of ~3% before a real pulse.
     emit_mask(lines, "leadlong", q := rhythm_start(26, 28, 46, 295))
     emit_location(lines, "leadlong", q)

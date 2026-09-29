@@ -31,6 +31,9 @@ object StripLocator {
     const val CLOSE_FRACTION = 0.035
     const val PULSE_SEARCH_FRACTION = 0.03
     const val PULSE_START_FRACTION = 0.005
+    /** `segment.END_GAP_FRACTION` / `END_ROW_TOLERANCE`: trace pieces past an end. */
+    const val END_GAP_FRACTION = 0.02
+    const val END_ROW_TOLERANCE = 0.10
     /** `segment.LEVEL_*`: the local tilt estimate around the strip. */
     const val LEVEL_PAD_FRACTION = 0.08
     const val LEVEL_MIN_MARGIN = 1.5
@@ -136,6 +139,50 @@ object StripLocator {
                     for (c in x until x + w) covered[c] = true
                 }
             }
+            // `segment.isolate_trace`: a narrow piece that CONTINUES the trace
+            // past either end, starting close to it and at its height. Phone run
+            // 6 of PTB-XL 40 lost its last 0.84 s -- the tenth R wave -- to
+            // pieces 16-80 px wide beyond the last kept stretch.
+            val gap = max(2, pyRound(cols * END_GAP_FRACTION))
+            val tol = max(2, pyRound(rows * END_ROW_TOLERANCE))
+            var grew = true
+            while (grew) {
+                grew = false
+                var f = -1
+                var l = -1
+                for (c in 0 until cols) if (covered[c]) { if (f < 0) f = c; l = c }
+                // A snapshot per pass, as the Python's `kept` is: pieces added
+                // in this pass are not yet part of the reference rows.
+                val kept = keep.copyOf()
+                for (i in narrow) {
+                    if (keep[i]) continue
+                    val x = cc.left[i]
+                    val w = cc.width[i]
+                    val (c0, c1) = when {
+                        x > l && x <= l + gap -> max(0, l - gap) to l
+                        x + w - 1 >= f - gap && x + w - 1 < f -> f to min(cols - 1, f + gap)
+                        else -> continue
+                    }
+                    // Rows the KEPT trace occupies in the reference columns.
+                    var r0 = -1
+                    var r1 = -1
+                    for (r in 0 until rows) {
+                        var hit = false
+                        for (c in c0..c1) {
+                            val p = r * cols + c
+                            if (mask.data[p] != 0.toByte() && kept[cc.labels[p]]) { hit = true; break }
+                        }
+                        if (hit) { if (r0 < 0) r0 = r; r1 = r }
+                    }
+                    val y = cc.top[i]
+                    val hh = cc.height[i]
+                    if (r0 >= 0 && y <= r1 + tol && y + hh - 1 >= r0 - tol) {
+                        keep[i] = true
+                        for (c in x until x + w) covered[c] = true
+                        grew = true
+                    }
+                }
+            }
         }
         for (p in 0 until rows * cols) {
             if (mask.data[p] != 0.toByte() && keep[cc.labels[p]]) out[p] = 1
@@ -181,7 +228,8 @@ object StripLocator {
     }
 
     internal class Components(
-        val labels: IntArray, val count: Int, val left: IntArray, val width: IntArray
+        val labels: IntArray, val count: Int, val left: IntArray, val width: IntArray,
+        val top: IntArray, val height: IntArray
     )
 
     /**
@@ -193,6 +241,8 @@ object StripLocator {
         val labels = IntArray(rows * cols)
         val lefts = ArrayList<Int>().apply { add(0) }
         val rights = ArrayList<Int>().apply { add(0) }
+        val tops = ArrayList<Int>().apply { add(0) }
+        val bottoms = ArrayList<Int>().apply { add(0) }
         var n = 0
         val stack = IntArray(rows * cols)
         for (start in 0 until rows * cols) {
@@ -200,6 +250,8 @@ object StripLocator {
             n++
             var lo = start % cols
             var hi = lo
+            var rlo = start / cols
+            var rhi = rlo
             var top = 0
             stack[top++] = start
             labels[start] = n
@@ -209,6 +261,8 @@ object StripLocator {
                 val c = p % cols
                 if (c < lo) lo = c
                 if (c > hi) hi = c
+                if (r < rlo) rlo = r
+                if (r > rhi) rhi = r
                 for (dr in -1..1) {
                     val rr = r + dr
                     if (rr < 0 || rr >= rows) continue
@@ -225,10 +279,14 @@ object StripLocator {
             }
             lefts.add(lo)
             rights.add(hi)
+            tops.add(rlo)
+            bottoms.add(rhi)
         }
         val left = IntArray(n + 1) { lefts[it] }
         val width = IntArray(n + 1) { if (it == 0) 0 else rights[it] - lefts[it] + 1 }
-        return Components(labels, n, left, width)
+        val topA = IntArray(n + 1) { tops[it] }
+        val heightA = IntArray(n + 1) { if (it == 0) 0 else bottoms[it] - tops[it] + 1 }
+        return Components(labels, n, left, width, topA, heightA)
     }
 
     // ----------------------------------------------------------------------

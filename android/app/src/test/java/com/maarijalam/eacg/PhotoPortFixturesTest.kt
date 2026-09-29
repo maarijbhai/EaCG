@@ -152,6 +152,20 @@ class PhotoPortFixturesTest {
         for (x in 405 until 420) assertTrue("column $x", cols[x - box[0]] > 0)
     }
 
+    /**
+     * The trace's last stretch broken into narrow pieces past the last kept
+     * one, at its height: kept to the strip's end. Without this, phone run 6
+     * of PTB-XL 40 lost its tenth R wave.
+     */
+    @Test
+    fun followsTheTraceToItsEndAsThePythonDoes() {
+        checkLocation("tailfill")
+        val box = ints("tailfill.box")
+        val cols = ints("tailfill.isolated_cols")
+        for (x in 745 until 760) assertTrue("column $x", cols[x - box[0]] > 0)
+        for (x in 765 until 775) assertTrue("column $x", cols[x - box[0]] > 0)
+    }
+
     /** The ~8 mm margin corners on the sheet edge leave before the pulse. */
     @Test
     fun findsThePulseBehindASheetMarginAsThePythonDoes() {

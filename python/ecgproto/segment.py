@@ -142,6 +142,14 @@ BRIDGE_FRACTION = 0.002
 #: over the trace and shares all of them.
 MAX_SHARED_COLUMNS = 0.5
 
+#: A narrow piece continues the trace past an end if it starts within this
+#: fraction of the strip width of that end (~5 mm on a 10 s strip)...
+END_GAP_FRACTION = 0.02
+
+#: ...and its rows come within this fraction of the strip height of the rows
+#: the trace occupies at that end.
+END_ROW_TOLERANCE = 0.10
+
 #: Rows kept above and below the trace's own extent, as a fraction of the
 #: image height. About 2 mm on an A4 sheet: room for anti-aliasing and
 #: blur, not enough to reach the line of text under the strip.
@@ -215,6 +223,39 @@ def isolate_trace(mask: np.ndarray,
             if covered[x:x + w].mean() < MAX_SHARED_COLUMNS:
                 keep[i] = True
                 covered[x:x + w] = True
+
+    # ...and so is a narrow piece that CONTINUES the trace past either end:
+    # it starts within END_GAP_FRACTION of the end and at the height the
+    # trace is at there. Nothing is printed beyond a strip's ends, and the
+    # lead label sits in columns the trace covers, so text cannot pass both
+    # tests. Repeated, so a chain of pieces is followed to the true end. Phone
+    # run 6 of PTB-XL 40 lost its last 0.84 s -- the tenth R wave with it --
+    # to pieces 16-80 px wide beyond the last kept stretch.
+    if np.any(keep):
+        gap = max(2, int(round(m.shape[1] * END_GAP_FRACTION)))
+        tol = max(2, int(round(m.shape[0] * END_ROW_TOLERANCE)))
+        grew = True
+        while grew:
+            grew = False
+            on = np.flatnonzero(covered)
+            first, last = int(on[0]), int(on[-1])
+            kept = keep[labels] & (m > 0)
+            for i in narrow:
+                if keep[i]:
+                    continue
+                x, w = stats[i, cv2.CC_STAT_LEFT], stats[i, cv2.CC_STAT_WIDTH]
+                y, hh = stats[i, cv2.CC_STAT_TOP], stats[i, cv2.CC_STAT_HEIGHT]
+                if last < x <= last + gap:
+                    ref = kept[:, max(0, last - gap):last + 1]
+                elif first - gap <= x + w - 1 < first:
+                    ref = kept[:, first:first + gap + 1]
+                else:
+                    continue
+                r = np.flatnonzero(ref.any(axis=1))
+                if r.size and y <= r[-1] + tol and y + hh - 1 >= r[0] - tol:
+                    keep[i] = True
+                    covered[x:x + w] = True
+                    grew = True
     return keep[labels] & (m > 0)
 
 
