@@ -1,14 +1,15 @@
 {
   "generated_by": "python/ingest_device_exports.py",
-  "utc": "2026-09-29T09:28:10+00:00",
+  "utc": "2026-09-29T14:03:06+00:00",
   "source": "CSV files written by the app (Exporter.kt) and copied into data/device_exports/, which is not committed",
   "files": [
     "eacg_ptbxl40_kit_500hz_300dpi_20260928_104959.csv",
     "eacg_ptbxl40_kit_500hz_300dpi_20260928_224050.csv",
     "eacg_ptbxl40_kit_500hz_300dpi_20260928_231824.csv",
     "eacg_ptbxl40_kit_500hz_300dpi_20260929_105833.csv",
-    "eacg_ptbxl40_kit_500hz_300dpi_20260929_112611.csv"
+    "eacg_ptbxl40_kit_500hz_300dpi_20260929_112611.csv",
+    "eacg_ptbxl40_kit_500hz_300dpi_20260929_155819.csv"
   ],
-  "n_rows": 13,
+  "n_rows": 16,
   "caveat": "The phone decodes photographs to 3200 px on the long side; compare with desktop rows scored at the same resolution. error_vs_corners_pct is against the scale the placed corners imply and is only as true as they are; desktop_px_per_mm_error_vs_truth_pct is against the PTB-XL waveform, recomputed from each export's own trace."
 }
