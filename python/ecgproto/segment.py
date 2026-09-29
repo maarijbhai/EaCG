@@ -187,14 +187,34 @@ def isolate_trace(mask: np.ndarray,
     # genuine piece of trace fills columns nothing else does.
     covered = np.zeros(m.shape[1], dtype=bool)
     keep = np.zeros(n, dtype=bool)
+    narrow = []
     for i in 1 + np.argsort(-stats[1:, cv2.CC_STAT_WIDTH], kind="stable"):
         x, w = stats[i, cv2.CC_STAT_LEFT], stats[i, cv2.CC_STAT_WIDTH]
         if w < min_w:
-            break
+            narrow.append(i)
+            continue
         span = covered[x:x + w]
         if span.mean() < MAX_SHARED_COLUMNS:
             keep[i] = True
             covered[x:x + w] = True
+
+    # A narrow piece that fills a hole INSIDE the kept trace is trace. Text
+    # sits in columns the trace already covers, or beyond its ends; it never
+    # fills columns the trace leaves empty between two kept stretches. On
+    # the A30s photograph of PTB-XL 40 at 3200 px a thin stroke broke before
+    # the beat at 9.14 s, the beat and its ST segment became an 80 px piece
+    # -- under the 3% (81 px) width floor -- and were dropped as text: a
+    # 0.24 s gap with an R wave in it.
+    on = np.flatnonzero(covered)
+    if on.size:
+        first, last = int(on[0]), int(on[-1])
+        for i in narrow:
+            x, w = stats[i, cv2.CC_STAT_LEFT], stats[i, cv2.CC_STAT_WIDTH]
+            if x <= first or x + w - 1 >= last:
+                continue
+            if covered[x:x + w].mean() < MAX_SHARED_COLUMNS:
+                keep[i] = True
+                covered[x:x + w] = True
     return keep[labels] & (m > 0)
 
 
@@ -230,6 +250,58 @@ class StripLocation:
 
     def crop(self, image: np.ndarray) -> np.ndarray:
         return image[self.y0:self.y1, self.x0:self.x1]
+
+
+#: Rows added above and below the strip for the local skew estimate, as a
+#: fraction of the page height: ~15 mm each side on a kit sheet, enough to
+#: take in six or more 5 mm rules.
+LEVEL_PAD_FRACTION = 0.08
+
+#: A local tilt is removed only when the estimate is a real peak (margin,
+#: optimum over the objective 1 degree away) and small. Larger is not a
+#: residual of rectification but a failure of it, and rotating would hide it.
+LEVEL_MIN_MARGIN = 1.5
+LEVEL_MAX_DEG = 2.0
+
+
+@dataclass(frozen=True)
+class LevelledStrip:
+    image: np.ndarray       # the strip crop, tilt removed (or as cropped)
+    angle_deg: float        # estimated local tilt; + is anticlockwise
+    margin: float
+    applied: bool
+
+
+def level_strip(image: np.ndarray, loc: StripLocation) -> LevelledStrip:
+    """Crop the rhythm strip with its OWN residual tilt removed.
+
+    A page rectified from imperfect corners is not uniformly level. On the
+    A30s photograph of PTB-XL 40 (phone run 5) the 5 mm rules were level at
+    the top of the page and sloped 12 px over 2200 px -- 0.31 degrees -- in
+    the rhythm band at the bottom, where the placed corners were 6-9 mm off.
+    Whole-page deskew measured 0.10 degrees and could not remove it; the
+    trace drifted 1.55 mm against the truth across the strip. So the tilt is
+    estimated on a band around the strip itself, from the grid rules in it,
+    and removed before the strip is cut out.
+
+    The band is rotated about its own centre with no expansion. Rows move by
+    at most (width/2) * tan(angle) -- ~7 px at 0.3 degrees on a 2800 px
+    page -- well inside the LEVEL_PAD_FRACTION margin, so the white fill of
+    the rotation never reaches the strip. Columns move by under a pixel, so
+    the strip's x-coordinates, t0 included, still hold.
+    """
+    from . import deskew as dsk              # deskew imports digitise too
+    h = image.shape[0]
+    pad = int(h * LEVEL_PAD_FRACTION)
+    b0, b1 = max(0, loc.y0 - pad), min(h, loc.y1 + pad)
+    band = image[b0:b1, loc.x0:loc.x1]
+    est = dsk.estimate_skew(band)
+    angle, margin = float(est["angle_deg"]), float(est["margin"])
+    ok = margin >= LEVEL_MIN_MARGIN and abs(angle) <= LEVEL_MAX_DEG
+    if not ok:
+        return LevelledStrip(loc.crop(image), angle, margin, False)
+    rotated = dsk.rotate_image(band, -angle, expand=False)
+    return LevelledStrip(rotated[loc.y0 - b0:loc.y1 - b0], angle, margin, True)
 
 
 def find_peaks_distance(x: np.ndarray, distance: int) -> np.ndarray:

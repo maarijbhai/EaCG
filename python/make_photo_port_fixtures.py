@@ -184,6 +184,15 @@ def main() -> int:
         q[top:320, fall:fall + 2] = True
         q[317:320, fall + 2:rise + 40] = True
         return q
+    # A 15 px piece of trace cut free between two 5 px breaks, narrower than
+    # the 3% width floor: it fills a hole inside the trace, so it must be
+    # kept (segment.isolate_trace), not dropped as text.
+    gm = m.copy()
+    gm[band, 400:405] = False
+    gm[band, 420:425] = False
+    emit_mask(lines, "gapfill", gm)
+    emit_location(lines, "gapfill", gm)
+
     # The margin a sheet edge leaves: a lead-in of ~3% before a real pulse.
     emit_mask(lines, "leadlong", q := rhythm_start(26, 28, 46, 295))
     emit_location(lines, "leadlong", q)

@@ -153,7 +153,11 @@ object PhotoPipeline {
         /** The corners as placed by hand, before refinement. */
         val handCorners: DoubleArray? = null,
         /** True when [corners] are the hand ones: refinement fit too poorly. */
-        val cornersFromHand: Boolean = false
+        val cornersFromHand: Boolean = false,
+        /** Local tilt of the strip band, and whether it was removed. */
+        val levelAngleDeg: Double? = null,
+        val levelMargin: Double? = null,
+        val levelApplied: Boolean = false
     )
 
     suspend fun run(
@@ -221,10 +225,33 @@ object PhotoPipeline {
                 )
             }
 
+            // `segment.level_strip`: remove the strip's OWN residual tilt, from
+            // the grid rules in a band around it. Imperfect corners leave the
+            // page level at the top and tilted at the bottom -- 0.31 degrees in
+            // phone run 5's rhythm band, 0.10 for the page as a whole -- and the
+            // trace drifted 1.55 mm against the truth across the strip.
+            val stripW = location.x1 - location.x0
+            val stripH = location.y1 - location.y0
+            val pad = (rect.rows() * StripLocator.LEVEL_PAD_FRACTION).toInt()
+            val b0 = maxOf(0, location.y0 - pad)
+            val b1 = minOf(rect.rows(), location.y1 + pad)
+            val band = Mat(rect, Rect(location.x0, b0, stripW, b1 - b0))
+            val level = try { SkewEstimator.estimate(band) } catch (e: RuntimeException) { null }
+            val levelApplied = level != null && level.margin >= StripLocator.LEVEL_MIN_MARGIN &&
+                kotlin.math.abs(level.angleDeg) <= StripLocator.LEVEL_MAX_DEG
             // The strip is binarised on its own, as the desktop scorer does:
             // the threshold is then a property of the strip, not of the page.
-            val stripMat = Mat(rect, Rect(location.x0, location.y0,
-                location.x1 - location.x0, location.y1 - location.y0)).clone()
+            val stripMat = if (levelApplied) {
+                val rotated = ImageWarp.rotate(band, -level!!.angleDeg, expand = false)
+                try {
+                    Mat(rotated, Rect(0, location.y0 - b0, stripW, stripH)).clone()
+                } finally {
+                    rotated.release()
+                }
+            } else {
+                Mat(rect, Rect(location.x0, location.y0, stripW, stripH)).clone()
+            }
+            band.release()
             val stripMask = try {
                 val bin = TraceExtractor.binarise(stripMat, openKernel = OPEN_KERNEL)
                 try {
@@ -323,7 +350,10 @@ object PhotoPipeline {
                 ),
                 error = null,
                 handCorners = roughCorners.copyOf(),
-                cornersFromHand = fromHand
+                cornersFromHand = fromHand,
+                levelAngleDeg = level?.angleDeg,
+                levelMargin = level?.margin,
+                levelApplied = levelApplied
             )
         } finally {
             rect.release()

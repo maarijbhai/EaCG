@@ -121,6 +121,7 @@ def main() -> int:
             "corners_used", "refine_shift_max_px", "refine_edge_rmse_max_px",
             "rectified_px", "px_per_mm_from_corners", "strip_box_px",
             "pulse_found", "pulse_warning",
+            "level_angle_deg", "level_margin", "level_applied",
             "ms_corners", "ms_rectify", "ms_locate", "ms_strip", "ms_grid",
             "ms_pipeline", "ms_harness")}
         waves = read_waveforms(f)

@@ -180,6 +180,10 @@ fun PhotoScoreSection(modifier: Modifier = Modifier) {
                     enabled = !state.busy,
                     refined = state.run?.corners
                 )
+                Text("Check each corner: the crosshair should sit on the very tips of the grid lines.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                CornerCheckRow(bmp, corners)
                 val nearEdge = CornerGeometry.cornersNearFrameEdge(corners, bmp.width, bmp.height)
                 if (nearEdge.isNotEmpty()) {
                     Text(
@@ -244,6 +248,9 @@ private fun PhotoResults(run: PhotoPipeline.Run, target: KitTargets.Target?) {
         run.pxPerMmFromCorners?.let { Stat("px/mm implied by corners", "%.4f".format(it)) }
         run.location?.let { loc ->
             Stat("pulse cut", if (loc.pulseX1 >= 0) "yes" else "no")
+            run.levelAngleDeg?.let { a ->
+                Stat("strip levelled", if (run.levelApplied) "%+.2f°".format(a) else "no (%+.2f°)".format(a))
+            }
             if (target != null && loc.pulseX1 < 0) {
                 Text("The printed 1 mV pulse was not found, so it was traced as signal " +
                     "and counted in the duration anchor: expect a lag and a longer anchor.",

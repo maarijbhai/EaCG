@@ -67,7 +67,8 @@ object Exporter {
         photoLabel: String,
         stamp: String
     ): String = buildString {
-        fun meta(k: String, v: Any?) = append("# $k: $v\n")
+        // A missing value is written empty, not as the word "null".
+        fun meta(k: String, v: Any?) = append("# $k: ${v ?: ""}\n")
         meta("generated_by", "EaCG PhotoPipeline")
         meta("local_time", stamp)
         meta("device", "${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})")
@@ -89,6 +90,9 @@ object Exporter {
             meta("strip_box_px", "${it.x0},${it.y0},${it.x1},${it.y1}")
             meta("strip_t0_px", "%.2f".us(it.t0X))
             meta("pulse_found", it.pulseX1 >= 0)
+            meta("level_angle_deg", run.levelAngleDeg?.let { a -> "%.4f".us(a) })
+            meta("level_margin", run.levelMargin?.let { a -> "%.3f".us(a) })
+            meta("level_applied", run.levelApplied)
             if (target != null && it.pulseX1 < 0) {
                 meta("pulse_warning", "every kit sheet prints a 1 mV pulse and none was " +
                     "found: it was traced as signal and its width counted in the duration anchor")

@@ -337,7 +337,13 @@ def score_pipeline(photo: np.ndarray, corners: np.ndarray, target: Target,
         loc = segment.locate_rhythm_strip(rect)
     except RuntimeError as exc:
         return [dict(base, calibration="-", error=f"locate: {exc}")]
-    strip = loc.crop(rect)
+    lev = segment.level_strip(rect, loc)
+    strip = lev.image
+    base.update({
+        "level_angle_deg": round(lev.angle_deg, 4),
+        "level_margin": round(lev.margin, 3),
+        "level_applied": lev.applied,
+    })
 
     # How well the locator did, against the kit's box scaled into this frame.
     sx, sy = geom["out_w"] / target.sheet.shape[1], geom["out_h"] / target.sheet.shape[0]

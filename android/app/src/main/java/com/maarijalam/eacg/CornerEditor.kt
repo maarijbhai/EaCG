@@ -147,11 +147,12 @@ fun CornerEditor(
 
 /** Magnified view of the photograph around corner [idx], drawn at [at]. */
 private fun DrawScope.drawLoupe(
-    full: ImageBitmap, corners: DoubleArray, idx: Int, at: Offset, side: Float
+    full: ImageBitmap, corners: DoubleArray, idx: Int, at: Offset, side: Float,
+    halfSrc: Int = LOUPE_HALF_SRC_PX
 ) {
     val cx = corners[2 * idx]
     val cy = corners[2 * idx + 1]
-    val win = CornerGeometry.loupeWindow(cx, cy, LOUPE_HALF_SRC_PX,
+    val win = CornerGeometry.loupeWindow(cx, cy, halfSrc,
         full.width, full.height, side.toDouble())
     drawRect(Color.Black, at, Size(side, side))
     clipRect(at.x, at.y, at.x + side, at.y + side) {
@@ -165,7 +166,7 @@ private fun DrawScope.drawLoupe(
             )
         }
         // The two sheet edges that meet here, in loupe coordinates.
-        val k = side / (2.0 * LOUPE_HALF_SRC_PX)
+        val k = side / (2.0 * halfSrc)
         fun toLoupe(i: Int) = Offset(
             (at.x + side / 2 + (corners[2 * i] - cx) * k).toFloat(),
             (at.y + side / 2 + (corners[2 * i + 1] - cy) * k).toFloat()
@@ -178,6 +179,30 @@ private fun DrawScope.drawLoupe(
         drawLine(ACTIVE, c - Offset(0f, arm), c + Offset(0f, arm), 2f)
     }
     drawRect(Color.White, at, Size(side, side), style = Stroke(3f))
+}
+
+/**
+ * All four corners at once, close up, so each can be checked before scoring
+ * without dragging it. Run 5's corners looked right on the preview and were
+ * 2-9 mm off: at the preview's scale a 5 mm square is ~13 screen pixels.
+ * Each tile shows [CHECK_HALF_SRC_PX] photograph pixels either side of its
+ * corner, with the two sheet edges that meet there.
+ */
+@Composable
+fun CornerCheckRow(photo: Bitmap, corners: DoubleArray, modifier: Modifier = Modifier) {
+    val full: ImageBitmap = remember(photo) { photo.asImageBitmap() }
+    androidx.compose.foundation.layout.Row(
+        modifier.fillMaxWidth(),
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)
+    ) {
+        // Top-left, top-right, bottom-left, bottom-right: the sheet's top
+        // pair, then its bottom pair.
+        for (idx in intArrayOf(0, 1, 3, 2)) {
+            Canvas(Modifier.weight(1f).aspectRatio(1f)) {
+                drawLoupe(full, corners, idx, Offset.Zero, size.width, CHECK_HALF_SRC_PX)
+            }
+        }
+    }
 }
 
 /**
@@ -258,12 +283,17 @@ private val GRAB_RADIUS = 36.dp
 private val LOUPE_SIZE = 132.dp
 
 /**
- * Photograph pixels either side of the corner in the loupe. At 60 a 132 dp
- * loupe (~264 px on the A30s) shows 2.2 screen px per photograph px, about
- * ten times the preview's magnification: a 5 mm grid square, ~50 px at
- * ~10 px/mm, fills nearly half of it.
+ * Photograph pixels either side of the corner in the drag loupe: ~9 mm at
+ * ~11 px/mm. Was 60 (~5.5 mm), less than the 6-9 mm the bottom corners were
+ * off in phone runs 4 and 5 -- a corner that far out never showed the true
+ * one in the loupe at all. At 100 a 132 dp loupe (~264 px on the A30s) is
+ * 1.3 screen px per photograph px, still about seven times the preview's
+ * magnification; the per-corner checks below the photo zoom in further.
  */
-private const val LOUPE_HALF_SRC_PX = 60
+private const val LOUPE_HALF_SRC_PX = 100
+
+/** Photograph pixels either side of a corner in its check tile: ~4.5 mm. */
+private const val CHECK_HALF_SRC_PX = 50
 
 private val HANDLE = Color(0xFF1E88E5)
 private val ACTIVE = Color(0xFFFFB300)

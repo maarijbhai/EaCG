@@ -31,6 +31,10 @@ object StripLocator {
     const val CLOSE_FRACTION = 0.035
     const val PULSE_SEARCH_FRACTION = 0.03
     const val PULSE_START_FRACTION = 0.005
+    /** `segment.LEVEL_*`: the local tilt estimate around the strip. */
+    const val LEVEL_PAD_FRACTION = 0.08
+    const val LEVEL_MIN_MARGIN = 1.5
+    const val LEVEL_MAX_DEG = 2.0
     /** `segment.PULSE_LEADIN_FRACTION`: a thin lead-in the rising edge may follow. */
     const val PULSE_LEADIN_FRACTION = 0.05
     /** `segment.PULSE_MIN_WIDTH_FRACTION`: after a lead-in, a pulse's edges
@@ -100,15 +104,37 @@ object StripLocator {
         val order = (1..cc.count).sortedWith(compareBy { -cc.width[it] })
         val covered = BooleanArray(cols)
         val keep = BooleanArray(cc.count + 1)
-        for (i in order) {
-            val w = cc.width[i]
-            if (w < minW) break
-            val x = cc.left[i]
+        val narrow = ArrayList<Int>()
+        fun sharedFraction(x: Int, w: Int): Double {
             var shared = 0
             for (c in x until x + w) if (covered[c]) shared++
-            if (shared.toDouble() / w < MAX_SHARED_COLUMNS) {
+            return shared.toDouble() / w
+        }
+        for (i in order) {
+            val w = cc.width[i]
+            if (w < minW) { narrow.add(i); continue }
+            val x = cc.left[i]
+            if (sharedFraction(x, w) < MAX_SHARED_COLUMNS) {
                 keep[i] = true
                 for (c in x until x + w) covered[c] = true
+            }
+        }
+        // `segment.isolate_trace`: a narrow piece filling a hole INSIDE the
+        // kept trace is trace, not text. On the A30s photograph of PTB-XL 40
+        // a beat at 9.14 s broke off as an 80 px piece under the 81 px floor
+        // and was dropped as text, leaving a 0.24 s gap with an R wave in it.
+        var first = -1
+        var last = -1
+        for (c in 0 until cols) if (covered[c]) { if (first < 0) first = c; last = c }
+        if (first >= 0) {
+            for (i in narrow) {
+                val x = cc.left[i]
+                val w = cc.width[i]
+                if (x <= first || x + w - 1 >= last) continue
+                if (sharedFraction(x, w) < MAX_SHARED_COLUMNS) {
+                    keep[i] = true
+                    for (c in x until x + w) covered[c] = true
+                }
             }
         }
         for (p in 0 until rows * cols) {

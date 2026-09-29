@@ -2,6 +2,7 @@ package com.maarijalam.eacg
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
 import org.junit.Test
 import kotlin.math.floor
@@ -137,6 +138,18 @@ class PhotoPortFixturesTest {
         assertEquals("n", want[3].toInt(), got.nCompared)
         assertEquals("pcc", want[0], got.pcc, 1e-9)
         assertEquals("at bound", want[4] != 0.0, got.atBound)
+    }
+
+    /**
+     * A 15 px piece of trace between two breaks, under the width floor: kept,
+     * as it fills a hole inside the trace. The old rule dropped it as text.
+     */
+    @Test
+    fun keepsTracePiecesThatFillAGapAsThePythonDoes() {
+        checkLocation("gapfill")
+        val box = ints("gapfill.box")
+        val cols = ints("gapfill.isolated_cols")
+        for (x in 405 until 420) assertTrue("column $x", cols[x - box[0]] > 0)
     }
 
     /** The ~8 mm margin corners on the sheet edge leave before the pulse. */
