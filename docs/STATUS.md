@@ -1,5 +1,10 @@
 # Project status audit — 2026-09-23
 
+> **Superseded.** This is a snapshot from 2026-09-23 and is not maintained.
+> The current state, the photo pipeline and the next steps are in
+> `CLAUDE.md` ("Current state — read this first"); the ML plan is
+> `docs/ml_plan.md`.
+
 Branch `prototype-and-dataset-repair`, HEAD `f064ebe`. Read-only audit; no code changed.
 
 > **Correction, 2026-09-24.** §4 originally said the kit sheets carry no

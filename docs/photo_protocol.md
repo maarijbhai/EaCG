@@ -278,8 +278,10 @@ What differs from §0–§7, and why:
   first photographed sheet showed only the 5 mm rules, and the grid
   estimator -- correctly, for that paper -- read a 5 mm pitch.
   `make_kit_target.py` now redraws them in `MINOR_GRID_RGB` (242,160,160),
-  as clinical paper prints them; geometry and truth are unchanged. **Sheets
-  printed before 2026-09-28 have no usable 1 mm grid: reprint them.**
+  as clinical paper prints them; geometry and truth are unchanged. Sheets
+  printed before 2026-09-28 have no 1 mm grid. Keep their photographs as a
+  real-world condition (grid calibration fails 5x, the duration anchor still
+  works), but print new sheets from the regenerated PDFs.
 - **Scoring is automatic past the corners.** The rhythm strip is located, the
   printed text and calibration pulse are cut away, and three calibrations
   are scored side by side (`grid`, `comb`, and the 10 s `duration` anchor).

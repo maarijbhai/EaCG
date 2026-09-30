@@ -13,10 +13,7 @@ models, and the open question is whether that pipeline survives
 compression onto consumer mobile hardware, and at what cost in latency,
 memory and reconstruction fidelity.
 
-**Status.** The Python prototype exists and runs: rendering, deskew, grid
-estimation, classical digitisation, the reconstruction metrics and the FR8
-quality gate, with committed measurements under `results/` (18 CSV/JSON
-pairs). Lead segmentation does not exist.
+## Current state — read this first (updated 2026-09-30)
 
 **Requirement numbering — read this before citing an FR.** Two schemes are
 in play and they collide. The thesis report uses a flat **FR1–FR11**
@@ -28,128 +25,163 @@ nested FR-1.1…FR-8.7 in which FR-8.x is *deployment characterisation* and
 the quality gate is FR-3.4. So "FR8" means the quality gate in the report
 and something entirely different in the tex table. Say which you mean.
 
-The Android app runs two ported stages on the target device: grid
-estimation (`GridEstimator.kt`) and skew estimation (`SkewEstimator.kt`),
-with OpenCV 4.14.0 for the resize and warp. A rotation slider injects a
-known angle so the estimator can be scored against ground truth on the
-phone itself, and a benchmark button reports per-stage timings. A
-port-fidelity suite (`SkewEstimatorPortTest.kt`, golden vectors from
-`make_port_fixtures.py`) asserts the compiled Kotlin reproduces the Python
-to 1e-12, and a mutation check confirms the suite would fail if it did
-not. See CHANGES.txt section 12 for the whole of it, and section 13 for
-the FR8 gate.
+**Where the project is.** The whole classical pipeline runs **on the Galaxy
+A30s on a real photograph of a printed PTB-XL record**, and every result is
+scored against that record's true waveform. Photo path, on the phone and on
+the desktop alike: four corners (hand-placed; see below) → perspective
+rectify → locate the lead II rhythm strip and cut the 1 mV pulse → level the
+strip locally → binarise → isolate trace from text → calibrate → trace → FR8
+gate → score against the truth → export CSV. Classical Phase 0 is done
+(grid detrend, harmonic-lock test, midpoint threshold replacing Otsu).
+**The ML phase has not started**; its plan is `docs/ml_plan.md` (rewritten
+2026-09-29).
 
-**The tracer is ported (2026-09-20).** FR5–FR7 and the FR8 gate now run
-on-device: load a strip, digitise, and the app traces the ink, calibrates to
-mV and seconds, gates the result, and scores its own reconstruction against
-a committed source waveform. Per-stage latency for a completed digitisation
-— FR11 — is on screen. 39 host-side unit tests pass and the APK builds;
-**none of it has run on the handset yet**, so every behavioural claim about
-the phone is a claim about the code. FR4 lead segmentation and FR10 export
-remain unbuilt, and there is still no camera.
+**Best measured result** (PTB-XL 40, one real photograph, phone run 7,
+`results/device/photo_scores.csv`): all 10 R peaks within ~10 ms, duration
+anchor **−0.25%** against the truth, as-is PCC 0.81, aligned PCC **0.83**
+over 9.9 s, pipeline 2.0 s on the A30s. Desktop on the same photo with
+accurate corners: aligned PCC 0.86. **What is still wrong:** R peaks read at
+**~0.70** of true height (column-centroid bias of the classical tracer — the
+control condition, deliberately not "fixed"; it is the ML target); R timing
+wobbles ±10–20 ms (corner placement); on soft or unevenly lit photos the
+pulse's thin edges vanish and the lead-in rule takes an early beat for the
+pulse (duration anchor −10 to −18%, photos `ptbxl40_20260929_01..04`); the
+FR8 gate cannot see a duration-anchor error (circular by construction).
 
-**First real photographs, measured 2026-09-22.** Six frames of a genuine
-clinical printout taken on the A30s sit in `data/a30_pics/` (gitignored),
-and `python/run_photo.py` writes `results/photo/` from them: 45 rows over
-four experiments. Headlines: `estimate_grid_pitch` fails on all six through
-the shipped call; an external 10 s duration anchor recovers the pitch to
-0.87% across three frames where the grid comb is out by 1.6 to 46%; Otsu's
-threshold is discontinuous in the crop; and repeatability between two
-photographs of the same paper is PCC 0.62 to 0.85. The page is a print of
-ecg-image-kit's sample `ecg00001.png`, which **has no waveform ground truth
-and never can**, so fidelity is measured against the clean digital original
-instead: PCC ceiling **0.47**, against a photograph-to-photograph
-repeatability of 0.62-0.85. Repeatability overstates accuracy by about two,
-because the dominant errors are common to both photographs. For a real
-PCC-against-waveform, print a fold-10 PTB-XL record with a provenance
-sidecar. Limitation 15 has the whole of it.
+**Where to pick up next session:**
+1. The user is printing and photographing **PTB-XL 9, 38, 57** (PDFs in
+   `out/kit_targets/<name>/<name>.pdf`). When photos arrive in
+   `data/kit_photos/`: register each (`score_kit_photo.py --add ... --target
+   ... --corners "x,y x,y x,y x,y" --no-refine`; corners can be found with
+   the prototype below and must be checked by eye), score, and have the user
+   run each through the app. Everything so far is ONE record (PTB-XL 40);
+   no ML claim is credible on that.
+2. **ML, two-week plan agreed with the user** (deadline ~2026-10-14): learned
+   tracer = small depthwise-separable U-Net with a column-wise row head,
+   canonical 8 px/mm strip, labels from the kit's `plotted_pixels`, folds
+   1–8 train / 9 val / 10 test, Keras/TensorFlow in **WSL2 Ubuntu** (native
+   Windows TF has no GPU; laptop has an RTX 3050 4 GB), INT8 LiteRT. Details
+   and decision rules in `docs/ml_plan.md` §2–§6. First job: generate ~2,000
+   fold-1–8 kit sheets and the strip/label pipeline.
+3. Open, not done: memory instrumentation on the A30s (decision rule 3
+   needs it); `score_kit_photo.py` does not enforce the 8.5 s overlap rule on
+   `pcc_aligned` (the phone and `ingest_device_exports.py` do); why strip
+   levelling estimated 2.6° on run 7 (guard refused it, correctly); the pulse
+   misfire on soft photos; classical FR4; merge the branch to `main` (56+
+   commits ahead, never merged).
 
-**First device results, Galaxy A30s, 2026-09-18.** Grid pitch on the three
-fixtures: 5.941 / 7.899 / 11.82 px/mm, errors +0.61% / +0.32% / +0.08%,
-matching the Python to within 0.06 percentage points. Grid estimation
-205 ms at 8.41 MP. A full inject-estimate-correct pass on the 300 dpi
-fixture, about 3500 ms — but see limitation 9: most of that is test
-scaffolding, not pipeline.
+**The photo path, and the measured reasons for each of its steps** (each
+has a commit message with the numbers):
+
+- **Print targets** (`make_kit_target.py`): the kit's minor grid
+  (254,223,219) is dropped by an office printer — the first print had no
+  1 mm rules and the grid read 5× wrong. Targets now redraw the minor rules
+  in `MINOR_GRID_RGB` (242,160,160); on the reprint the raw grid
+  calibration came within 0.28% on a sharp photo. Prints made before
+  2026-09-28 (the `ptbxl40_20260928_01.jpg` photo) have no 1 mm rules; kept
+  as a real-world condition.
+- **Corners**: the phone decodes photos to 3200 px and a 720 px screen shows
+  4–5 photo pixels per screen pixel, so taps were 92 px off. Now
+  `CornerEditor.kt`: drag handles, a ±100 px full-resolution magnifier, and
+  four always-visible corner close-ups. `PageCorners`/`page.refine_corners`
+  finds edges as the grid→paper step, which needs the 1 mm grid; above 3 px
+  edge-fit RMS the **hand corners are used as placed** (`corners_used` in
+  the CSV). Users tend to place corners inside the sheet — tell them "on the
+  very tips of the grid lines". A prototype automatic corner finder (paper
+  mask → grid region → line per edge, within ~1–3 mm on the 29 Sep photos)
+  lives only in the 2026-09-29 session scratchpad; rebuild it if needed.
+- **Binarisation**: the photo path uses a **2×2** opening (`OPEN_KERNEL`);
+  at ~10 px/mm the trace is 2–3 px and 3×3 erased it (anchor −35.6% → +5.8%).
+  2×2 keeps thin grid rules, which touch QRS peaks; no pixel rule separates
+  them on this print (colour and threshold sweeps). An area filter in place
+  of the opening was tried and rejected.
+- **Pulse**: `segment.locate_rhythm_strip` skips a thin lead-in (≤5% of the
+  width, `PULSE_LEADIN_FRACTION`) before the pulse, and after a lead-in
+  requires the pulse's edges ≥1.2% apart (`PULSE_MIN_WIDTH_FRACTION`).
+  With accurate corners the pulse starts ~8 mm in behind grid-rule ink.
+- **Levelling**: `segment.level_strip` estimates the strip band's own tilt
+  (imperfect corners leave the bottom of the page tilted while the top is
+  level) and removes it if margin ≥1.5 and |angle| ≤2°. Drift vs truth
+  1.55 mm → 0.25 mm.
+- **Text removal** (`isolate_trace`): widest components first; narrow
+  pieces (<3% width) are kept when they fill a hole inside the trace or
+  continue it past an end at its height — both were real lost beats (a
+  0.24 s gap; the tenth R wave).
+- **Calibrations reported**: `duration` (10 s anchor), `grid` (raw comb —
+  the control, usually wrong on photos), `grid_anchored` (the anchor picks
+  the harmonic factor 1/2/5 within 10%, or refuses).
+- **Honest reporting** (after a header that overstated results):
+  `px_per_mm_from_corners` / `error_vs_corners_pct` are only as true as the
+  corners; `truth_px_per_mm_error_pct` / `pcc_aligned` come from aligning
+  the trace to the truth waveform (`Fidelity.bestAlignment`, a port of
+  `run_photo.best_alignment`) and are **withheld unless the alignment spans
+  ≥ 8.5 s** (`run_photo.MIN_OVERLAP_S`) — a 5×-wrong trace is 2 s long and
+  the ±10% search reports a spurious local match otherwise.
+
+**Device workflow.** Phone CSVs (`Downloads/EaCG/eacg_*.csv`) go in
+`data/device_exports/`; `python ingest_device_exports.py` writes
+`results/device/photo_scores.csv`, mapping old header names and
+recomputing the truth alignment from each export's own waveform (the
+phone's figures have matched the desktop recomputation exactly). Photos go
+in `data/kit_photos/` as `ptbxl<id>_<date>_<nn>.jpg`, corners in
+`python/kit_photos.json` (committed). `data/a30_pics/` held the six
+`ecg00001` photos behind `results/photo/`; **they were deleted around
+2026-09-29 and are not on the PC** — `results/photo/` cannot be regenerated
+unless the user restores them from the phone.
+
+**Older measurements, still valid:** grid pitch on the A30s 5.941 / 7.899 /
+11.82 px/mm (+0.61 / +0.32 / +0.08%) on the three bundled sheets, 205 ms at
+8.41 MP (`results/device/a30s_2026-09-18.csv`); `ecg00001` photographs
+(limitation 15): repeatability overstates accuracy by about two.
 
 ## Repository layout
 
 ```
 ECG-App/
-├── android/          Kotlin/Compose app; OpenCV, the full classical chain
-│   ├── app/src/main/assets/reference/   6 printouts of known px/mm:
-│   │                       3 sheets (valid for FR3 only) + 3 single strips
-│   │                       with committed truth (valid for FR5-FR7).
-│   │                       See limitations 13 and 14.
-│   ├── app/src/test/java/.../
-│   │   ├── SkewEstimatorPortTest.kt  port fidelity vs the Python, 1e-12
-│   │   ├── TraceExtractorPortTest.kt FR5-FR7 against the Python
-│   │   ├── QualityGatePortTest.kt    FR8 against the Python
-│   │   ├── FidelityPortTest.kt       the metrics against the Python
-│   │   ├── GridResponseTest.kt       the shared redness response
-│   │   └── PortFixtures.kt           golden vectors from make_port_fixtures
-│   └── app/src/main/java/com/maarijalam/eacg/
-│       ├── GridEstimator.kt    port of digitise.estimate_grid_pitch
-│       ├── SkewEstimator.kt    port of deskew.estimate_skew
-│       ├── GridResponse.kt     the redness response, shared by both
-│       ├── ImageWarp.kt        OpenCV resize/rotate, Python conventions
-│       ├── ImageSource.kt      decode under a memory bound; UriSource
-│       ├── ReferenceImages.kt  the bundled fixtures and their true px/mm
-│       ├── TimingStats.kt      per-stage latency, warmup discarded
-│       ├── OpenCvRuntime.kt    load once, report at startup
-│       ├── DeskewPipeline.kt   inject -> estimate -> correct, timed
-│       ├── TraceExtractor.kt   FR5-FR7: binarise, centroid, calibrate
-│       ├── QualityGate.kt      FR8 on-device; tracesPerColumn is the one
-│       │                       check that catches a 3x4 sheet
-│       ├── Fidelity.kt         PCC / RMSE / gain, scored on the handset
-│       ├── TruthWaveform.kt    reads the committed source waveform
-│       ├── DigitisePipeline.kt FR3->FR8 in one timed pass
-│       ├── DigitisePanels.kt   strip row, verdict, waveform plot, timings
-│       └── DigitiseScreen.kt   UI, slider, results, benchmark
-├── python/           the prototype (this is what exists)
-│   ├── ecgproto/
-│   │   ├── ptbxl.py      PTB-XL loader
-│   │   ├── synth.py      signal synthesis + single-strip rendering
-│   │   ├── layout.py     clinical 3x4 12-lead printout rendering
-│   │   ├── deskew.py     stage 2: recover and remove in-plane rotation
-│   │   ├── digitise.py   classical (non-ML) digitisation pipeline
-│   │   ├── quality.py    FR8 gate: accept / flag / reject a digitisation
-│   │   ├── grid_reference.py  line-for-line twin of GridEstimator.kt
-│   │   │                      — STALE, see limitation 11
-│   │   └── evaluate.py   SNR / shifted SNR / RMSE / PCC
-│   ├── tests/            the only Python tests; unittest, no dependency
-│   │   ├── test_quality.py     31 tests over the FR8 gate
-│   │   └── mutate_quality.py   mutation check on those tests
-│   ├── run_baseline.py   experiment on synthetic signals
-│   ├── run_ptbxl.py      experiment on real PTB-XL records
-│   ├── run_deskew.py     deskew measurement suite -> results/deskew/
-│   ├── run_gridchannel.py  grid channel/threshold suite -> results/grid/
-│   ├── run_gate.py       FR8 gate characterisation -> results/gate/
-│   ├── make_port_fixtures.py  golden vectors for the Kotlin port tests
-│   ├── make_strip_fixtures.py single-strip assets + committed truth
-│   ├── mutate_kotlin_tracer.py  mutation check on the Kotlin port tests
-│   ├── make_print_target.py  print a lead at true physical scale
-│   ├── make_kit_target.py    ecg-image-kit sheet -> true-scale print
-│   │                         PDF + plotted_pixels ground truth
-│   ├── photo_rois.json   hand ROIs standing in for FR1 and FR4
-│   ├── run_photo.py      real photographs -> results/photo/
-│   ├── score_photo.py    score a photograph of that print
-│   ├── demo_kit_pipeline.py  kit printout -> waveform, with a figure
-│   ├── see_digitise.py   eyeball one digitisation
-│   ├── fetch_ptbxl.py    dataset download
-│   └── verify_ptbxl.py   dataset download integrity check
-├── docs/
-│   ├── functional_requirements.tex  the nested FR-1.1..FR-8.7 table
-│   ├── functional_requirements_standalone.tex
-│   ├── photo_protocol.md   what a human must do to break the closed loop
-│   └── ml_plan.md          where ML goes, the gates it must pass, and the
-│                           expected results. Read section 2 first:
-│                           calibration dominates, not trace extraction.
-├── results/          committed measurements — CSV + provenance JSON
-│   ├── deskew/       angle recovery, cost, levers, guards
-│   ├── grid/         channel and threshold suites
-│   └── gate/         FR8 false rejects and catch rates
-├── out/              gitignored — generated artefacts, reproducible
-└── data/             gitignored — PTB-XL lives here, NOT in the repo
+├── android/app/src/main/java/com/maarijalam/eacg/
+│   ├── DigitiseScreen.kt   one scrolling screen: fixtures, deskew check,
+│   │                       digitise, and the photo section
+│   ├── PhotoPanels.kt      the photo section UI (pick, record, corners,
+│   │                       score, results, export)
+│   ├── CornerEditor.kt     drag handles, magnifier, corner close-ups;
+│   │                       CornerGeometry (unit-tested)
+│   ├── PhotoPipeline.kt    corners -> rectify -> locate -> level -> binarise
+│   │                       -> isolate -> 3 calibrations -> trace -> gate
+│   │                       -> truth scoring; OPEN_KERNEL, anchor resolution
+│   ├── PageCorners.kt      port of page.refine_corners
+│   ├── StripLocator.kt     port of segment.locate_rhythm_strip/isolate_trace
+│   ├── Exporter.kt         FR10 CSV to Downloads/EaCG/
+│   ├── KitTargets.kt       the printed sheets (assets/kit/targets.txt)
+│   ├── Fidelity.kt         PCC/RMSE/gain, fillNan, bestAlignment (FFT)
+│   ├── TraceExtractor.kt   FR5-FR7; midpointThreshold; binarise(openKernel)
+│   ├── GridEstimator.kt    FR3 with detrend + resolveHarmonic
+│   ├── SkewEstimator.kt    FR2; QualityGate.kt FR8; ImageWarp.kt; ImageSource.kt
+│   │                       (decode to maxDim exactly, EXIF orientation)
+│   └── ...                 DeskewPipeline, DigitisePipeline, TimingStats, etc.
+├── android/app/src/main/assets/  reference/ (6 fixtures), kit/ (truth for the
+│                                 four printed sheets, lead II at 500 Hz)
+├── android/app/src/test/   75 JVM tests: port fidelity (PhotoPortFixturesTest,
+│                           golden vectors in resources/photo_port_fixtures.txt
+│                           from python/make_photo_port_fixtures.py), corner
+│                           geometry, anchor resolution, alignment
+├── python/ecgproto/
+│   ├── digitise.py   FR3/FR5-FR7: detrend, _resolve_harmonic, midpoint
+│   │                 threshold, binarise_trace(method, open_kernel)
+│   ├── segment.py    locate_rhythm_strip, level_strip, isolate_trace
+│   ├── page.py       refine_corners;  pulse.py  1 mV pulse height (not wired
+│   │                 into the gate yet);  quality.py FR8;  deskew.py FR2
+│   └── evaluate.py, synth.py, layout.py, ptbxl.py, grid_reference.py (stale)
+├── python/  score_kit_photo.py (desktop scorer + simulate self-test),
+│            make_kit_target.py (print targets), make_kit_assets.py (app
+│            truth), ingest_device_exports.py, rerun_results.py +
+│            compare_results.py (before/after), run_*.py (experiments)
+├── results/  committed CSV + provenance JSON: deskew/ gate/ grid/ photo/
+│             kitphoto/ (score.csv real photos, selftest.csv simulated)
+│             device/ (phone runs)
+├── docs/     ml_plan.md (the ML plan), photo_protocol.md (§8: print and
+│             photograph the kit sheets), STATUS.md (2026-09-23 snapshot, stale)
+├── out/      gitignored, regenerable: kit_targets/ (printable PDFs), kitphoto/
+└── data/     gitignored: ptb-xl/1.0.3/, kit_photos/, device_exports/, a30_pics/
 ```
 
 Data is at `data/ptb-xl/1.0.3/` and must never be committed.
@@ -230,7 +262,10 @@ scope boundaries.
    discontinuous in the crop -- widening a strip ROI by 44 pixel rows moves
    the ink fraction from 12% to 4% -- and which on one frame never finds the
    correct basin at all. The channel choice survives for FR5; the
-   thresholding does not.
+   thresholding does not. **Done 2026-09-24:** Otsu is replaced by
+   `digitise.midpoint_threshold` (halfway between the paper median and the
+   99.9th-percentile ink level); `method="otsu"` keeps the original as the
+   control.
 
 3. **Rendered images are synthetic.** Signals are real PTB-XL; images are
    not. ECG-Image-Kit should replace `render_printout`/`render_12lead`.
@@ -254,7 +289,10 @@ scope boundaries.
    the synthetic renders. This is a *parameter* change; the selection rule
    itself is deliberately unchanged, and the case for replacing it with a
    harmonic test rather than a height threshold is made in CHANGES.txt
-   §11.5 and not acted on.
+   §11.5 and not acted on. **Acted on 2026-09-24:** `digitise._resolve_harmonic`
+   (ported as `GridEstimator.resolveHarmonic`) tests sub-multiples of the
+   spacing and walks a 2x/5x lock down; `resolve_harmonics=False` keeps the
+   old rule as the control.
 
    Two things the earlier reading of this got wrong, both now measured.
    The green channel does not help — it is the *worst* of blue, redness,
@@ -363,7 +401,12 @@ scope boundaries.
     same 230.8 bpm on the *ground-truth* waveform, so the flag is about
     the signal's morphology, not the digitisation. It is kept only because
     it is the sole time-axis anchor that survives when duration is
-    unknown. The gate is Python only; nothing is ported to Kotlin.
+    unknown. The gate is ported to Kotlin (`QualityGate.kt`, port-tested).
+    A fourth blind spot, found on real photographs: the gate cannot catch a
+    duration-anchor error, because the anchor assumes 10 s at 25 mm/s and
+    the paper-speed check then passes by construction; it ACCEPTed traces
+    with the anchor 10-14% out and one with the calibration pulse traced as
+    signal.
 
 13. **Three of the six bundled Android fixtures are 3x4 sheets.** They are
     known-good for FR3 (grid estimation) and are an instance of
@@ -528,6 +571,9 @@ scope boundaries.
       comb then appears immediately, at cv 0.007-0.012. **That detrend is a
       property of the script, not of `digitise`, and it is the single
       smallest change that would make FR3 work at all on a photograph.**
+      **Done 2026-09-24** (`b4567d4`): `digitise.detrend`, a 41-sample moving
+      average as in `GridEstimator.kt`. It measurably changed deliberately
+      un-deskewed rotated renders (see `results/deskew/endtoend.csv`).
 
     **`redness` is reliably the worst response for the 1 mm rules, and no
     alternative is reliably the best.** `channels.csv`, 1 mm / 5 mm
@@ -557,6 +603,7 @@ scope boundaries.
     give a noisy answer to the right one. That is the case for replacing
     the height threshold with a harmonic test, argued in CHANGES.txt §11.5
     and still not acted on -- now with photographic evidence behind it.
+    (Acted on 2026-09-24; see limitation 6.)
 
     Luma does win the one skew statistic that is internally checkable:
     `axis_disagreement_deg` between the horizontal and vertical estimates
@@ -659,8 +706,14 @@ scope boundaries.
   natively under the hood; the JNI boundary costs a crossing, not the
   compute. CameraX, ML Kit and UI are Kotlin-only anyway.
 - **LiteRT (formerly TensorFlow Lite)** as the mobile runtime.
-- **ML Kit Document Scanner** for capture-time rectification in the
-  first version (perspective correction, edge detection, cropping).
+- ~~ML Kit Document Scanner for capture-time rectification.~~ **Dropped
+  2026-09-25, pending the supervisor's agreement:** it returns only a
+  processed image (no corners or transform), so its accuracy cannot be
+  measured against the truth; it runs as its own Play-services screen, so it
+  cannot be timed as a pipeline stage; and it cannot run on the desktop
+  scorer. FR1 is hand-placed corners now; next is a classical automatic
+  corner finder, then a learned corner regressor only if that fails
+  (`docs/ml_plan.md` §7).
 - **Emulator for correctness only.** It runs on host x86 CPU with active
   cooling, so latency, memory and thermal numbers from it are invalid for
   a thesis about mobile constraints. All benchmarking must use a physical
@@ -695,12 +748,18 @@ The unit tests — the port-fidelity suite included — need no device:
 java -Dorg.gradle.appname=gradlew -jar gradle/wrapper/gradle-wrapper.jar testDebugUnitTest
 ```
 
+75 tests as of 2026-09-30. After changing `segment.py`, `page.py` or the
+digitise functions the photo path uses, regenerate the golden vectors with
+`python make_photo_port_fixtures.py` (from `python/`) and port the change to
+Kotlin in the same commit; each new rule gets a fixture case checked to
+FAIL under the old rule.
+
 ## Running the Python tests
 
 From `python/`. There is no pytest dependency and no reason to add one.
 
 ```
-python -m unittest discover -s tests     # 31 tests
+python -m unittest discover -s tests     # 44 tests
 python tests/mutate_quality.py           # 14 of 15 mutations caught
 ```
 
@@ -735,3 +794,18 @@ expected to survive; the script says which.
   produced a confident, wrong conclusion. Simulation parameters and
   parameters under test need separate flags.
 
+- **Measure against the truth, and before trusting a fix, measure it.**
+  Twice in this project a plausible fix made things worse and was caught
+  only by an end-to-end score against the PTB-XL waveform (an area filter
+  replacing the opening; a width filter on the row profile). Replay the
+  phone's own path on the desktop (3200 px decode, `open_kernel=2`, the
+  run's hand corners from its CSV) before porting anything to Kotlin.
+- **Any agreement figure states its span.** `pcc_aligned` or a scale error
+  from an alignment covering < 8.5 s is not a measurement; report it as
+  not measurable.
+- **Commit messages carry no Claude co-author trailer** (the user's
+  instruction, 2026-09-25). Never cite a commit hash in a message without
+  checking it exists.
+- Scores run from uncommitted code record `git_dirty: true` in their
+  sidecar: commit the code (and `python/kit_photos.json`) first, then
+  regenerate the results.
