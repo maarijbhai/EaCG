@@ -226,6 +226,55 @@ def gain_ratio(reference: np.ndarray, test: np.ndarray) -> float:
     return covariance / variance
 
 
+#: Half-width of the window a test peak is searched in, around each true R
+#: peak. Covers the ±10-20 ms R-timing wobble measured on phone runs 5-7
+#: (corner placement), and is well short of the QRS-to-T spacing.
+R_PEAK_WINDOW_S = 0.025
+
+
+def r_peak_ratio(
+    reference: np.ndarray,
+    test: np.ndarray,
+    fs: float,
+    window_s: float = R_PEAK_WINDOW_S,
+) -> tuple[float, int]:
+    """Median height of the test's R peaks relative to the truth's. (ratio, n)
+
+    The number `docs/ml_plan.md` decision rule 1 is written in (classical
+    ~0.70-0.72 on PTB-XL 40, target >= 0.90), so it is one function used for
+    every tracer rather than a per-script decomposition.
+
+    Heights are measured from each signal's own median, a robust stand-in
+    for the isoelectric line, which makes the ratio insensitive to a DC
+    offset. The dominant deflection's polarity is taken from the truth, so
+    a lead whose QRS points down is scored on its S/QS wave. Peaks are the
+    truth's local maxima above half its largest deflection, at least 0.25 s
+    apart; the test's height is its largest same-polarity deviation within
+    `window_s`. Unlike `gain_ratio`, which is dominated by the whole
+    waveform's slow content, this isolates the QRS tip -- exactly where a
+    column-centroid tracer loses height.
+    """
+    reference, test = align_length(reference, test)
+    dev_r = reference - np.nanmedian(reference)
+    dev_t = test - np.nanmedian(test)
+    s = 1.0 if dev_r.max() >= -dev_r.min() else -1.0
+    dev_r, dev_t = s * dev_r, s * dev_t
+    top = float(dev_r.max())
+    if not np.isfinite(top) or top <= 0:
+        return float("nan"), 0
+    peaks, _ = sps.find_peaks(dev_r, height=0.5 * top,
+                              distance=max(1, int(0.25 * fs)))
+    w = int(round(window_s * fs))
+    ratios = []
+    for p in peaks:
+        seg = dev_t[max(0, p - w):p + w + 1]
+        if np.isfinite(seg).any():
+            ratios.append(float(np.nanmax(seg)) / float(dev_r[p]))
+    if not ratios:
+        return float("nan"), 0
+    return float(np.median(ratios)), len(ratios)
+
+
 def evaluate_all(
     reference: np.ndarray,
     test: np.ndarray,

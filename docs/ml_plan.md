@@ -125,19 +125,48 @@ rather than the ink*.
 
 ### 2.2 Input and output
 
+**Revised 2026-09-30 on measurement** (`results/ml/label_ceiling.*`, all
+2,000 training strips): the window is 48 mm, not 32, and the head outputs two
+columns per input column, not one. Both numbers below are what a *perfect*
+model could score, so they bound decision rule 1 from above.
+
+| | 32 mm window | 48 mm window |
+|---|---|---|
+| strips clipped, baseline centred exactly | 6.5% | 0.3% |
+| strips clipped, centre off by up to 4 mm | 23% | 0.8% |
+
+Lead II R waves reach 19.6 mm above baseline at p99.
+
+| Head output | R-peak ratio of a perfect model, median | strips < 0.90 |
+|---|---|---|
+| 1 column per input column (8 px/mm) | 0.953 | 7.5% |
+| **2 columns per input column (16 px/mm)** | **0.989** | **0.45%** |
+| perfect ink mask + column centroid (model A) | 0.80 | 86% |
+
+One output per 8 px/mm column averages ~2.5 samples at the QRS apex and caps
+the ratio too close to the 0.90 rule. The last row is the plan's §0
+correction, now measured: a *perfect* segmentation still reads R peaks at 0.80,
+so model A cannot pass rule 1 however well it is trained.
+
 - **Canonical scale.** After calibration (the duration anchor), resample the
   levelled strip crop to a fixed **8 px/mm**: a 10 s strip is then 2,000 px
-  wide. Crop or pad to **256 px tall (32 mm, ±16 mm, > ±1.5 mV at 10 mm/mV)**
-  centred on the strip's baseline. The model always sees the same geometry,
-  whatever the photo's resolution, and output rows convert to mV exactly.
-  8 px/mm is above the ~3 px/mm floor where the 1 mm grid resolves and below
-  the phone's ~11 px/mm, so no detail is invented.
-- **Input:** RGB, 256 × 2048 (padded), normalised. Keep colour. The grid is
-  red and the trace neutral, and the network can use that where a threshold
-  could not.
-- **Output:** per column, a 256-way softmax over rows, plus a presence logit.
-  Row = Σ p·row. Mask the output where presence < 0.5. The existing gap
-  interpolation and the gate take over from there.
+  wide. Crop or pad to **384 px tall (48 mm, ±24 mm)** centred on the strip's
+  baseline. The model always sees the same geometry, whatever the photo's
+  resolution, and output rows convert to mV exactly. 8 px/mm is above the
+  ~3 px/mm floor where the 1 mm grid resolves and below the phone's
+  ~11 px/mm, so no detail is invented. The mapping is
+  `ml/strips.to_canonical` (INTER_AREA resize, integer crop, padding with the
+  image's median colour); it is the function that gets Kotlin golden vectors.
+- **Input:** RGB, 384 × 2048 (padded), uint8, normalised inside the model.
+  Keep colour. The grid is red and the trace neutral, and the network can use
+  that where a threshold could not.
+- **Output:** per *output* column (4,096 of them, 16 px/mm), a 384-way
+  softmax over rows, plus a presence logit. Row = Σ p·row. Mask the output
+  where presence < 0.5. The existing gap interpolation and the gate take over
+  from there.
+- **Training runs on 512-column crops** (64 mm): the full frame does not fit
+  the RTX 3050's 4 GB even at batch 2. The network is fully convolutional and
+  runs on the full width at inference.
 - **Fully convolutional**, so the 3×4 block's 2.5 s leads (500 px wide at
   8 px/mm) go through the same network unchanged once FR4 exists.
 
@@ -147,11 +176,12 @@ rather than the ink*.
   depthwise-separable 3×3 blocks with batch norm and ReLU6. MobileNetV2-style
   inverted residuals are the obvious off-the-shelf choice.
 - Decoder: U-Net skip connections back to full resolution, 16 channels.
-- Heads: 1×1 conv → 1 channel logits map (256 × W). A softmax **down each
-  column** gives the row distribution. A separate column-pooled branch gives
-  presence.
-- Size: about 0.5 M parameters, **≤ 1 MB INT8**. Compute at 256 × 2048 is
-  roughly 0.5–1 GFLOP (*expected*).
+- Heads: 1×1 conv → 2 channels, reshaped to a (384 × 2W) logits map (output
+  column 2w + c). A softmax **down each column** gives the row distribution.
+  A separate column-pooled branch gives presence.
+- Built: `ml/train_tracer.py`, **389,580 parameters** (two dilated blocks at
+  1/16 added for vertical context). Compute at 384 × 2048 is roughly
+  1–1.5 GFLOP (*expected*).
 
 ### 2.4 Training
 

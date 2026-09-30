@@ -155,20 +155,40 @@ def recolour_minor_grid(sheet: np.ndarray, minor_rgb_kit, target_rgb
     blends with the minor rule) is left untouched. Geometry is unchanged, so
     `plotted_pixels` and the truth stay valid.
     """
-    white = np.array([255.0, 255.0, 255.0])
+    idx, a = minor_grid_blend(sheet, minor_rgb_kit)
+    return apply_minor_blend(sheet, idx, a, target_rgb), int(len(idx))
+
+
+def minor_grid_blend(sheet: np.ndarray, minor_rgb_kit, dtype=np.float64
+                     ) -> tuple[np.ndarray, np.ndarray]:
+    """The analysis half of `recolour_minor_grid`: which pixels are a blend
+    of white and the minor colour (flat indices), and how much (a in [0,1]).
+
+    Split out so a caller recolouring one sheet many times -- the ML
+    augmentation, `ml/strips.py` -- pays for the projection once. float64
+    is the default and what the printed targets use; the training loader
+    passes float32, ~2x faster, and may differ at the tolerance edge by a
+    pixel or two, which only changes an augmentation.
+    """
+    white = np.array([255.0, 255.0, 255.0], dtype)
     # The sheet is BGR; the kit records its colours as RGB.
-    m = np.asarray(minor_rgb_kit, dtype=np.float64)[::-1]
-    t = np.asarray(target_rgb, dtype=np.float64)[::-1]
-    d = white - m
-    p = sheet.reshape(-1, 3).astype(np.float64)
-    a = (white - p) @ d / (d @ d)
-    resid = np.linalg.norm((white - p) - a[:, None] * d[None, :], axis=1)
+    d = white - np.asarray(minor_rgb_kit, dtype=dtype)[::-1]
+    q = white - sheet.reshape(-1, 3).astype(dtype)
+    a = q @ d / float(d @ d)
+    resid = np.linalg.norm(q - a[:, None] * d[None, :], axis=1)
     blend = (a > 0.02) & (a <= 1.05) & (resid <= MINOR_BLEND_TOLERANCE)
-    a = np.clip(a[blend], 0.0, 1.0)
-    out = p.copy()
-    out[blend] = white - a[:, None] * (white - t)[None, :]
-    return (np.round(out).astype(np.uint8).reshape(sheet.shape),
-            int(blend.sum()))
+    return np.flatnonzero(blend), np.clip(a[blend], 0.0, 1.0)
+
+
+def apply_minor_blend(sheet: np.ndarray, idx: np.ndarray, a: np.ndarray,
+                      target_rgb) -> np.ndarray:
+    """The apply half: move each blend pixel to the same blend of white and
+    `target_rgb` (RGB). Returns a new BGR uint8 sheet."""
+    white = np.array([255.0, 255.0, 255.0])
+    t = np.asarray(target_rgb, dtype=np.float64)[::-1]
+    out = sheet.reshape(-1, 3).copy()
+    out[idx] = np.round(white - a[:, None] * (white - t)[None, :]).astype(np.uint8)
+    return out.reshape(sheet.shape)
 
 
 def numpy_shim() -> None:
@@ -196,13 +216,15 @@ def numpy_shim() -> None:
 
 
 def run_kit(kit_dir: Path, rec_stem: Path, out_dir: Path, dpi: int,
-            rhythm_lead: str, print_header: bool) -> tuple[Path, Path]:
+            rhythm_lead: str, print_header: bool,
+            extra_argv: tuple[str, ...] = ()) -> tuple[Path, Path]:
     """Render one record with the kit. Returns (png, sidecar json).
 
     Run in-process rather than as a subprocess so the shim applies and so a
     failure surfaces as a traceback rather than an exit code. The kit reads
     its templates and fonts relative to the working directory, hence the
-    chdir.
+    chdir. `extra_argv` is appended to the kit's own arguments; the ML data
+    generator uses it to vary the grid style (`ml/make_strips.py`).
     """
     numpy_shim()
     if str(kit_dir) not in sys.path:
@@ -228,6 +250,7 @@ def run_kit(kit_dir: Path, rec_stem: Path, out_dir: Path, dpi: int,
         ]
         if print_header:
             argv.append("--print_header")
+        argv += list(extra_argv)
         args = gen.get_parser().parse_args(argv)
         gen.run_single_file(args)
     finally:
