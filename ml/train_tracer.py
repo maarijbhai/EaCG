@@ -319,19 +319,23 @@ def rows_at_samples(row: np.ndarray, cols_c: np.ndarray, u: float) -> np.ndarray
 
 
 def score_val(model, val: list[dict], head: str, batch: int) -> dict:
-    x = np.stack([v["image"] for v in val])
-    out = model.predict(x, batch_size=batch, verbose=0)
+    # One strip at a time, each result pulled to the host before the next:
+    # model.predict concatenates every output on the GPU first, and 150
+    # full-width row maps are 150 x 384 x 4096 floats, 0.9 GB (measured:
+    # OOM in ConcatV2 at the end of epoch 1).
     mae, pccs, rrs, cov = [], [], [], []
     for i, v in enumerate(val):
+        o = model(v["image"][None], training=False)
+        o = {k: np.asarray(t)[0] for k, t in o.items()}
         if head == "row":
-            row = decode_rows(out["rows"][i], out["presence"][i])
+            row = decode_rows(o["rows"], o["presence"])
             u = S.OUT_UPSAMPLE
             ok = (v["valid"] > 0) & np.isfinite(row)
             if ok.any():
                 mae.append(float(np.abs(row[ok] - v["mean_row"][ok]).mean()))
             cov.append(float(np.isfinite(row)[v["presence"] > 0].mean()))
         else:
-            row = decode_mask(out["mask"][i])
+            row = decode_mask(o["mask"])
             u = 1
         if np.isfinite(row).sum() < 10:
             pccs.append(np.nan)
