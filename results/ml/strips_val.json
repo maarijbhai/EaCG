@@ -1,0 +1,73 @@
+{
+  "generated_by": "ml/make_strips.py",
+  "utc": "2026-09-30T21:56:04+00:00",
+  "git_commit": "44e5a95451487f88eb657cd11a759e3e2e890220",
+  "git_dirty": false,
+  "params": {
+    "split": "val",
+    "n": 300,
+    "seed": 20260930,
+    "dpi": 300,
+    "band_margin_mm": 16.0,
+    "styles": [
+      [
+        "red",
+        0.5
+      ],
+      [
+        "brown",
+        0.05
+      ],
+      [
+        "pink",
+        0.05
+      ],
+      [
+        "blue",
+        0.05
+      ],
+      [
+        "green",
+        0.05
+      ],
+      [
+        "random",
+        0.2
+      ],
+      [
+        "bw",
+        0.1
+      ]
+    ],
+    "p_header": 0.3,
+    "ink_tolerance": 40.0,
+    "kit": "C:\\dev\\vendor\\ecg-image-kit\\codes\\ecg-image-generator",
+    "note": "manifest rebuilt from the per-sheet records at this commit; the sheets were rendered 2026-09-30 by the same make_strips.py rendering path"
+  },
+  "summary": {
+    "sheets": 300,
+    "errors": 0,
+    "label_ok": 300,
+    "label_on_ink_min": 1.0,
+    "off_sheet_sheets": 0,
+    "styles": {
+      "red": 147,
+      "brown": 17,
+      "pink": 8,
+      "blue": 16,
+      "green": 7,
+      "random": 70,
+      "bw": 35
+    },
+    "folds": {
+      "9": 300
+    },
+    "patients": 295,
+    "render_s_median": 7.5649999999999995
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "opencv": "5.0.0"
+  }
+}

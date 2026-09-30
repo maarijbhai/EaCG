@@ -1,0 +1,114 @@
+{
+  "generated_by": "ml/strips.py (label_ceiling)",
+  "utc": "2026-09-30T21:58:00+00:00",
+  "git_commit": "44e5a95451487f88eb657cd11a759e3e2e890220",
+  "git_dirty": false,
+  "params": {
+    "split": "train",
+    "n": 1999,
+    "window_clip": {
+      "32mm_clean": 0.06653,
+      "32mm_jitter4": 0.2076,
+      "40mm_clean": 0.02001,
+      "40mm_jitter4": 0.06653,
+      "48mm_clean": 0.01051,
+      "48mm_jitter4": 0.02001
+    },
+    "canon": {
+      "px_per_mm": 8.0,
+      "h": 384,
+      "w": 2048,
+      "out_upsample": 2
+    }
+  },
+  "summary": {
+    "label_x1_r_ratio": {
+      "median": 0.9534,
+      "p5": 0.89058,
+      "min": 0.4969,
+      "max": 1.0222,
+      "frac_below_0.90": 0.07504
+    },
+    "label_x1_pcc": {
+      "median": 0.9984,
+      "p5": 0.99343,
+      "min": 0.86267,
+      "max": 0.99992
+    },
+    "label_x2_r_ratio": {
+      "median": 0.9889,
+      "p5": 0.95818,
+      "min": 0.6106,
+      "max": 1.0218,
+      "frac_below_0.90": 0.0045
+    },
+    "label_x2_pcc": {
+      "median": 0.99945,
+      "p5": 0.9979,
+      "min": 0.94474,
+      "max": 0.99997
+    },
+    "label_x2.5_r_ratio": {
+      "median": 0.9985,
+      "p5": 0.99629,
+      "min": 0.9713,
+      "max": 1.0205,
+      "frac_below_0.90": 0.0
+    },
+    "label_x2.5_pcc": {
+      "median": 0.99999,
+      "p5": 0.99997,
+      "min": 0.99969,
+      "max": 1.0
+    },
+    "label_x3_r_ratio": {
+      "median": 0.9926,
+      "p5": 0.98129,
+      "min": 0.8464,
+      "max": 1.0206,
+      "frac_below_0.90": 0.0015
+    },
+    "label_x3_pcc": {
+      "median": 0.99958,
+      "p5": 0.99898,
+      "min": 0.98703,
+      "max": 0.99998
+    },
+    "mask_centroid_r_ratio": {
+      "median": 0.8007,
+      "p5": 0.65582,
+      "min": 0.171,
+      "max": 1.0266,
+      "frac_below_0.90": 0.86443
+    },
+    "mask_centroid_pcc": {
+      "median": 0.9812,
+      "p5": 0.94729,
+      "min": 0.60036,
+      "max": 0.99922
+    },
+    "out_of_window_frac": {
+      "median": 0.0,
+      "p5": 0.0,
+      "min": 0.0,
+      "max": 0.03399
+    },
+    "max_up_mm": {
+      "median": 8.11,
+      "p5": 2.799,
+      "min": 0.71,
+      "max": 99.17
+    },
+    "max_down_mm": {
+      "median": 2.75,
+      "p5": 1.12,
+      "min": 0.51,
+      "max": 28.67
+    }
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "opencv": "5.0.0"
+  }
+}

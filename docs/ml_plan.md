@@ -132,8 +132,12 @@ model could score, so they bound decision rule 1 from above.
 
 | | 32 mm window | 48 mm window |
 |---|---|---|
-| strips clipped, baseline centred exactly | 6.5% | 0.3% |
-| strips clipped, centre off by up to 4 mm | 23% | 0.8% |
+| strips clipped, baseline centred exactly | 6.7% | 1.1% |
+| strips clipped, centre off by up to 4 mm | 20.8% | 2.0% |
+
+(A strip counts as clipped if any sample leaves the window; within a clipped
+strip it is a few columns at the tallest R wave, and those columns are
+excluded from the loss via `in_window`, not trained toward the edge.)
 
 Lead II R waves reach 19.6 mm above baseline at p99.
 

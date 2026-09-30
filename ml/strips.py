@@ -15,7 +15,7 @@ inference so training and deployment cannot disagree about geometry:
     OUT_UPSAMPLE = 2        the row head outputs 16 px/mm columns
 
 Two of these differ from `ml_plan.md` §2.2 as first written, on measurement
-(`label_ceiling`, results/ml/label_ceiling.*): at 32 mm tall, 6.5% of lead
+(`label_ceiling`, results/ml/label_ceiling.*): at 32 mm tall, 6.7% of lead
 II strips clip even perfectly centred (R waves reach 19.6 mm at p99); and a
 head with one output per 8 px/mm column averages ~2.5 samples at the QRS
 apex, which caps a PERFECT model's R-peak ratio at 0.95 median, 0.86 worst
@@ -123,7 +123,8 @@ class AugConfig:
     # Placement of the canonical window, as an imperfect locator places it.
     # The locator's centre is the classical mask's median row, which the
     # row above or text can pull; 4 mm is the jitter the 48 mm window was
-    # sized against (label_ceiling: 0.8% of strips then clip).
+    # sized against (label_ceiling: 2.0% of strips then clip somewhere, 1.1%
+    # centred exactly; 32 mm would be 20.8% and 6.7%).
     center_jitter_mm: float = 1.5
     center_clip_mm: float = 4.0
     lead_in_mm: tuple[float, float] = (-2.0, 14.0)   # >~5 mm keeps the pulse
