@@ -108,17 +108,33 @@ class AugConfig:
     stretch_y: float = 0.03         # vertical scale is assumed isotropic
     shear: float = 0.005
     corner_jitter_mm: float = 0.4
-    # Effective resolution of the rectified photo. The A30s gives ~10-11.
-    phone_px_per_mm: tuple[float, float] = (7.5, 12.5)
-    # Photometric.
-    paper_level: tuple[float, float] = (215.0, 250.0)
-    paper_tint: float = 6.0
-    colour_gain: float = 0.08
+    # Effective resolution of the rectified photo. The A30s gives ~10-11;
+    # a photo taken from further away gives less.
+    phone_px_per_mm: tuple[float, float] = (6.0, 12.5)
+    # Photometric: the scene.
+    paper_level: tuple[float, float] = (170.0, 250.0)
+    paper_tint: float = 8.0
+    colour_gain: float = 0.15
     light_ramp: tuple[float, float] = (0.0, 0.45)
     p_shadow: float = 0.3
     shadow_depth: tuple[float, float] = (0.15, 0.45)
-    blur_sigma_px: tuple[float, float] = (0.3, 1.3)
-    noise_sigma: tuple[float, float] = (0.5, 4.0)
+    # The camera (added for run b1, results/ml/photo_compare_b0: on the real
+    # A30s photographs the paper sits at ~115-160 grey, the grid is a dull,
+    # desaturated brick red, the trace is only 2-3x darker than the paper,
+    # and the thin QRS strokes come out LIGHTER than the baseline -- where
+    # b0 lost whole beats. The b0 augmentation produced bright paper (mostly
+    # 170-250), saturated grids and full-contrast strokes.)
+    blur_sigma_px: tuple[float, float] = (0.3, 2.0)
+    p_motion_blur: float = 0.25
+    motion_len_px: tuple[float, float] = (2.0, 5.0)
+    exposure: tuple[float, float] = (0.45, 1.15)     # >1 clips: bright light
+    black_lift: tuple[float, float] = (0.0, 0.22)    # ink never reads as 0
+    gamma: tuple[float, float] = (0.75, 1.4)
+    saturation: tuple[float, float] = (0.25, 1.1)
+    noise_sigma: tuple[float, float] = (1.0, 8.0)
+    chroma_noise_sigma: tuple[float, float] = (0.0, 4.0)
+    p_sharpen: float = 0.5                           # phone ISP unsharp mask
+    sharpen_amount: tuple[float, float] = (0.3, 1.2)
     jpeg_quality: tuple[int, int] = (60, 95)
     # Placement of the canonical window, as an imperfect locator places it.
     # The locator's centre is the classical mask's median row, which the
@@ -380,8 +396,32 @@ def _photometric(img: np.ndarray, cfg: AugConfig,
         g = g * (1.0 - rng.uniform(*cfg.shadow_depth) / (1.0 + np.exp(-d / soft)))
     g = cv2.resize(g.astype(np.float32), (w, h), interpolation=cv2.INTER_LINEAR)
     x = img.astype(np.float32) * g[..., None] * gain.astype(np.float32)
+    # Optics: defocus, sometimes hand shake.
     x = cv2.GaussianBlur(x, (0, 0), rng.uniform(*cfg.blur_sigma_px))
-    x += rng.normal(0, rng.uniform(*cfg.noise_sigma), x.shape).astype(np.float32)
+    if rng.random() < cfg.p_motion_blur:
+        n = int(np.ceil(cfg.motion_len_px[1])) * 2 + 1
+        k = np.zeros((n, n), np.float32)
+        L = rng.uniform(*cfg.motion_len_px) / 2
+        th = rng.uniform(0, np.pi)
+        c = n // 2
+        cv2.line(k, (int(round(c - L * np.cos(th))), int(round(c - L * np.sin(th)))),
+                 (int(round(c + L * np.cos(th))), int(round(c + L * np.sin(th)))), 1.0, 1)
+        x = cv2.filter2D(x, -1, k / k.sum())
+    # Sensor and tone curve: exposure, black-level lift, gamma. Applied to
+    # the scene in [0, 1], so ink keeps its order but loses contrast.
+    y = np.clip(x / 255.0, 0, 1) * rng.uniform(*cfg.exposure)
+    b = rng.uniform(*cfg.black_lift)
+    y = b + (1.0 - b) * y
+    y = np.power(np.clip(y, 0, 1), rng.uniform(*cfg.gamma))
+    # Saturation: real grids come out a dull brick red.
+    grey = y.mean(axis=2, keepdims=True)
+    y = grey + rng.uniform(*cfg.saturation) * (y - grey)
+    x = y * 255.0
+    x += rng.normal(0, rng.uniform(*cfg.noise_sigma), x.shape[:2])[..., None].astype(np.float32)
+    x += rng.normal(0, rng.uniform(*cfg.chroma_noise_sigma), x.shape).astype(np.float32)
+    if rng.random() < cfg.p_sharpen:
+        soft = cv2.GaussianBlur(x, (0, 0), rng.uniform(0.8, 1.6))
+        x = x + rng.uniform(*cfg.sharpen_amount) * (x - soft)
     x = np.clip(x, 0, 255).astype(np.uint8)
     q = int(rng.integers(cfg.jpeg_quality[0], cfg.jpeg_quality[1] + 1))
     params = [cv2.IMWRITE_JPEG_QUALITY, q]
