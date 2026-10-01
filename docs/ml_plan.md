@@ -9,6 +9,57 @@ measurement.
 
 ---
 
+## Progress, 2026-10-01 (read this first)
+
+**Two days into the two-week plan (deadline ~2026-10-14), and ahead of it on
+the model.** Data, training and a first real-photo result are done; nothing
+has touched the phone yet.
+
+| | Status | Where |
+|---|---|---|
+| Training data: 2,000 fold 1–8 + 300 fold 9 strips, exact labels | **done** | `ml/make_strips.py`, `results/ml/strips_*` |
+| Augmentation with labels carried exactly (100% on ink) | **done**, camera stage added after b0 | `ml/strips.py`, `results/ml/strips_selftest.*` |
+| Label ceiling; frame resized to 48 mm, head output ×2 | **done** (§2.2) | `results/ml/label_ceiling.*` |
+| WSL2 + TF 2.21 + RTX 3050 | **done** | `ml/setup_wsl.sh`, `ml/wsl_run.sh` |
+| Model B trained (b0, then b1 with camera augmentation) | **done** | `results/ml/train_b0.*`, `train_b1.*` |
+| Real-photo comparison, matched corners and calibration | **done on PTB-XL 40 only** | `ml/eval_photos.py`, `results/ml/photo_compare_*` |
+| Photos of PTB-XL 9, 38, 57 | **not yet** (user, 2026-10-02) | `data/kit_photos/` |
+| Model A (ablation) | not started | `train_tracer.py --head mask` |
+| INT8 LiteRT, Kotlin port, app switch | not started | §5 |
+| Latency and memory on the A30s | not started; memory not instrumented | rules 2, 3 |
+
+**Measured on six real A30s photographs of PTB-XL 40** (matched corners,
+warp and calibration; aligned PCC only where the alignment spans ≥ 8.5 s):
+
+| photo | classical PCCa / R | b0 PCCa / R | **b1 PCCa / R** |
+|---|---|---|---|
+| 0928_01 | 0.851 / 0.728 | 0.646 / 0.950 | 0.832 / 0.948 |
+| 0929_01 | 0.873 / 0.595 | 0.638 / 0.528 | 0.922 / 0.935 |
+| 0929_02 | — (7.3 s) | — | 0.840 / 0.913 |
+| 0929_03 | — (< 8.5 s) | — | 0.921 / 0.913 |
+| 0929_04 | — (8.3 s) | — | 0.932 / 0.918 |
+| 0929_05 | 0.890 / 0.675 | 0.896 / 0.892 | 0.915 / 0.890 |
+
+Against decision rule 1 (§4), on this one record:
+- **R-peak ratio ≥ 0.90: met on 5 of 6** (0.89 on the sixth); classical
+  0.59–0.73.
+- **No loss of coverage: met.** b1 traces 94–100% of columns; classical
+  53–97%, too little on three photos to be scored at all.
+- **Aligned PCC ≥ classical + 0.08: not met.** −0.02, +0.05, +0.03 on the
+  three photos where both can be scored.
+
+What b0 → b1 showed: the render-to-photo gap was real (b0 dropped whole beats
+on real photos at a simulated PCC of 0.997), and closing it took a camera
+model in the augmentation (exposure, gamma, desaturation, blur, ISP
+sharpening), not a different network.
+
+**Two caveats limit what can be claimed.** It is one record. And the
+PTB-XL 40 photographs' appearance informed the camera augmentation, so they
+are no longer an untouched test set. **The clean test is PTB-XL 9, 38 and 57,
+photographed after b1 was frozen**, scored once, with nothing changed.
+
+---
+
 ## 0. What changed since the last plan, and why the order changes
 
 The 2026-09-22 plan argued that **calibration dominates** and that a learned
@@ -313,33 +364,32 @@ control, and every ML claim is relative to it.
 
 ## 6. Phases and timeline
 
-Assuming roughly five working weeks for the ML element (*adjust with the
-supervisor*).
+**Revised 2026-10-01 to the two-week plan agreed with the user** (deadline
+~2026-10-14). The original five-week outline assumed the photo session and
+memory instrumentation came first; in practice the data and model went first
+(days 1–2) and the device work is the critical path.
 
-**Week 1: groundwork, no model yet.**
-- Photo session: PTB-XL 9, 38, 57 (+ 40 retakes), 3–5 shots each, the sheet
-  alone, white margin all round, corners checked in the app's close-ups.
-- Memory instrumentation on the A30s.
-- Desktop scorer: enforce the 8.5 s overlap rule; rescore.
-- Record the **classical baseline** on the full real-photo set: aligned PCC,
-  R-peak ratio, gain, coverage, latency.
+| Days | Dates | Work | Status |
+|---|---|---|---|
+| 1–2 | 09-30 – 10-01 | Data, augmentation, label ceiling, WSL/TF, model B b0 and b1, first real-photo comparison | **done** |
+| 3 | 10-02 | Photos of PTB-XL 9, 38, 57 (3–5 shots each); register corners; classical + b1 scored **once** | user photographs |
+| 3–4 | 10-02 – 10-03 | Model A (`--head mask`, ~2 h) and its real-photo score: the A-vs-B ablation | |
+| 4–5 | 10-03 – 10-04 | INT8 LiteRT export at the full 384 × 2048 frame; INT8 vs FP32 on the real photos (§5) | |
+| 5–8 | 10-04 – 10-07 | Kotlin: `to_canonical` port with golden vectors, LiteRT in the app behind a switch, decode, gap fill | **critical path** |
+| 8–9 | 10-07 – 10-08 | Memory instrumentation; latency and memory on the A30s (rules 2, 3) | |
+| 9–10 | 10-08 – 10-09 | Phone runs of all sheets, both tracers, same corners | |
+| 11–14 | 10-10 – 10-14 | Write-up; small fixes only (8.5 s rule in `score_kit_photo`, merge to `main`) | |
 
-**Week 2: data.**
-- Generate 2,000 + 300 sheets with fold names. Build the canonical-strip
-  extractor and the label rasteriser; verify labels land on ink after every
-  augmentation.
-- Extend `simulate` with the §3.3 conditions.
+**On track?** Yes for the model, which is a week ahead of the original
+outline. The risk has moved to the device: nothing has run on the A30s, the
+model runs at 384 × 2048 against a 600 ms budget that is only *expected* to
+fit, and memory is not yet instrumented. If the Kotlin integration slips past
+day 8, cut model A's device run (keep its desktop score) before cutting the
+phone measurement of B, which is the thesis's actual question.
 
-**Week 3: model A then model B.**
-- Train A (ink mask + classical centroid) and B (row head). Validate on
-  fold 9. Pick by validation only.
-
-**Week 4: evaluation and device.**
-- Real-photo test for classical, A and B at matched corners.
-- INT8 conversion; LiteRT in the app behind a switch, so both tracers run
-  on the same photo; latency and memory on the A30s.
-
-**Week 5: write-up margin**, or FR1/FR4 if time allows (§7).
+Practical constraint learned: Claude Code's background-job reaper stops long
+runs when the laptop is low on memory (b0 at epoch 19, b1's first attempt at
+epoch 4). Run training from a WSL terminal by hand.
 
 **Classification** stays optional and last. If it is done, window PTB-XL
 exactly as the printout does (2.5 s per lead at the printed offsets, 10 s for
@@ -367,6 +417,12 @@ comparing the two would measure the wrong thing.
 ---
 
 ## 8. Expected results (*predictions; overwrite with measurements*)
+
+Measured 2026-10-01 on six real photographs of PTB-XL 40 (desktop, matched
+corners, `results/ml/photo_compare_b1.csv`): classical 0.85–0.89 / 0.59–0.73
+where scorable (3 of 6); **model B (b1) 0.83–0.93 / 0.89–0.95 on all 6.**
+Model A and INT8 are not measured yet. The predictions below stand as
+written, for comparison.
 
 | Condition | Aligned PCC | R-peak ratio | Basis |
 |---|---|---|---|

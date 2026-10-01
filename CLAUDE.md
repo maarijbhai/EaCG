@@ -13,7 +13,7 @@ models, and the open question is whether that pipeline survives
 compression onto consumer mobile hardware, and at what cost in latency,
 memory and reconstruction fidelity.
 
-## Current state — read this first (updated 2026-09-30)
+## Current state — read this first (updated 2026-10-01)
 
 **Requirement numbering — read this before citing an FR.** Two schemes are
 in play and they collide. The thesis report uses a flat **FR1–FR11**
@@ -33,8 +33,23 @@ rectify → locate the lead II rhythm strip and cut the 1 mV pulse → level the
 strip locally → binarise → isolate trace from text → calibrate → trace → FR8
 gate → score against the truth → export CSV. Classical Phase 0 is done
 (grid detrend, harmonic-lock test, midpoint threshold replacing Otsu).
-**The ML phase has not started**; its plan is `docs/ml_plan.md` (rewritten
-2026-09-29).
+**The ML phase is under way** (started 2026-09-30): a learned tracer
+(model B, row head) is trained and has been scored on real photographs on
+the desktop; nothing ML runs on the phone yet. Plan and progress:
+`docs/ml_plan.md`, whose "Progress" section at the top is current.
+
+**ML result so far** (`results/ml/photo_compare_b1.csv`, desktop, six real
+A30s photographs of PTB-XL 40, matched corners/warp/calibration): model B
+run **b1** reads R peaks at **0.89–0.95** of true height (classical
+0.59–0.73), traces 94–100% of columns on every photo (classical 53–97%, too
+little on three photos to score), aligned PCC **0.83–0.93 on all six**
+(classical 0.85–0.89 on the three it can be scored on; per-photo difference
+−0.02, +0.05, +0.03). Decision rule 1: the R-peak and coverage parts met,
+the PCC +0.08 margin not. The earlier run **b0** scored PCC 0.997 on
+simulated validation yet dropped whole beats on real photos; a camera-response
+augmentation (`22c82ac`) closed that gap. **Caveats:** one record, and these
+photos' appearance informed that augmentation, so they are no longer a clean
+test set — PTB-XL 9, 38, 57 are.
 
 **Best measured result** (PTB-XL 40, one real photograph, phone run 7,
 `results/device/photo_scores.csv`): all 10 R peaks within ~10 ms, duration
@@ -48,22 +63,32 @@ pulse's thin edges vanish and the lead-in rule takes an early beat for the
 pulse (duration anchor −10 to −18%, photos `ptbxl40_20260929_01..04`); the
 FR8 gate cannot see a duration-anchor error (circular by construction).
 
-**Where to pick up next session:**
-1. The user is printing and photographing **PTB-XL 9, 38, 57** (PDFs in
-   `out/kit_targets/<name>/<name>.pdf`). When photos arrive in
-   `data/kit_photos/`: register each (`score_kit_photo.py --add ... --target
-   ... --corners "x,y x,y x,y x,y" --no-refine`; corners can be found with
-   the prototype below and must be checked by eye), score, and have the user
-   run each through the app. Everything so far is ONE record (PTB-XL 40);
-   no ML claim is credible on that.
-2. **ML, two-week plan agreed with the user** (deadline ~2026-10-14): learned
-   tracer = small depthwise-separable U-Net with a column-wise row head,
-   canonical 8 px/mm strip, labels from the kit's `plotted_pixels`, folds
-   1–8 train / 9 val / 10 test, Keras/TensorFlow in **WSL2 Ubuntu** (native
-   Windows TF has no GPU; laptop has an RTX 3050 4 GB), INT8 LiteRT. Details
-   and decision rules in `docs/ml_plan.md` §2–§6. First job: generate ~2,000
-   fold-1–8 kit sheets and the strip/label pipeline.
-3. Open, not done: memory instrumentation on the A30s (decision rule 3
+**Where to pick up next session (2026-10-02):**
+1. **The user is bringing photographs of PTB-XL 9, 38, 57** (PDFs in
+   `out/kit_targets/<name>/<name>.pdf`). This is the clean test of b1, so:
+   b1 is FROZEN (`out/ml_runs/b1/best.weights.h5`, epoch 17) — change nothing
+   about the model, augmentation or decoding before scoring them. When photos
+   arrive in `data/kit_photos/` as `ptbxl<id>_<date>_<nn>.jpg`: register each
+   (`score_kit_photo.py --add ... --target ... --corners "x,y x,y x,y x,y"
+   --no-refine`; corners must be checked by eye), run the classical scorer,
+   then `bash ml/wsl_run.sh python ml/eval_photos.py --run b1` ONCE (it scores
+   every registered photo, PTB-XL 40 included; report the new records
+   separately). Commit the results whatever they show.
+2. Then, per `docs/ml_plan.md` §6 (two-week plan, deadline ~2026-10-14):
+   model A (`train_tracer.py --head mask`) for the ablation; INT8 LiteRT
+   export and INT8-vs-FP32 on the real photos; the Kotlin port
+   (`strips.to_canonical` with golden vectors, LiteRT behind a switch) — the
+   critical path; memory instrumentation and latency on the A30s.
+3. **How ML work runs.** Training and model inference run in WSL2 Ubuntu
+   (`ml/setup_wsl.sh` builds the venv; `ml/wsl_run.sh <cmd>` runs inside it
+   from the repo root; data copied to `~/data/ml_strips`). From Git Bash
+   prefix `MSYS_NO_PATHCONV=1` or the `/mnt/c/...` path gets rewritten. **Long
+   training runs: the user runs them by hand in a WSL terminal** — Claude
+   Code's background-job reaper killed two runs on low host memory, and a
+   process detached inside WSL dies when `wsl.exe` returns. Usable GPU memory
+   under WSL is ~1.8 GB: train on 512-column crops at batch 2, mixed precision,
+   and run full-width inference one strip at a time.
+4. Open, not done: memory instrumentation on the A30s (decision rule 3
    needs it); `score_kit_photo.py` does not enforce the 8.5 s overlap rule on
    `pcc_aligned` (the phone and `ingest_device_exports.py` do); why strip
    levelling estimated 2.6° on run 7 (guard refused it, correctly); the pulse
@@ -177,11 +202,18 @@ ECG-App/
 │            compare_results.py (before/after), run_*.py (experiments)
 ├── results/  committed CSV + provenance JSON: deskew/ gate/ grid/ photo/
 │             kitphoto/ (score.csv real photos, selftest.csv simulated)
-│             device/ (phone runs)
+│             device/ (phone runs) ml/ (training data manifests, label
+│             ceiling, training histories, photo_compare_<run>.csv)
+├── ml/       the learned tracer (TensorFlow, runs in WSL2): make_strips.py
+│             (training bands + labels -> data/ml_strips/), strips.py (canonical
+│             frame, augmentation, targets, --ceiling/--selftest),
+│             train_tracer.py (model A/B, training), eval_photos.py (real
+│             photos vs classical, matched), setup_wsl.sh, wsl_run.sh
 ├── docs/     ml_plan.md (the ML plan), photo_protocol.md (§8: print and
 │             photograph the kit sheets), STATUS.md (2026-09-23 snapshot, stale)
 ├── out/      gitignored, regenerable: kit_targets/ (printable PDFs), kitphoto/
-└── data/     gitignored: ptb-xl/1.0.3/, kit_photos/, device_exports/, a30_pics/
+└── data/     gitignored: ptb-xl/1.0.3/, kit_photos/, device_exports/, a30_pics/,
+              ml_strips/ (2,000 train + 300 val bands; copy in WSL ~/data/)
 ```
 
 Data is at `data/ptb-xl/1.0.3/` and must never be committed.
@@ -759,7 +791,7 @@ FAIL under the old rule.
 From `python/`. There is no pytest dependency and no reason to add one.
 
 ```
-python -m unittest discover -s tests     # 44 tests
+python -m unittest discover -s tests     # 49 tests
 python tests/mutate_quality.py           # 14 of 15 mutations caught
 ```
 
@@ -769,8 +801,9 @@ expected to survive; the script says which.
 
 ## Conventions
 
-- Python 3, NumPy/OpenCV/SciPy/pandas/wfdb. No deep learning framework
-  committed to yet.
+- Python 3, NumPy/OpenCV/SciPy/pandas/wfdb in `python/`, which stays free of
+  any deep-learning dependency. TensorFlow/Keras (2.21) lives only in `ml/`
+  and runs in WSL2.
 - British spelling in prose and identifiers (`digitise`, `binarise`,
   `vectorise`) to match the thesis document.
 - Docstrings explain *why*, not just what — several encode the domain
