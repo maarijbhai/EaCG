@@ -272,10 +272,16 @@ def presence_loss(y_true, logits):
     return tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(y_true, logits))
 
 
+#: Trace is ~1.8% of a canonical crop's pixels (measured on training
+#: batches), so a balanced weight is (1 - 0.018) / 0.018 ~ 54. At 20 the
+#: background still dominated: after 450 steps no pixel was predicted trace.
+MASK_POS_WEIGHT = 54.0
+
+
 def mask_loss(y_true, logits):
     import tensorflow as tf
     bce = tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(
-        y_true, logits, pos_weight=20.0))
+        y_true, logits, pos_weight=MASK_POS_WEIGHT))
     p = tf.sigmoid(logits)
     inter = tf.reduce_sum(p * y_true, axis=[1, 2])
     dice = 1.0 - (2 * inter + 1) / (tf.reduce_sum(p, [1, 2])
@@ -449,7 +455,8 @@ def main(argv=None) -> int:
             "epochs_completed": len(history),
             "params": {**{k: str(v) for k, v in vars(args).items()},
                        "k_samples": K_SAMPLES, "sigma_px": SIGMA_PX,
-                       "lambda_l1": LAMBDA_L1, "params": model.count_params(),
+                       "lambda_l1": LAMBDA_L1, "mask_pos_weight": MASK_POS_WEIGHT,
+                   "params": model.count_params(),
                        "canon": [S.CANON_PX_PER_MM, S.CANON_H, S.CANON_W,
                                  S.OUT_UPSAMPLE],
                        "val_stems": list(val_stems)},
@@ -471,8 +478,11 @@ def main(argv=None) -> int:
                **{k: round(float(v[-1]), 5) for k, v in hist.history.items()},
                **{k: (round(v, 5) if isinstance(v, float) else v) for k, v in m.items()}}
         cur = m[monitor]
-        improved = best is None or (cur < best if mode == "min" else cur > best)
-        if improved and np.isfinite(cur):
+        # An epoch with nothing scorable (NaN, e.g. an untrained mask head
+        # marking no pixels) is never "best" and saves nothing.
+        improved = bool(np.isfinite(cur)) and (
+            best is None or (cur < best if mode == "min" else cur > best))
+        if improved:
             best = cur
             model.save_weights(run / "best.weights.h5")
         row["best"] = improved
