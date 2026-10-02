@@ -1,0 +1,121 @@
+{
+  "generated_by": "ml/strips.py (strips_selftest_rows)",
+  "utc": "2026-10-02T12:13:17+00:00",
+  "git_commit": "3301c9654b7fc1c69b08a2ce93f33d71b031da3f",
+  "git_dirty": false,
+  "params": {
+    "n": 40,
+    "split": "train",
+    "seed": 7,
+    "aug": {
+      "p_recolour": 0.9,
+      "recolour_t": [
+        0.0,
+        1.4
+      ],
+      "rot_deg": 0.5,
+      "stretch_x": 0.02,
+      "stretch_y": 0.03,
+      "shear": 0.005,
+      "corner_jitter_mm": 0.4,
+      "phone_px_per_mm": [
+        6.0,
+        12.5
+      ],
+      "paper_level": [
+        170.0,
+        250.0
+      ],
+      "paper_tint": 8.0,
+      "colour_gain": 0.15,
+      "light_ramp": [
+        0.0,
+        0.45
+      ],
+      "p_shadow": 0.3,
+      "shadow_depth": [
+        0.15,
+        0.45
+      ],
+      "blur_sigma_px": [
+        0.3,
+        2.0
+      ],
+      "p_motion_blur": 0.25,
+      "motion_len_px": [
+        2.0,
+        5.0
+      ],
+      "exposure": [
+        0.45,
+        1.15
+      ],
+      "black_lift": [
+        0.0,
+        0.22
+      ],
+      "gamma": [
+        0.75,
+        1.4
+      ],
+      "saturation": [
+        0.25,
+        1.1
+      ],
+      "noise_sigma": [
+        1.0,
+        8.0
+      ],
+      "chroma_noise_sigma": [
+        0.0,
+        4.0
+      ],
+      "p_sharpen": 0.5,
+      "sharpen_amount": [
+        0.3,
+        1.2
+      ],
+      "jpeg_quality": [
+        60,
+        95
+      ],
+      "center_jitter_mm": 1.5,
+      "center_clip_mm": 4.0,
+      "lead_in_mm": [
+        -2.0,
+        14.0
+      ]
+    },
+    "canon": {
+      "px_per_mm": 8.0,
+      "h": 384,
+      "w": 2048,
+      "out_upsample": 2
+    }
+  },
+  "summary": {
+    "aug_label_on_ink_frac": {
+      "median": 1.0,
+      "p5": 1.0,
+      "min": 1.0,
+      "max": 1.0
+    },
+    "augment_ms": {
+      "median": 1152.85,
+      "p5": 617.88,
+      "min": 487.4,
+      "max": 2166.6
+    },
+    "targets_ms": {
+      "median": 98.75,
+      "p5": 92.16,
+      "min": 90.7,
+      "max": 146.1
+    }
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "opencv": "5.0.0"
+  }
+}
