@@ -493,3 +493,318 @@ def locate_rhythm_strip(
     return StripLocation(x0=x0, y0=int(y0), x1=x1, y1=int(y1),
                          row_peaks=tuple(int(p) for p in peaks),
                          pulse_x1=pulse_x1, t0_x=float(t0_x))
+
+
+# --------------------------------------------------------------------------
+# FR4: lead segmentation of the standard 3x4 + rhythm layout
+# --------------------------------------------------------------------------
+
+#: The standard 3x4 layout, row by row; each row is one continuous 10 s
+#: trace of four consecutive 2.5 s leads, and the fourth trace row is the
+#: lead II rhythm strip. Lead identity comes from POSITION, not from reading
+#: the printed labels: a stated scope limit (other layouts are out of scope).
+LAYOUT_3X4 = (("I", "aVR", "V1", "V4"),
+              ("II", "aVL", "V2", "V5"),
+              ("III", "aVF", "V3", "V6"))
+CELL_S = 2.5
+RECORDING_S = 10.0
+
+#: Half-width of the blanked zone around each internal cell boundary, mm.
+#: Printers mark the boundary with a short vertical tick that crosses the
+#: trace (ecg-image-kit draws it at 3x the trace width); traced, it is a
+#: full-height spike. The samples lost are 2 x 1 mm = 80 ms per boundary,
+#: interpolated over like any other gap.
+SEPARATOR_GUARD_MM = 1.0
+
+
+@dataclass(frozen=True)
+class LeadCell:
+    name: str
+    row: int                # 0-2 the 3x4 block, 3 the rhythm strip
+    col: int                # 0-3; 0 for the rhythm strip
+    t_start_s: float        # where this lead's window starts in the recording
+    duration_s: float
+    x0: int
+    x1: int
+    y0: int
+    y1: int
+    baseline_y: float       # the row's trace centre (row-profile peak)
+
+
+@dataclass(frozen=True)
+class LeadLayout:
+    cells: tuple[LeadCell, ...]     # 12 leads then the rhythm strip
+    t0_x: float                     # recording time zero, sheet column
+    px_per_s: float                 # from the caller's calibration
+    row_y: tuple[int, ...]          # the four row centres
+    row_bands: tuple[tuple[int, int], ...]
+
+    def cell(self, name: str, rhythm: bool = False) -> LeadCell:
+        for c in self.cells:
+            if c.name == name and (c.row == 3) == rhythm:
+                return c
+        raise KeyError(name)
+
+
+def segment_leads(image: np.ndarray, loc: StripLocation,
+                  px_per_mm_x: float) -> LeadLayout:
+    """Cut a page-cropped 3x4 + rhythm sheet into its 13 traces.
+
+    Rows come from `loc.row_peaks`, the row-profile peaks the rhythm-strip
+    search already found; each band runs halfway to its neighbours. Columns
+    come from time: recording zero is the rhythm strip's `t0_x` (the
+    calibration pulse's falling edge), and cell k of a 3x4 row covers
+    [k * 2.5 s, (k+1) * 2.5 s) at `px_per_mm_x` * 25 mm/s. That ASSUMES every
+    row starts at the rhythm strip's t0, which the standard layout does (the
+    kit puts all four at 15.0 mm); a row printed with its own offset would
+    put every cell of it out by that offset.
+
+    The calibration is the caller's, as for the rhythm strip: the duration
+    anchor on a photograph. Nothing here measures scale.
+    """
+    h, w = image.shape[:2]
+    peaks = sorted(int(p) for p in loc.row_peaks)
+    if len(peaks) != 4:
+        raise RuntimeError(f"{len(peaks)} rows found; the 3x4 + rhythm layout has 4")
+    bands = []
+    for i, y in enumerate(peaks):
+        up = (y - peaks[i - 1]) / 2 if i > 0 else (peaks[1] - peaks[0]) / 2
+        dn = (peaks[i + 1] - y) / 2 if i < 3 else (y - peaks[2]) / 2
+        bands.append((max(0, int(round(y - up))), min(h, int(round(y + dn)))))
+    px_per_s = px_per_mm_x * dig.MM_PER_S
+    t0 = float(loc.t0_x)
+    cells = []
+    for r, names in enumerate(LAYOUT_3X4):
+        for k, name in enumerate(names):
+            x0 = t0 + k * CELL_S * px_per_s
+            cells.append(LeadCell(name, r, k, k * CELL_S, CELL_S,
+                                  int(round(x0)), int(round(x0 + CELL_S * px_per_s)),
+                                  bands[r][0], bands[r][1], float(peaks[r])))
+    cells.append(LeadCell("II", 3, 0, 0.0, RECORDING_S, int(round(t0)),
+                          int(round(t0 + RECORDING_S * px_per_s)),
+                          bands[3][0], bands[3][1], float(peaks[3])))
+    return LeadLayout(tuple(cells), t0, px_per_s, tuple(peaks), tuple(bands))
+
+
+def trace_row(image: np.ndarray, layout: LeadLayout, row: int,
+              open_kernel: int = 3, tracked: bool = True
+              ) -> tuple[np.ndarray, int]:
+    """Classical FR5/FR6 over one whole row: (row per column, x origin).
+
+    Binarise and isolate over the full 10 s band -- the row's own trace is
+    the widest component there, which is what lets `isolate_trace` drop the
+    QRS tips of the rows above and below that reach into the band -- then
+    take the column centroid, and blank the separator ticks at the cell
+    boundaries (SEPARATOR_GUARD_MM either side).
+    """
+    y0, y1 = layout.row_bands[row]
+    x0 = int(round(layout.t0_x))
+    x1 = int(round(layout.t0_x + RECORDING_S * layout.px_per_s))
+    x1 = min(x1, image.shape[1])
+    band = image[y0:y1, x0:x1]
+    mask = isolate_trace(dig.binarise_trace(band, open_kernel=open_kernel))
+    if not tracked:
+        pos = dig.trace_positions(mask) + y0
+    else:
+        # Track each cell from its own middle: a 3x4 row changes lead at
+        # every boundary, and the jump there is the signal's, not a fault.
+        px_mm = layout.px_per_s / dig.MM_PER_S
+        pos = np.full(mask.shape[1], np.nan)
+        n_cells = 4 if row < 3 else 1
+        span = (CELL_S if row < 3 else RECORDING_S) * layout.px_per_s
+        for k in range(n_cells):
+            a = int(round(k * span))
+            b = mask.shape[1] if k == n_cells - 1 else int(round((k + 1) * span))
+            pos[a:b] = trace_positions_tracked(mask[:, a:b], px_mm)
+        pos = pos + y0
+    if row < 3:
+        guard = SEPARATOR_GUARD_MM * layout.px_per_s / dig.MM_PER_S
+        for k in (1, 2, 3):
+            xb = k * CELL_S * layout.px_per_s
+            lo, hi = int(np.floor(xb - guard)), int(np.ceil(xb + guard))
+            pos[max(0, lo):max(0, min(len(pos), hi + 1))] = np.nan
+    return pos, x0
+
+
+#: Furthest the tracked run may move between adjacent columns, mm, plus one
+#: pixel per column skipped, up to twice this in all. A steep stroke
+#: overlaps the previous run (distance 0), so this only bites when a
+#: column's ONLY ink is somewhere else -- measured on the clean PTB-XL 40
+#: sheet at the start of V3, V5 and V6, where the kit draws the first
+#: millimetres of the trace broken and the label is the sole ink in the gaps,
+#: ~4-5 mm below. Uncapped, the allowance grew across a 0.3 s gap until it
+#: reached the label and the tracker followed the label instead.
+TRACK_MAX_JUMP_MM = 1.5
+
+
+def trace_positions_tracked(mask: np.ndarray,
+                            px_per_mm: float | None = None) -> np.ndarray:
+    """Row of the trace per column, following ONE ink run column to column.
+
+    `digitise.trace_positions` takes the centroid of all ink in a column,
+    which is right when the trace is the only ink there. In a 3x4 row it is
+    not at the start of every cell: the printed lead label ("aVR", "V6")
+    sits just under the trace's first ~0.1-0.3 s, survives isolate_trace
+    (wider than its 3% cut over a 10 s band), and the all-ink centroid lands
+    between label and trace -- measured on the CLEAN printed PTB-XL 40 sheet,
+    a 0.4 mV false dip that cost aVR and V6 a third of their PCC.
+
+    Here each column's ink is split into vertical runs and the run nearest
+    the previous column's chosen run is kept (interval distance, so a
+    steep stroke that overlaps the last run always wins). Tracking starts
+    from the widest stretch of single-run columns and goes outward both
+    ways; a column with no ink is NaN and does not move the reference.
+    Where a column holds one run this equals the all-ink centroid exactly.
+    With `px_per_mm`, a column whose nearest run is more than
+    TRACK_MAX_JUMP_MM away (plus a pixel per skipped column) is a gap, not
+    a jump.
+    """
+    h, w = mask.shape
+    runs = []
+    for x in range(w):
+        col = mask[:, x]
+        if not col.any():
+            runs.append([])
+            continue
+        d = np.diff(np.concatenate(([0], col.astype(np.int8), [0])))
+        st, en = np.flatnonzero(d == 1), np.flatnonzero(d == -1)
+        runs.append(list(zip(st.tolist(), en.tolist())))
+    out = np.full(w, np.nan)
+    single = np.array([len(r) == 1 for r in runs])
+    if not single.any():
+        return dig.trace_positions(mask)
+    # Seed: the middle of the longest stretch of single-run columns.
+    idx = np.flatnonzero(single)
+    breaks = np.flatnonzero(np.diff(idx) > 1)
+    segs = np.split(idx, breaks + 1)
+    seed_seg = max(segs, key=len)
+    seed = int(seed_seg[len(seed_seg) // 2])
+
+    def pick(rs, ref):
+        a, b = ref
+        best, bd = None, None
+        for s, e in rs:
+            dist = max(0, s - b, a - e)     # 0 when the intervals overlap
+            if bd is None or dist < bd or (dist == bd and (e - s) > (best[1] - best[0])):
+                best, bd = (s, e), dist
+        return best
+
+    jump = TRACK_MAX_JUMP_MM * px_per_mm if px_per_mm else np.inf
+    for direction in (1, -1):
+        ref = runs[seed][0]
+        x, skipped = seed, 0
+        while 0 <= x < w:
+            rs = runs[x]
+            if rs:
+                s, e = pick(rs, ref)
+                if max(0, s - ref[1], ref[0] - e) <= jump + min(skipped, jump):
+                    out[x] = 0.5 * (s + e - 1)
+                    ref, skipped = (s, e), 0
+                else:
+                    skipped += 1
+            else:
+                skipped += 1
+            x += direction
+    return out
+
+
+#: Rows of a 3x4 + rhythm sheet are ~33-36 mm apart; peaks of the row ink
+#: profile closer than this fraction of the page height (~25 mm on A4
+#: landscape) are one row's QRS and text, not two rows. `locate_rhythm_strip`
+#: uses 0.07 and keeps the four TALLEST peaks, which on unevenly lit photos
+#: (ptbxl40_20260929_01, _03) dropped the faint top row for a phantom row
+#: between row 3 and the rhythm strip.
+SHEET_ROW_SPACING_FRACTION = 0.11
+
+#: The calibration pulse: 1 mV tall at 10 mm/mV, 0.2 s (5 mm) wide, printed
+#: at the start of every row. Its TOP edge, a horizontal segment 10 mm above
+#: the row's centre, survives where its thin vertical edges vanish on a soft
+#: photo; its right end is the falling edge, recording time zero.
+PULSE_TOP_MM = 10.0
+PULSE_SLAB_MM = 2.5             # search +-2.5 mm around the expected top
+PULSE_WIDTH_MM = (3.0, 7.5)     # accepted length of the top segment
+PULSE_GAP_MM = 0.5              # gaps closed inside the segment
+PULSE_SEARCH_FRACTION_X = 0.15  # pulses lie in the left 15% of the page
+
+
+@dataclass(frozen=True)
+class SheetLocation:
+    rows: tuple[int, ...]           # the four row centres, top to bottom
+    t0_x: float                     # recording time zero (pulses' falling edge)
+    t0_per_row: tuple[float, ...]   # each row's own pulse, NaN where not found
+    x_end: int                      # last inked column of the rhythm strip
+    rhythm: StripLocation           # locate_rhythm_strip's own answer
+    t0_source: str                  # "pulses" or "rhythm_locator"
+
+    @property
+    def anchor_px_per_mm(self) -> float:
+        """The duration anchor over the whole recording: 10 s at 25 mm/s."""
+        return (self.x_end - self.t0_x) / (RECORDING_S * dig.MM_PER_S)
+
+    def as_strip_location(self) -> StripLocation:
+        from dataclasses import replace
+        return replace(self.rhythm, row_peaks=self.rows, t0_x=self.t0_x)
+
+
+def sheet_rows(image: np.ndarray, mask: np.ndarray | None = None) -> tuple[int, ...]:
+    """The four trace rows of a page-cropped 3x4 + rhythm sheet, by layout."""
+    h = image.shape[0]
+    m = dig.binarise_trace(image) if mask is None else np.asarray(mask, bool)
+    rows = m.sum(axis=1).astype(np.float64)
+    edge = int(h * EDGE_FRACTION)
+    rows[:edge] = 0.0
+    rows[h - edge:] = 0.0
+    win = max(5, int(h * SMOOTH_FRACTION)) | 1
+    smooth = np.convolve(rows, np.ones(win), mode="same") / win
+    peaks = find_peaks_distance(smooth, max(1, int(h * SHEET_ROW_SPACING_FRACTION)))
+    if len(peaks) < 4:
+        raise RuntimeError(f"found {len(peaks)} trace rows, expected 4")
+    top4 = np.sort(peaks[np.argsort(-smooth[peaks], kind="stable")][:4])
+    return tuple(int(p) for p in top4)
+
+
+def pulse_falling_edge(mask: np.ndarray, row_y: int, px_per_mm: float) -> float:
+    """Right end of the pulse's top segment in one row, or NaN."""
+    h, w = mask.shape
+    yc = row_y - PULSE_TOP_MM * px_per_mm
+    a = max(0, int(round(yc - PULSE_SLAB_MM * px_per_mm)))
+    b = min(h, int(round(yc + PULSE_SLAB_MM * px_per_mm)))
+    if b <= a:
+        return float("nan")
+    cols = mask[a:b, :int(w * PULSE_SEARCH_FRACTION_X)].any(axis=0)
+    idx = np.flatnonzero(cols)
+    if idx.size == 0:
+        return float("nan")
+    gap = max(1, int(round(PULSE_GAP_MM * px_per_mm)))
+    breaks = np.flatnonzero(np.diff(idx) > gap)
+    first = idx[:breaks[0] + 1] if breaks.size else idx
+    length_mm = (first[-1] - first[0] + 1) / px_per_mm
+    if not (PULSE_WIDTH_MM[0] <= length_mm <= PULSE_WIDTH_MM[1]):
+        return float("nan")
+    # The falling edge is a line of finite width whose centre is time zero;
+    # the segment's last inked column is its right-hand side.
+    line_px = 0.25 * px_per_mm
+    return float(first[-1]) - 0.5 * line_px
+
+
+def locate_sheet(image: np.ndarray) -> SheetLocation:
+    """Rows, recording time zero and the duration anchor for a whole sheet.
+
+    Rows from `sheet_rows` (layout spacing). Time zero from the pulses of
+    all four rows (median of those found), falling back to the rhythm
+    locator's own t0 when none is found. The scale needed to place the
+    pulse search comes from the rhythm locator's anchor; a t0 error of the
+    size measured (up to 1.5 s, 15%) leaves the search slab on the pulse.
+    """
+    m = dig.binarise_trace(image)
+    rows = sheet_rows(image, m)
+    loc = locate_rhythm_strip(image, mask=m)
+    approx = loc.recording_width_px / (RECORDING_S * dig.MM_PER_S)
+    edges = tuple(pulse_falling_edge(m, y, approx) for y in rows)
+    found = [e for e in edges if np.isfinite(e)]
+    if found:
+        t0, src = float(np.median(found)), "pulses"
+    else:
+        t0, src = float(loc.t0_x), "rhythm_locator"
+    return SheetLocation(rows=rows, t0_x=t0, t0_per_row=edges, x_end=int(loc.x1),
+                         rhythm=loc, t0_source=src)
