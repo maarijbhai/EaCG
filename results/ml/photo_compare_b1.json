@@ -1,10 +1,12 @@
 {
   "generated_by": "ml/eval_photos.py",
-  "utc": "2026-10-01T18:54:19+00:00",
-  "git_commit": "97b42fc2a424fbd861277185f14e734bf67dc08f",
+  "utc": "2026-10-02T07:05:10+00:00",
+  "git_commit": "c77f6da5da1465a9f078727b3b2ff992c2438f41",
   "git_dirty": false,
   "params": {
     "run": "b1",
+    "head": "row",
+    "only": "",
     "weights": "out/ml_runs/b1/best.weights.h5",
     "lead_in_mm": 4.0,
     "corners": "python/kit_photos.json as placed",
