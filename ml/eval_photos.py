@@ -223,7 +223,7 @@ def main(argv=None) -> int:
         rows.append({**info, "tracer": f"{label}_{args.run}", "open_kernel": "",
                      **m_score})
 
-        np.savez(DIAG / f"{stem}_traces.npz",
+        np.savez(DIAG / f"{stem}_{args.run}_traces.npz",
                  classical_x=np.arange(x0, x1, dtype=np.float64), classical_r=c_rows,
                  model_x=mx, model_r=mr, truth_x=target.cols, truth_r=target.rows,
                  truth_mv=target.lead_signal, t0_col=target.t0_col, px_per_mm=mm,
