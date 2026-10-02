@@ -23,8 +23,8 @@ has touched the phone yet.
 | WSL2 + TF 2.21 + RTX 3050 | **done** | `ml/setup_wsl.sh`, `ml/wsl_run.sh` |
 | Model B trained (b0, then b1 with camera augmentation) | **done** | `results/ml/train_b0.*`, `train_b1.*` |
 | Real-photo comparison, matched corners and calibration | **done on PTB-XL 40 only** | `ml/eval_photos.py`, `results/ml/photo_compare_*` |
-| Photos of PTB-XL 9, 38, 57 | **not yet** (user, 2026-10-02) | `data/kit_photos/` |
-| Model A (ablation) | not started | `train_tracer.py --head mask` |
+| Photos of PTB-XL 9, 38, 57 | **not yet** (user) | `data/kit_photos/` |
+| Model A (ablation): a1 trained and scored on the real photos | **done** (2026-10-02) | `results/ml/train_a1.*`, `photo_compare_a1.*` |
 | INT8 LiteRT, Kotlin port, app switch | not started | §5 |
 | Latency and memory on the A30s | not started; memory not instrumented | rules 2, 3 |
 
@@ -52,6 +52,12 @@ What b0 → b1 showed: the render-to-photo gap was real (b0 dropped whole beats
 on real photos at a simulated PCC of 0.997), and closing it took a camera
 model in the augmentation (exposure, gamma, desaturation, blur, ISP
 sharpening), not a different network.
+
+**Model A (a1) on the same photos, 2026-10-02** (`photo_compare_a1.csv`):
+aligned PCC 0.891 / 0.939 / 0.936 / 0.937 / 0.937 / 0.919 -- best of the three
+tracers on every photo -- with R 0.64-0.70, no better than classical. The
+§8 prediction ("A buys most of the PCC gain, B most of the amplitude gain")
+held. A vs classical where both scorable: +0.04 / +0.07 / +0.03.
 
 **Two caveats limit what can be claimed.** It is one record. And the
 PTB-XL 40 photographs' appearance informed the camera augmentation, so they

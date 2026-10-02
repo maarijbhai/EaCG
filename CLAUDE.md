@@ -13,7 +13,7 @@ models, and the open question is whether that pipeline survives
 compression onto consumer mobile hardware, and at what cost in latency,
 memory and reconstruction fidelity.
 
-## Current state — read this first (updated 2026-10-01)
+## Current state — read this first (updated 2026-10-02)
 
 **Requirement numbering — read this before citing an FR.** Two schemes are
 in play and they collide. The thesis report uses a flat **FR1–FR11**
@@ -38,18 +38,35 @@ gate → score against the truth → export CSV. Classical Phase 0 is done
 the desktop; nothing ML runs on the phone yet. Plan and progress:
 `docs/ml_plan.md`, whose "Progress" section at the top is current.
 
-**ML result so far** (`results/ml/photo_compare_b1.csv`, desktop, six real
-A30s photographs of PTB-XL 40, matched corners/warp/calibration): model B
-run **b1** reads R peaks at **0.89–0.95** of true height (classical
-0.59–0.73), traces 94–100% of columns on every photo (classical 53–97%, too
-little on three photos to score), aligned PCC **0.83–0.93 on all six**
-(classical 0.85–0.89 on the three it can be scored on; per-photo difference
-−0.02, +0.05, +0.03). Decision rule 1: the R-peak and coverage parts met,
-the PCC +0.08 margin not. The earlier run **b0** scored PCC 0.997 on
-simulated validation yet dropped whole beats on real photos; a camera-response
-augmentation (`22c82ac`) closed that gap. **Caveats:** one record, and these
-photos' appearance informed that augmentation, so they are no longer a clean
-test set — PTB-XL 9, 38, 57 are.
+**ML result so far** (desktop, six real A30s photographs of PTB-XL 40,
+matched corners/warp/calibration; `results/ml/photo_compare_b1.csv`,
+`photo_compare_a1.csv`). Aligned PCC / R-peak ratio, "--" where the trace's
+alignment spans < 8.5 s and no figure may be quoted:
+
+| photo | classical | model A (a1, ink mask) | model B (b1, row head) |
+|---|---|---|---|
+| 0928_01 | 0.851 / 0.728 | **0.891** / 0.700 | 0.832 / **0.948** |
+| 0929_01 | 0.873 / 0.595 | **0.939** / 0.681 | 0.922 / **0.935** |
+| 0929_02 | -- | **0.936** / 0.643 | 0.840 / **0.913** |
+| 0929_03 | -- | **0.937** / 0.655 | 0.921 / **0.913** |
+| 0929_04 | -- | **0.937** / 0.649 | 0.932 / **0.918** |
+| 0929_05 | 0.890 / 0.675 | **0.919** / 0.687 | 0.915 / **0.890** |
+
+**The ablation split exactly as `ml_plan.md` §8 predicted before training:**
+model A (seeing which ink is trace) buys the PCC -- best of the three on all
+six photos, 98-100% coverage -- but keeps the classical R-peak under-read
+(0.64-0.70; a *perfect* mask read by column centroid tops out at 0.80,
+`results/ml/label_ceiling`). Model B (reading the waveform per column) buys
+the amplitude (R 0.89-0.95) at a PCC between classical and A. Neither does
+both. Decision rule 1 (PCC >= classical + 0.08 AND R >= 0.90): B meets the R
+and coverage parts; A's PCC gains over classical are +0.04 / +0.07 / +0.03,
+closer to the margin but short; neither meets the whole rule. Combining
+them is the obvious idea and deliberately NOT tried yet: designing it
+against these photos would contaminate the test. History: run **b0** scored
+PCC 0.997 on simulated validation yet dropped whole beats on real photos; a
+camera-response augmentation (`22c82ac`) closed that gap for b1 and a1 alike.
+**Caveats:** one record, and these photos' appearance informed that
+augmentation, so they are no longer a clean test set -- PTB-XL 9, 38, 57 are.
 
 **Best measured result** (PTB-XL 40, one real photograph, phone run 7,
 `results/device/photo_scores.csv`): all 10 R peaks within ~10 ms, duration
@@ -65,17 +82,19 @@ FR8 gate cannot see a duration-anchor error (circular by construction).
 
 **Where to pick up next session (2026-10-02):**
 1. **The user is bringing photographs of PTB-XL 9, 38, 57** (PDFs in
-   `out/kit_targets/<name>/<name>.pdf`). This is the clean test of b1, so:
-   b1 is FROZEN (`out/ml_runs/b1/best.weights.h5`, epoch 17) — change nothing
-   about the model, augmentation or decoding before scoring them. When photos
+   `out/kit_targets/<name>/<name>.pdf`). This is the clean test of BOTH
+   models, so a1 and b1 are FROZEN (`out/ml_runs/{a1,b1}/best.weights.h5`,
+   epochs 15 and 17) — change nothing about the models, augmentation or
+   decoding before scoring them. When photos
    arrive in `data/kit_photos/` as `ptbxl<id>_<date>_<nn>.jpg`: register each
    (`score_kit_photo.py --add ... --target ... --corners "x,y x,y x,y x,y"
    --no-refine`; corners must be checked by eye), run the classical scorer,
-   then `bash ml/wsl_run.sh python ml/eval_photos.py --run b1` ONCE (it scores
-   every registered photo, PTB-XL 40 included; report the new records
-   separately). Commit the results whatever they show.
-2. Then, per `docs/ml_plan.md` §6 (two-week plan, deadline ~2026-10-14):
-   model A (`train_tracer.py --head mask`) for the ablation; INT8 LiteRT
+   then ONCE per model `bash ml/wsl_run.sh python ml/eval_photos.py --run b1
+   --only ptbxl9` (and `ptbxl38`, `ptbxl57`, and again with `--run a1`);
+   `--only` writes each record to its own CSV, keeping the new records apart
+   from PTB-XL 40. Commit the results whatever they show.
+2. Then, per `docs/ml_plan.md` §6 (two-week plan, deadline ~2026-10-14;
+   model A is done, a day early): INT8 LiteRT
    export and INT8-vs-FP32 on the real photos; the Kotlin port
    (`strips.to_canonical` with golden vectors, LiteRT behind a switch) — the
    critical path; memory instrumentation and latency on the A30s.
