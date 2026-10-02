@@ -1,7 +1,7 @@
 {
   "generated_by": "ml/strips.py (strips_selftest_rows)",
-  "utc": "2026-10-02T12:13:17+00:00",
-  "git_commit": "3301c9654b7fc1c69b08a2ce93f33d71b031da3f",
+  "utc": "2026-10-02T12:45:52+00:00",
+  "git_commit": "cc73fe421073e4eb793bff5894a1c6df7aedcbbe",
   "git_dirty": false,
   "params": {
     "n": 40,
@@ -101,16 +101,16 @@
       "max": 1.0
     },
     "augment_ms": {
-      "median": 1152.85,
-      "p5": 617.88,
-      "min": 487.4,
-      "max": 2166.6
+      "median": 681.5,
+      "p5": 219.465,
+      "min": 211.8,
+      "max": 1412.7
     },
     "targets_ms": {
-      "median": 98.75,
-      "p5": 92.16,
-      "min": 90.7,
-      "max": 146.1
+      "median": 67.6,
+      "p5": 33.795,
+      "min": 33.5,
+      "max": 109.4
     }
   },
   "versions": {
