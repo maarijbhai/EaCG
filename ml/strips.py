@@ -87,6 +87,7 @@ CANON_H = 384
 CANON_W = 2048
 OUT_UPSAMPLE = 2
 OUT_W = CANON_W * OUT_UPSAMPLE
+TAG = ""  # result-file suffix, set by --tag
 MM_PER_S = 25.0
 MM_PER_MV = 10.0
 
@@ -608,7 +609,7 @@ def _persist(name: str, rows: list[dict], params: dict, keys: tuple) -> Path:
 def label_ceiling(split: str) -> Path:
     """`ceiling_row` over every band of a split, plus how often the window
     would clip at candidate heights. Sizes the canonical frame."""
-    rows = [ceiling_row(load_strip(s, split)) for s in list_stems(split)]
+    rows = [ceiling_row(load_strip(s, split, DATA)) for s in list_stems(split, DATA)]
     up = np.array([r["max_up_mm"] for r in rows])
     down = np.array([r["max_down_mm"] for r in rows])
     jit = AugConfig().center_clip_mm
@@ -621,7 +622,7 @@ def label_ceiling(split: str) -> Path:
     print("  window clipping (fraction of strips):", clip)
     keys = tuple(k for k in rows[0] if k.endswith(("r_ratio", "_pcc"))) + (
         "out_of_window_frac", "max_up_mm", "max_down_mm")
-    return _persist("label_ceiling", rows,
+    return _persist("label_ceiling" + TAG, rows,
                     {"split": split, "n": len(rows), "window_clip": clip}, keys)
 
 
@@ -630,13 +631,13 @@ def selftest(n: int, split: str, seed: int) -> Path:
     trace-colour mask rides the identical geometry, and every label must land
     on it (3x3 neighbourhood, canonical pixels). Also times the chain and
     writes overlays to out/ml_selftest/ for eyeballing."""
-    stems = list_stems(split)
+    stems = list_stems(split, DATA)
     rng = np.random.default_rng(seed)
     pick = sorted(rng.choice(stems, size=min(n, len(stems)), replace=False))
     DIAG.mkdir(parents=True, exist_ok=True)
     rows_out = []
     for i, stem in enumerate(pick):
-        st = load_strip(stem, split)
+        st = load_strip(stem, split, DATA)
         r = {"stem": stem, "style": st.meta["style"]}
         t = time.perf_counter()
         ex = augment(st, np.random.default_rng(seed + i), extra=_ink_map(st))
@@ -664,7 +665,7 @@ def selftest(n: int, split: str, seed: int) -> Path:
                 if 0 <= y < CANON_H:
                     view[y, x] = (0, 200, 0)
             cv2.imwrite(str(DIAG / f"{stem}_aug.png"), view)
-    return _persist("strips_selftest", rows_out,
+    return _persist("strips_selftest" + TAG, rows_out,
                     {"n": len(rows_out), "split": split, "seed": seed,
                      "aug": asdict(AugConfig())},
                     ("aug_label_on_ink_frac", "augment_ms", "targets_ms"))
@@ -678,7 +679,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--n", type=int, default=60)
     p.add_argument("--split", default="train")
     p.add_argument("--seed", type=int, default=7)
+    p.add_argument("--data", type=Path, default=None,
+                   help="band directory (default data/ml_strips; data/ml_rows "
+                        "for the four-row data)")
+    p.add_argument("--tag", default="", help="suffix for the result files")
     args = p.parse_args(argv)
+    global DATA
+    if args.data is not None:
+        DATA = args.data
+    global TAG
+    TAG = args.tag
     if args.ceiling:
         print(label_ceiling(args.split))
     if args.selftest:

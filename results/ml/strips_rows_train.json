@@ -1,0 +1,80 @@
+{
+  "generated_by": "ml/make_strips.py",
+  "utc": "2026-10-02T12:04:32+00:00",
+  "git_commit": "14682d47a841bb36f00378b931e6966715784b62",
+  "git_dirty": false,
+  "params": {
+    "split": "train",
+    "n": 2000,
+    "seed": 20260930,
+    "dpi": 300,
+    "all_rows": true,
+    "band_margin_mm": 16.0,
+    "styles": [
+      [
+        "red",
+        0.5
+      ],
+      [
+        "brown",
+        0.05
+      ],
+      [
+        "pink",
+        0.05
+      ],
+      [
+        "blue",
+        0.05
+      ],
+      [
+        "green",
+        0.05
+      ],
+      [
+        "random",
+        0.2
+      ],
+      [
+        "bw",
+        0.1
+      ]
+    ],
+    "p_header": 0.3,
+    "ink_tolerance": 40.0,
+    "kit": "C:\\dev\\vendor\\ecg-image-kit\\codes\\ecg-image-generator"
+  },
+  "summary": {
+    "sheets": 8000,
+    "errors": 0,
+    "label_ok": 7998,
+    "label_on_ink_min": 0.8756,
+    "off_sheet_sheets": 10,
+    "styles": {
+      "red": 4112,
+      "brown": 448,
+      "pink": 332,
+      "blue": 376,
+      "green": 356,
+      "random": 1564,
+      "bw": 812
+    },
+    "folds": {
+      "1": 1000,
+      "2": 1016,
+      "3": 928,
+      "4": 1052,
+      "5": 1040,
+      "6": 1024,
+      "7": 876,
+      "8": 1064
+    },
+    "patients": 1950,
+    "render_s_median": 8.71
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "opencv": "5.0.0"
+  }
+}

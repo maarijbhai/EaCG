@@ -1,0 +1,73 @@
+{
+  "generated_by": "ml/make_strips.py",
+  "utc": "2026-10-02T12:09:49+00:00",
+  "git_commit": "bd3dc3a1ebdbd474bf4f21e5c2f364a77e4e2084",
+  "git_dirty": false,
+  "params": {
+    "split": "val",
+    "n": 300,
+    "seed": 20260930,
+    "dpi": 300,
+    "all_rows": true,
+    "band_margin_mm": 16.0,
+    "styles": [
+      [
+        "red",
+        0.5
+      ],
+      [
+        "brown",
+        0.05
+      ],
+      [
+        "pink",
+        0.05
+      ],
+      [
+        "blue",
+        0.05
+      ],
+      [
+        "green",
+        0.05
+      ],
+      [
+        "random",
+        0.2
+      ],
+      [
+        "bw",
+        0.1
+      ]
+    ],
+    "p_header": 0.3,
+    "ink_tolerance": 40.0,
+    "kit": "C:\\dev\\vendor\\ecg-image-kit\\codes\\ecg-image-generator"
+  },
+  "summary": {
+    "sheets": 1200,
+    "errors": 0,
+    "label_ok": 1200,
+    "label_on_ink_min": 0.9988,
+    "off_sheet_sheets": 0,
+    "styles": {
+      "red": 588,
+      "brown": 68,
+      "pink": 32,
+      "blue": 64,
+      "green": 28,
+      "random": 280,
+      "bw": 140
+    },
+    "folds": {
+      "9": 1200
+    },
+    "patients": 295,
+    "render_s_median": 9.16
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "opencv": "5.0.0"
+  }
+}
