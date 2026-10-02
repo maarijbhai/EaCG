@@ -99,14 +99,18 @@ def model_rows(model, sheet: np.ndarray, mm: float, t0_col: float,
 
 def score(x: np.ndarray, r: np.ndarray, target, x0: int, x1: int) -> dict:
     """One scoring path for both tracers: (x, row) in sheet pixels."""
-    keep = np.isfinite(r) & (x >= x0) & (x < x1)
+    # Coverage: the share of the tracer's OWN output positions over the
+    # truth's span that hold a trace. Counting sheet columns instead (11.8
+    # px/mm) charged model A, which outputs at 8 px/mm, a constant 0.68 for
+    # columns it never had; and credited model B (16 px/mm) twice.
+    t_lo, t_hi = float(target.cols.min()), float(target.cols.max())
+    span = (x >= max(x0, t_lo)) & (x <= min(x1 - 1, t_hi))
+    fin = np.isfinite(r)
+    keep = fin & (x >= x0) & (x < x1)
+    out = {"cols_traced": int((fin & span).sum()),
+           "coverage": round(float((fin & span).sum()) / max(1, int(span.sum())), 4)}
     x, r = x[keep], r[keep]
     mm = target.px_per_mm
-    # Coverage counts sheet columns holding at least one traced point, so a
-    # tracer with two outputs per column is not credited twice.
-    covered = np.unique(np.floor(x + 0.5).astype(int))
-    out = {"cols_traced": int(len(covered)),
-           "coverage": round(len(covered) / max(1, (x1 - x0)), 4)}
     if len(x) < 50:
         return out
     o = np.argsort(x)
