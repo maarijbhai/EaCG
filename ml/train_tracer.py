@@ -177,13 +177,14 @@ def val_set(pool, stems: list[str], seed: int) -> list[dict]:
 # model
 # --------------------------------------------------------------------------
 
-def build_model(head: str, h: int = S.CANON_H, w: int | None = None):
+def build_model(head: str, h: int | None = None, w: int | None = None):
     """`w=None` builds a width-agnostic model (any multiple of 16): trained
     on crops, validated at full width. The LiteRT export will build it again
     at w = CANON_W and load the same weights."""
     import keras
     import tensorflow as tf
     from keras import layers as L
+    h = S.CANON_H if h is None else h
 
     class ToColumns(L.Layer):
         """(B, H, W, u) -> (B, H, W*u), or (B, W, u) -> (B, W*u).
@@ -289,6 +290,53 @@ def mask_loss(y_true, logits):
     return bce + tf.reduce_mean(dice)
 
 
+#: Tiled inference: tile width and the margin discarded at each tile's inner
+#: edges, canonical input columns. A full 512 x 2048 frame does not fit the
+#: ~1.8 GB of GPU memory WSL leaves usable (measured: OOM in BatchNorm on the
+#: first full-width validation of a 64 mm model), and the phone will need
+#: the same for memory. 128 columns (16 mm) clears the network's horizontal
+#: context: 4 stride-2 stages and two dilated 3x3 blocks at 1/16.
+TILE_W = 1024
+TILE_MARGIN = 128
+#: Frames up to this many pixels run in one call, as a1/b1 were evaluated,
+#: so their committed results reproduce exactly. Tiled against full width on
+#: five b1 validation strips: mean row difference 0.0001-0.004 px, worst
+#: column 0.88 px (0.1 mm), presence identical.
+FULL_FRAME_MAX_PX = 384 * 2048
+
+
+def predict_tiled(model, image: np.ndarray, tile_w: int = TILE_W,
+                  margin: int = TILE_MARGIN) -> dict:
+    """Run a fully convolutional tracer over overlapping width tiles.
+
+    `image` is one canonical RGB uint8 frame (H, W, 3). Returns the same
+    outputs a single full-width call would, as numpy without the batch
+    axis: per output column for "rows"/"presence" (2 per input column),
+    per input column for "mask". Each tile keeps only its middle, so every
+    kept column saw at least `margin` columns of context either side
+    (except at the frame's own ends, as a full-width call would).
+    """
+    h, w = image.shape[:2]
+    if w <= tile_w or h * w <= FULL_FRAME_MAX_PX:
+        out = model(image[None], training=False)
+        return {k: np.asarray(v)[0] for k, v in out.items()}
+    step = tile_w - 2 * margin
+    starts = list(range(0, w - tile_w, step)) + [w - tile_w]
+    acc = {}
+    for x0 in starts:
+        out = model(image[None, :, x0:x0 + tile_w], training=False)
+        out = {k: np.asarray(v)[0] for k, v in out.items()}
+        keep0 = 0 if x0 == 0 else margin
+        keep1 = tile_w if x0 + tile_w >= w else tile_w - margin
+        for k, v in out.items():
+            u = v.shape[-1] // tile_w             # 2 for rows/presence, 1 for mask
+            if k not in acc:
+                acc[k] = np.zeros(v.shape[:-1] + (w * u,), v.dtype)
+            a, b = (x0 + keep0) * u, (x0 + keep1) * u
+            acc[k][..., a:b] = v[..., keep0 * u:keep1 * u]
+    return acc
+
+
 def decode_rows(logits: np.ndarray, pres_logits: np.ndarray) -> np.ndarray:
     """(H, W_out) logits -> per-output-column row (soft-argmax), NaN where
     presence < 0.5. The numpy twin of what the phone will do."""
@@ -331,8 +379,7 @@ def score_val(model, val: list[dict], head: str, batch: int) -> dict:
     # OOM in ConcatV2 at the end of epoch 1).
     mae, pccs, rrs, cov = [], [], [], []
     for i, v in enumerate(val):
-        o = model(v["image"][None], training=False)
-        o = {k: np.asarray(t)[0] for k, t in o.items()}
+        o = predict_tiled(model, v["image"])
         if head == "row":
             row = decode_rows(o["rows"], o["presence"])
             u = S.OUT_UPSAMPLE
@@ -376,6 +423,9 @@ def main(argv=None) -> int:
     p.add_argument("--epochs", type=int, default=30)
     p.add_argument("--steps", type=int, default=500, help="steps per epoch")
     p.add_argument("--batch", type=int, default=4)
+    p.add_argument("--canon-h", type=int, default=S.CANON_H,
+                   help="window height, canonical rows (384 = 48 mm for the "
+                        "rhythm data, 512 = 64 mm for the four-row data)")
     p.add_argument("--crop-w", type=int, default=512,
                    help="training crop width, input columns (multiple of 16)")
     p.add_argument("--lr", type=float, default=2e-3)
@@ -383,8 +433,13 @@ def main(argv=None) -> int:
     p.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 4) - 3))
     p.add_argument("--seed", type=int, default=1)
     p.add_argument("--no-mixed", action="store_true")
+    p.add_argument("--init", default="",
+                   help="start from another run's weights (e.g. b1): the "
+                        "architecture does not depend on the window height")
     args = p.parse_args(argv)
 
+    # Before the pool forks, so every worker inherits it.
+    S.CANON_H = args.canon_h
     run = RUNS / args.name
     run.mkdir(parents=True, exist_ok=True)
     train_stems = S.list_stems("train", root=args.data)
@@ -411,6 +466,9 @@ def main(argv=None) -> int:
         keras.mixed_precision.set_global_policy("mixed_float16")
     keras.utils.set_random_seed(args.seed)
     model = build_model(args.head)
+    if args.init:
+        model.load_weights(RUNS / args.init / "best.weights.h5")
+        print(f"initialised from {args.init}", flush=True)
     print(f"params {model.count_params():,}", flush=True)
 
     h, w = S.CANON_H, args.crop_w

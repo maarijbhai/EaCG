@@ -83,6 +83,11 @@ RESULTS = REPO / "results" / "ml"
 DIAG = REPO / "out" / "ml_selftest"
 
 CANON_PX_PER_MM = 8.0
+#: Window height in canonical rows. A module global read at CALL time, so
+#: a run can set it (train_tracer --canon-h; eval scripts from the run's own
+#: record): 384 (48 mm) for the rhythm-strip models a1/b1; 512 (64 mm) for
+#: the four-row data, where precordial leads swing up to +-35 mm (p99) and a
+#: 48 mm window clipped 18% of row bands with locator jitter, 64 mm 5%.
 CANON_H = 384
 CANON_W = 2048
 OUT_UPSAMPLE = 2
@@ -217,7 +222,8 @@ class CanonMap:
 
 
 def to_canonical(img: np.ndarray, px_per_mm: float, x_start: float,
-                 center_row: float, pad=None) -> tuple[np.ndarray, CanonMap]:
+                 center_row: float, pad=None, height: int | None = None
+                 ) -> tuple[np.ndarray, CanonMap]:
     """Resample `img` to CANON_PX_PER_MM and cut the CANON_H x CANON_W window.
 
     `x_start` is the source column that becomes canonical column 0, and
@@ -226,19 +232,20 @@ def to_canonical(img: np.ndarray, px_per_mm: float, x_start: float,
     per-channel median of `img` -- paper, not white, because a photo's paper
     is not white and a white border is an edge no real crop has.
     """
+    H = CANON_H if height is None else height
     k = CANON_PX_PER_MM / px_per_mm
     small = cv2.resize(img, None, fx=k, fy=k, interpolation=cv2.INTER_AREA)
     if small.ndim == 2:          # resize drops a single channel's axis
         small = small[..., None]
     x0 = int(round((x_start + 0.5) * k - 0.5))
-    y0 = int(round((center_row + 0.5) * k - 0.5)) - CANON_H // 2
+    y0 = int(round((center_row + 0.5) * k - 0.5)) - H // 2
     if pad is None:
         # Every 7th pixel: the median of paper is not sensitive to it.
         pad = np.median(img.reshape(-1, img.shape[2])[::7], axis=0)
-    out = np.empty((CANON_H, CANON_W, img.shape[2]), img.dtype)
+    out = np.empty((H, CANON_W, img.shape[2]), img.dtype)
     out[:] = np.asarray(pad, dtype=np.float64).astype(img.dtype)
     sy0, sx0 = max(0, y0), max(0, x0)
-    sy1 = min(small.shape[0], y0 + CANON_H)
+    sy1 = min(small.shape[0], y0 + H)
     sx1 = min(small.shape[1], x0 + CANON_W)
     if sy1 > sy0 and sx1 > sx0:
         out[sy0 - y0:sy1 - y0, sx0 - x0:sx1 - x0] = small[sy0:sy1, sx0:sx1]
@@ -260,7 +267,7 @@ def column_index(cols_c: np.ndarray, upsample: float = OUT_UPSAMPLE) -> np.ndarr
 
 def column_targets(rows_c: np.ndarray, cols_c: np.ndarray,
                    upsample: float = OUT_UPSAMPLE,
-                   height: int = CANON_H) -> dict:
+                   height: int | None = None) -> dict:
     """Per OUTPUT column: mean truth row, presence, in-window flag.
 
     Columns are the head's (CANON_W * upsample of them); rows stay in the
@@ -271,6 +278,7 @@ def column_targets(rows_c: np.ndarray, cols_c: np.ndarray,
     the mean row falls outside the window, an excursion the frame cannot
     represent.
     """
+    height = CANON_H if height is None else height
     width = int(round(CANON_W * upsample))
     ci = column_index(cols_c, upsample)
     ok = (ci >= 0) & (ci < width)
@@ -311,9 +319,10 @@ def column_samples(rows_c: np.ndarray, cols_c: np.ndarray, k: int = 4,
 
 def row_distribution(rows_c: np.ndarray, cols_c: np.ndarray, sigma: float = 1.0,
                      upsample: float = OUT_UPSAMPLE,
-                     height: int = CANON_H) -> np.ndarray:
+                     height: int | None = None) -> np.ndarray:
     """(H, W_out) float32: a Gaussian per sample down its output column, each
     column normalised to sum 1 where it holds a sample (§2.4's KL target)."""
+    height = CANON_H if height is None else height
     width = int(round(CANON_W * upsample))
     ci = column_index(cols_c, upsample)
     ok = (ci >= 0) & (ci < width)
@@ -332,9 +341,10 @@ def row_distribution(rows_c: np.ndarray, cols_c: np.ndarray, sigma: float = 1.0,
 
 def trace_mask(rows_c: np.ndarray, cols_c: np.ndarray,
                width_px: float = TRACE_WIDTH_MM * CANON_PX_PER_MM,
-               width: int = CANON_W, height: int = CANON_H) -> np.ndarray:
+               width: int = CANON_W, height: int | None = None) -> np.ndarray:
     """(H, W) uint8 {0,1}: the truth polyline at the trace's printed width.
     Model A's target (§2.1): which pixels are trace."""
+    height = CANON_H if height is None else height
     m = np.zeros((height, width), np.uint8)
     shift = 4
     pts = np.stack([cols_c, rows_c], 1) * (1 << shift)

@@ -81,8 +81,7 @@ def model_rows(model, sheet: np.ndarray, mm: float, t0_col: float,
     own threshold mask."""
     import train_tracer as T
     canon, cm = S.to_canonical(sheet, mm, t0_col - LEAD_IN_MM * mm, center_row)
-    out = model(canon[..., ::-1][None].copy(), training=False)
-    out = {k: np.asarray(v)[0] for k, v in out.items()}
+    out = T.predict_tiled(model, canon[..., ::-1].copy())
     if head == "mask":
         row = T.decode_mask(out["mask"])
         c = np.arange(len(row), dtype=np.float64)
@@ -180,7 +179,11 @@ def main(argv=None) -> int:
     keras.mixed_precision.set_global_policy("mixed_float16")
     # The head comes from the run's own training record, not a flag, so a
     # run cannot be scored as the wrong kind of model.
-    head = json.loads((RESULTS / f"train_{args.run}.json").read_text())["params"]["head"]
+    rec = json.loads((RESULTS / f"train_{args.run}.json").read_text())["params"]
+    head = rec["head"]
+    # The window height the run was trained with (absent before --canon-h:
+    # those runs used 384).
+    S.CANON_H = int(rec.get("canon_h", 384))
     model = T.build_model(head)
     wpath = REPO / "out" / "ml_runs" / args.run / f"{args.weights}.weights.h5"
     model.load_weights(wpath)

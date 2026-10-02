@@ -41,16 +41,15 @@ RESULTS = REPO / "results" / "ml"
 LEAD_IN_MM = 4.0
 
 
-def make_tracer(model, head: str):
+def make_tracer(model, head: str, height: int):
     import train_tracer as T
 
     def tracer(sheet, layout, row):
         px_mm = layout.px_per_s / 25.0
         center = float(layout.row_y[row])
         canon, cm = S.to_canonical(sheet, px_mm, layout.t0_x - LEAD_IN_MM * px_mm,
-                                   center)
-        out = model(canon[..., ::-1][None].copy(), training=False)
-        out = {k: np.asarray(v)[0] for k, v in out.items()}
+                                   center, height=height)
+        out = T.predict_tiled(model, canon[..., ::-1].copy())
         if head == "mask":
             r = T.decode_mask(out["mask"])
             c = np.arange(len(r), dtype=np.float64)
@@ -79,11 +78,13 @@ def main(argv=None) -> int:
     keras.mixed_precision.set_global_policy("mixed_float16")
     tracers = {}
     for run in args.runs.split(","):
-        head = json.loads((RESULTS / f"train_{run}.json").read_text())["params"]["head"]
-        m = T.build_model(head)
+        rec = json.loads((RESULTS / f"train_{run}.json").read_text())["params"]
+        head = rec["head"]
+        h = int(rec.get("canon_h", 384))
+        m = T.build_model(head, h=h)
         m.load_weights(REPO / "out" / "ml_runs" / run / "best.weights.h5")
         label = ("model_A_" if head == "mask" else "model_B_") + run
-        tracers[label] = make_tracer(m, head)
+        tracers[label] = make_tracer(m, head, h)
 
     reg = skp.load_registry()["photos"]
     rows = []
