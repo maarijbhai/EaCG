@@ -81,6 +81,7 @@ from ecgproto import ptbxl  # noqa: E402
 import make_kit_target as mkt  # noqa: E402
 
 DATA = REPO / "data" / "ml_strips"
+DATA_ROWS = REPO / "data" / "ml_rows"
 RESULTS = REPO / "results" / "ml"
 
 SPLIT_FOLDS = {"train": (1, 2, 3, 4, 5, 6, 7, 8), "val": (9,)}
@@ -162,6 +163,44 @@ def rhythm_lead(kit: dict, off: dict) -> tuple[int, np.ndarray, np.ndarray]:
     return int(lead["start_sample"]), p[:, 0] - off["y"], p[:, 1] - off["x"]
 
 
+def sheet_rows(kit: dict, off: dict) -> list[dict]:
+    """The sheet's four trace rows, top to bottom, in cropped-sheet px.
+
+    Rows 0-2 are the 3x4 block, each one continuous 10 s trace made of four
+    consecutive 2.5 s leads (I aVR V1 V4 / II aVL V2 V5 / III aVF V3 V6 on
+    the standard layout); row 3 is the full-length rhythm lead. Leads are
+    grouped by their median plotted row, which separates rows by ~36 mm on
+    a kit sheet, and each row is checked to tile the 10 s exactly once.
+    """
+    leads = []
+    for l in kit["leads"]:
+        p = np.asarray(l["plotted_pixels"], dtype=np.float64)
+        leads.append({"name": l["lead_name"], "start": int(l["start_sample"]),
+                      "end": int(l["end_sample"]),
+                      "rows": p[:, 0] - off["y"], "cols": p[:, 1] - off["x"]})
+    full = [l for l in leads if l["end"] - l["start"] >= 10 * FS - 1]
+    if len(full) != 1:
+        raise ValueError(f"{len(full)} full-length leads, expected 1")
+    cells = sorted((l for l in leads if l is not full[0]),
+                   key=lambda l: np.median(l["rows"]))
+    if len(cells) != 12:
+        raise ValueError(f"{len(cells)} short leads, expected 12 (3x4 layout)")
+    out = []
+    for k in range(3):
+        row = sorted(cells[4 * k:4 * k + 4], key=lambda l: l["start"])
+        starts = [l["start"] for l in row]
+        if starts != [0, 1250, 2500, 3750] or any(
+                l["end"] - l["start"] != 1250 for l in row):
+            raise ValueError(f"row {k} does not tile 10 s: starts {starts}")
+        out.append(row)
+    out.append(full)
+    return [{"row": k,
+             "leads": [(l["name"], l["start"], l["end"]) for l in r],
+             "rows": np.concatenate([l["rows"] for l in r]),
+             "cols": np.concatenate([l["cols"] for l in r])}
+            for k, r in enumerate(out)]
+
+
 def label_on_ink(band: np.ndarray, rows: np.ndarray, cols: np.ndarray,
                  trace_rgb) -> float:
     """Fraction of labels with trace-coloured ink in their 3x3 neighbourhood."""
@@ -173,11 +212,67 @@ def label_on_ink(band: np.ndarray, rows: np.ndarray, cols: np.ndarray,
     return float(ink[r, c].mean())
 
 
-def one(job: dict) -> dict:
+def write_band(sheet: np.ndarray, rows: np.ndarray, cols: np.ndarray,
+               mv: np.ndarray, leads: list, kit: dict, px_per_mm: float,
+               out_dir: Path, stem: str, base: dict) -> dict:
+    """Cut, check and save one band; return its manifest row."""
+    h, w = sheet.shape[:2]
+    m = BAND_MARGIN_MM * px_per_mm
+    want0, want1 = rows.min() - m, rows.max() + m
+    y0, y1 = int(max(0, np.floor(want0))), int(min(h, np.ceil(want1)))
+    band = sheet[y0:y1]
+    rows_b = rows - y0
+    on_ink = label_on_ink(band, rows_b, cols, kit["ecg_plot_color"])
+    cv2.imwrite(str(out_dir / f"{stem}.png"), band, [cv2.IMWRITE_PNG_COMPRESSION, 3])
+    np.savez_compressed(
+        out_dir / f"{stem}.npz",
+        rows=rows_b.astype(np.float32), cols=cols.astype(np.float32),
+        # The truth at every plotted sample, in plotting order: `mv`. The
+        # rhythm-only data called it lead_ii_mv; both keys are written.
+        mv=mv.astype(np.float32), lead_ii_mv=mv.astype(np.float32),
+        lead_names=np.array([l[0] for l in leads]),
+        lead_start=np.array([l[1] for l in leads], np.int32),
+        lead_end=np.array([l[2] for l in leads], np.int32),
+        fs=np.float32(FS), px_per_mm=np.float32(px_per_mm),
+        start_sample=np.int32(leads[0][1]))
+    row = dict(base)
+    row.update({
+        "stem": stem,
+        "leads": " ".join(l[0] for l in leads),
+        "band_y0": y0, "band_h": int(y1 - y0), "band_w": int(w),
+        "band_clip_top_mm": round(max(0.0, -want0) / px_per_mm, 2),
+        "band_clip_bottom_mm": round(max(0.0, want1 - h) / px_per_mm, 2),
+        "t0_col": round(float(cols.min()), 2),
+        "t_end_col": round(float(cols.max()), 2),
+        "trace_span_mm": round(float(rows.max() - rows.min()) / px_per_mm, 2),
+        "baseline_row": round(float(np.median(rows_b)), 2),
+        "off_sheet_samples": int(((rows < 0) | (rows > h - 1)).sum()),
+        "n_samples": int(len(rows)),
+        "mv_min": round(float(mv.min()), 3),
+        "mv_max": round(float(mv.max()), 3),
+        "grid_major_rgb": ",".join(f"{v:.0f}" for v in kit["grid_line_color_major"]),
+        "grid_minor_rgb": ",".join(f"{v:.0f}" for v in kit["grid_line_color_minor"]),
+        "trace_rgb": ",".join(f"{v:.0f}" for v in kit["ecg_plot_color"]),
+        "kit_bw": bool(kit.get("bw", False)),
+        "label_on_ink_frac": round(on_ink, 5),
+        "label_ok": bool(on_ink >= MIN_LABEL_ON_INK),
+        "error": "",
+    })
+    return row
+
+
+def one(job: dict) -> list[dict]:
+    """Render one record; save its rhythm band, or (all_rows) all four rows.
+
+    Stems: `<stem>` for the rhythm-only data; `<stem>_row0`..`_row3` with
+    all_rows, row 3 being the rhythm strip.
+    """
     stem, out_dir = job["stem"], Path(job["out_dir"])
-    done = out_dir / f"{stem}.json"
-    if done.exists():
-        return json.loads(done.read_text("utf-8"))
+    all_rows = bool(job.get("all_rows"))
+    names = [f"{stem}_row{k}" for k in range(4)] if all_rows else [stem]
+    done = [out_dir / f"{n}.json" for n in names]
+    if all(d.exists() for d in done):
+        return [json.loads(d.read_text("utf-8")) for d in done]
     t0 = time.perf_counter()
     rng = np.random.default_rng(job["seed"])
     style, style_argv = pick_style(rng)
@@ -188,9 +283,10 @@ def one(job: dict) -> dict:
     random.seed(job["seed"])
     np.random.seed(job["seed"] % (2 ** 32))
 
-    row = {"stem": stem, "ecg_id": job["ecg_id"], "patient_id": job["patient_id"],
-           "strat_fold": job["fold"], "split": job["split"], "seed": job["seed"],
-           "style": style, "print_header": header, "dpi": DPI}
+    base = {"sheet": stem, "ecg_id": job["ecg_id"], "patient_id": job["patient_id"],
+            "strat_fold": job["fold"], "split": job["split"], "seed": job["seed"],
+            "style": style, "print_header": header, "dpi": DPI}
+    out = []
     try:
         signal, meta = ptbxl.load_record(job["ecg_id"], root=job["root"],
                                          sampling_rate=FS)
@@ -203,57 +299,32 @@ def one(job: dict) -> dict:
         px_per_mm = DPI / 25.4
         t, b, l, r = KIT_FRAME_PX
         sheet = sheet[t:sheet.shape[0] - b, l:sheet.shape[1] - r]
-        start, rows, cols = rhythm_lead(kit, {"x": l, "y": t})
-
-        h, w = sheet.shape[:2]
-        m = BAND_MARGIN_MM * px_per_mm
-        want0, want1 = rows.min() - m, rows.max() + m
-        y0, y1 = int(max(0, np.floor(want0))), int(min(h, np.ceil(want1)))
-        band = sheet[y0:y1]
-        rows_b = rows - y0
-        lead = signal[:, ptbxl.LEAD_NAMES.index(RHYTHM_LEAD)]
-        n = len(rows)
-        if n != len(lead) - start and n != len(lead):
-            raise ValueError(f"{n} plotted samples for a {len(lead)}-sample lead")
-
-        on_ink = label_on_ink(band, rows_b, cols, kit["ecg_plot_color"])
-        cv2.imwrite(str(out_dir / f"{stem}.png"), band,
-                    [cv2.IMWRITE_PNG_COMPRESSION, 3])
-        np.savez_compressed(
-            out_dir / f"{stem}.npz",
-            rows=rows_b.astype(np.float32), cols=cols.astype(np.float32),
-            lead_ii_mv=lead[start:start + n].astype(np.float32),
-            fs=np.float32(FS), px_per_mm=np.float32(px_per_mm),
-            start_sample=np.int32(start))
-        row.update({
-            "band_y0": y0, "band_h": int(y1 - y0), "band_w": int(w),
-            "band_clip_top_mm": round(max(0.0, -want0) / px_per_mm, 2),
-            "band_clip_bottom_mm": round(max(0.0, want1 - h) / px_per_mm, 2),
-            "t0_col": round(float(cols.min()), 2),
-            "t_end_col": round(float(cols.max()), 2),
-            "trace_span_mm": round(float(rows.max() - rows.min()) / px_per_mm, 2),
-            "baseline_row": round(float(np.median(rows_b)), 2),
-            "off_sheet_samples": int(((rows < 0) | (rows > h - 1)).sum()),
-            "n_samples": int(n),
-            "lead_ii_min_mv": round(float(lead.min()), 3),
-            "lead_ii_max_mv": round(float(lead.max()), 3),
-            "grid_major_rgb": ",".join(f"{v:.0f}" for v in kit["grid_line_color_major"]),
-            "grid_minor_rgb": ",".join(f"{v:.0f}" for v in kit["grid_line_color_minor"]),
-            "trace_rgb": ",".join(f"{v:.0f}" for v in kit["ecg_plot_color"]),
-            "kit_bw": bool(kit.get("bw", False)),
-            "label_on_ink_frac": round(on_ink, 5),
-            "label_ok": bool(on_ink >= MIN_LABEL_ON_INK),
-            "error": "",
-        })
+        rows_all = sheet_rows(kit, {"x": l, "y": t})
+        wanted = rows_all if all_rows else [rows_all[3]]
+        for name, rw in zip(names, wanted):
+            if rw["row"] == 3 and rw["leads"][0][0].upper() != RHYTHM_LEAD:
+                raise ValueError(f"rhythm lead is {rw['leads'][0][0]}, expected II")
+            mv = np.concatenate([
+                signal[s0:s1, ptbxl.LEAD_NAMES.index(nm.upper())]
+                for nm, s0, s1 in rw["leads"]])
+            if len(mv) != len(rw["rows"]):
+                raise ValueError(f"{len(rw['rows'])} plotted samples, {len(mv)} truth")
+            out.append(write_band(sheet, rw["rows"], rw["cols"], mv, rw["leads"],
+                                  kit, px_per_mm, out_dir, name,
+                                  dict(base, row=rw["row"])))
     except Exception as exc:
-        row["error"] = f"{type(exc).__name__}: {exc}"
-    row["render_s"] = round(time.perf_counter() - t0, 2)
-    done.write_text(json.dumps(row), encoding="utf-8")
-    return row
+        out = [dict(base, stem=n, row=(k if all_rows else 3),
+                    error=f"{type(exc).__name__}: {exc}")
+               for k, n in enumerate(names)]
+    el = round(time.perf_counter() - t0, 2)
+    for rowd, d in zip(out, done):
+        rowd["render_s"] = el
+        d.write_text(json.dumps(rowd), encoding="utf-8")
+    return out
 
 
 def jobs_for(split: str, n: int, seed: int, root: Path, kit: Path,
-             out_dir: Path) -> list[dict]:
+             out_dir: Path, all_rows: bool = False) -> list[dict]:
     folds = SPLIT_FOLDS[split]
     df = ptbxl.load_metadata(root)
     pool = df[df["strat_fold"].isin(folds)].sort_index()
@@ -272,6 +343,7 @@ def jobs_for(split: str, n: int, seed: int, root: Path, kit: Path,
             "seed": int(seed * 1_000_003 + ecg_id),
             "rec_rel": ptbxl.record_path(r, FS),
             "root": str(root), "kit": str(kit), "out_dir": str(out_dir),
+            "all_rows": all_rows,
         })
     return jobs
 
@@ -296,7 +368,7 @@ def write_manifest(split: str, out_dir: Path, params: dict) -> Path:
         "off_sheet_sheets": sum(r["off_sheet_samples"] > 0 for r in ok),
         "styles": {s[0]: sum(r["style"] == s[0] for r in ok) for s in STYLES},
         "folds": {str(f): sum(r["strat_fold"] == f for r in ok)
-                  for f in SPLIT_FOLDS[split]},
+                  for f in SPLIT_FOLDS[split.removeprefix("rows_")]},
         "patients": len({r["patient_id"] for r in ok}),
         "render_s_median": float(np.median([r["render_s"] for r in rows])) if rows else None,
     }
@@ -322,12 +394,19 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 2))
     p.add_argument("--root", type=Path, default=ptbxl.DEFAULT_ROOT)
     p.add_argument("--kit", type=Path, default=mkt.DEFAULT_KIT)
-    p.add_argument("--out", type=Path, default=DATA)
+    p.add_argument("--out", type=Path, default=None,
+                   help="default data/ml_strips (rhythm) or data/ml_rows (--all-rows)")
+    p.add_argument("--all-rows", action="store_true",
+                   help="save all four rows of each sheet (the 12-lead scan), "
+                        "not only the rhythm strip")
     args = p.parse_args(argv)
+    if args.out is None:
+        args.out = DATA_ROWS if args.all_rows else DATA
 
     out_dir = args.out / args.split
     out_dir.mkdir(parents=True, exist_ok=True)
-    jobs = jobs_for(args.split, args.n, args.seed, args.root, args.kit, out_dir)
+    jobs = jobs_for(args.split, args.n, args.seed, args.root, args.kit, out_dir,
+                    args.all_rows)
     print(f"{args.split}: {len(jobs)} records from folds {SPLIT_FOLDS[args.split]}"
           f" -> {out_dir}")
     t0 = time.perf_counter()
@@ -337,23 +416,27 @@ def main(argv: list[str] | None = None) -> int:
     else:
         pool = Pool(args.workers, maxtasksperchild=40)
         it = pool.imap_unordered(one, jobs, chunksize=1)
-    for r in it:
+    for rs in it:
         done += 1
-        if r.get("error"):
-            print(f"  {r['stem']} FAILED: {r['error']}")
-        elif not r["label_ok"]:
-            print(f"  {r['stem']} labels on ink {r['label_on_ink_frac']:.4f}")
+        for r in rs:
+            if r.get("error"):
+                print(f"  {r['stem']} FAILED: {r['error']}", flush=True)
+            elif not r["label_ok"]:
+                print(f"  {r['stem']} labels on ink {r['label_on_ink_frac']:.4f}",
+                      flush=True)
         if done % 50 == 0 or done == len(jobs):
             el = time.perf_counter() - t0
-            print(f"  {done}/{len(jobs)}  {el/60:.1f} min")
+            print(f"  {done}/{len(jobs)}  {el/60:.1f} min", flush=True)
     if args.workers > 1:
         pool.close()
         pool.join()
     params = {"split": args.split, "n": args.n, "seed": args.seed, "dpi": DPI,
+              "all_rows": args.all_rows,
               "band_margin_mm": BAND_MARGIN_MM, "styles": [s[:2] for s in STYLES],
               "p_header": P_HEADER, "ink_tolerance": INK_TOLERANCE,
               "kit": str(args.kit)}
-    path = write_manifest(args.split, out_dir, params)
+    path = write_manifest(("rows_" if args.all_rows else "") + args.split,
+                          out_dir, params)
     print(f"manifest {path}")
     return 0
 
