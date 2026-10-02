@@ -72,12 +72,23 @@ def classical_rows(strip: np.ndarray, open_kernel: int) -> np.ndarray:
 
 
 def model_rows(model, sheet: np.ndarray, mm: float, t0_col: float,
-               center_row: float):
-    """Model B on the warped sheet -> (sheet x, sheet row) per output column."""
+               center_row: float, head: str = "row"):
+    """A model on the warped sheet -> (sheet x, sheet row) per output column.
+
+    Model B: soft-argmax per output column (2 per input column). Model A:
+    the predicted ink mask read by the classical column centroid, one per
+    input column -- the same reading the classical tracer applies to its
+    own threshold mask."""
     import train_tracer as T
     canon, cm = S.to_canonical(sheet, mm, t0_col - LEAD_IN_MM * mm, center_row)
     out = model(canon[..., ::-1][None].copy(), training=False)
     out = {k: np.asarray(v)[0] for k, v in out.items()}
+    if head == "mask":
+        row = T.decode_mask(out["mask"])
+        c = np.arange(len(row), dtype=np.float64)
+        x = cm.column_to_source_x(c)
+        r = (row + cm.y0 + 0.5) / cm.k - 0.5
+        return x, r, canon, cm
     row = T.decode_rows(out["rows"], out["presence"])
     j = np.arange(len(row))
     c = (j + 0.5) / S.OUT_UPSAMPLE - 0.5                 # canonical input col
@@ -149,6 +160,8 @@ def main(argv=None) -> int:
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--run", default="b0")
     p.add_argument("--weights", default="best")
+    p.add_argument("--only", default="",
+                   help="score only photos whose stem starts with this")
     args = p.parse_args(argv)
 
     import tensorflow as tf
@@ -161,7 +174,10 @@ def main(argv=None) -> int:
     # (measured: OOM in the dilated block). INT8/FP32 on the phone is a
     # separate measurement (§5).
     keras.mixed_precision.set_global_policy("mixed_float16")
-    model = T.build_model("row")
+    # The head comes from the run's own training record, not a flag, so a
+    # run cannot be scored as the wrong kind of model.
+    head = json.loads((RESULTS / f"train_{args.run}.json").read_text())["params"]["head"]
+    model = T.build_model(head)
     wpath = REPO / "out" / "ml_runs" / args.run / f"{args.weights}.weights.h5"
     model.load_weights(wpath)
 
@@ -169,6 +185,8 @@ def main(argv=None) -> int:
     DIAG.mkdir(parents=True, exist_ok=True)
     rows = []
     for stem, entry in sorted(reg.items()):
+        if args.only and not stem.startswith(args.only):
+            continue
         target = skp.Target(entry["target"])
         photo = rp.read_oriented(skp.PHOTOS / entry.get("file", f"{stem}.jpg"))
         corners = np.asarray(entry["corners_px"], np.float32)
@@ -176,7 +194,7 @@ def main(argv=None) -> int:
         x0, y0, x1, y1 = target.known_box()
         strip = sheet[y0:y1, x0:x1]
         mm = target.px_per_mm
-        head = {"photo": stem, "target": target.name, "ecg_id": target.ecg_id,
+        info = {"photo": stem, "target": target.name, "ecg_id": target.ecg_id,
                 "strat_fold": target.manifest["source"]["strat_fold"],
                 "note": entry.get("note", "")[:80]}
 
@@ -190,13 +208,15 @@ def main(argv=None) -> int:
             return v if v != "" and v is not None else -2.0
         best_ok = max(cls, key=lambda k: key(cls[k][1]))
         c_rows, c_score = cls[best_ok]
-        rows.append({**head, "tracer": "classical", "open_kernel": best_ok,
+        rows.append({**info, "tracer": "classical", "open_kernel": best_ok,
                      **c_score})
 
         center = float(np.nanmedian(c_rows))
-        mx, mr, canon, cm = model_rows(model, sheet, mm, target.t0_col, center)
+        mx, mr, canon, cm = model_rows(model, sheet, mm, target.t0_col, center,
+                                       head)
         m_score = score(mx, mr, target, x0, x1)
-        rows.append({**head, "tracer": f"model_B_{args.run}", "open_kernel": "",
+        label = "model_A" if head == "mask" else "model_B"
+        rows.append({**info, "tracer": f"{label}_{args.run}", "open_kernel": "",
                      **m_score})
 
         np.savez(DIAG / f"{stem}_traces.npz",
@@ -227,19 +247,20 @@ def main(argv=None) -> int:
     keys = []
     for r in rows:
         keys += [k for k in r if k not in keys]
-    out = RESULTS / f"photo_compare_{args.run}.csv"
+    out = RESULTS / f"photo_compare_{args.run}{'_' + args.only if args.only else ''}.csv"
     with out.open("w", newline="") as f:
         wr = csv.DictWriter(f, fieldnames=keys)
         wr.writeheader()
         wr.writerows(rows)
     git = lambda *a: subprocess.run(["git", *a], cwd=REPO, capture_output=True,
                                     text=True).stdout.strip()
-    (RESULTS / f"photo_compare_{args.run}.json").write_text(json.dumps({
+    out.with_suffix(".json").write_text(json.dumps({
         "generated_by": "ml/eval_photos.py",
         "utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "git_commit": git("rev-parse", "HEAD"),
         "git_dirty": bool(git("status", "--porcelain", "--", "ml", "python")),
-        "params": {"run": args.run, "weights": str(wpath.relative_to(REPO)),
+        "params": {"run": args.run, "head": head, "only": args.only,
+                   "weights": str(wpath.relative_to(REPO)),
                    "lead_in_mm": LEAD_IN_MM, "corners": "python/kit_photos.json as placed",
                    "calibration": "known (sheet frame, 300 dpi)",
                    "classical": "binarise_trace midpoint + isolate_trace + centroid; "
