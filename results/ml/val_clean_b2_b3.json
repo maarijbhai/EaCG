@@ -1,0 +1,43 @@
+{
+  "generated_by": "python/score_12lead.py",
+  "utc": "2026-10-03T10:07:12+00:00",
+  "git_commit": "e5e95e24f2345f7d6155319448e6a2ae0cec9687",
+  "git_dirty": false,
+  "params": {
+    "runs": [
+      "b2",
+      "b3"
+    ],
+    "n": 60,
+    "every": 20,
+    "data": "data/ml_rows val (fold 9)",
+    "min_overlap_fraction": 0.85,
+    "cell_max_lag_s": 0.1,
+    "layout": [
+      [
+        "I",
+        "aVR",
+        "V1",
+        "V4"
+      ],
+      [
+        "II",
+        "aVL",
+        "V2",
+        "V5"
+      ],
+      [
+        "III",
+        "aVF",
+        "V3",
+        "V6"
+      ]
+    ],
+    "separator_guard_mm": 1.0
+  },
+  "versions": {
+    "python": "3.12.3",
+    "numpy": "2.5.3",
+    "opencv": "5.0.0"
+  }
+}
