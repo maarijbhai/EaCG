@@ -150,7 +150,7 @@ def main(argv=None) -> int:
     p.add_argument("--run", default="b3")
     p.add_argument("--width", type=int, default=1024)
     p.add_argument("--n-rep", type=int, default=200)
-    p.add_argument("--variants", default="fp32,fp16,int8")
+    p.add_argument("--variants", default="fp32,fp16,int8,int8f")
     p.add_argument("--reuse", action="store_true",
                    help="reuse .tflite files already in out/ml_export")
     args = p.parse_args(argv)
@@ -194,7 +194,23 @@ def main(argv=None) -> int:
             # Float input/output and float fallback for any op without an
             # int8 kernel; the body (convolutions) is int8.
         t0 = time.perf_counter()
-        blob = conv.convert()
+        if v == "int8f":
+            # INT8 body, FLOAT decode. In plain int8 the soft-argmax output is
+            # itself 8-bit: a 0-511 row quantised in ~2 px steps (measured:
+            # row error 0.33 -> 1.07 px, 1.0-2.1 px from Keras, though PCC
+            # and R stayed within the section 5 rule). The decode is a
+            # softmax, a multiply and a sum per column; nearly all compute is
+            # in the convolutions, which stay int8.
+            conv.optimizations = [tf.lite.Optimize.DEFAULT]
+            dbg_opts = tf.lite.experimental.QuantizationDebugOptions(
+                denylisted_ops=["SOFTMAX", "MUL", "SUM"])
+            dbg = tf.lite.experimental.QuantizationDebugger(
+                converter=conv, debug_dataset=lambda: ([t[None]] for t in rep[:50]),
+                debug_options=dbg_opts)
+            conv.representative_dataset = lambda: ([t[None]] for t in rep)
+            blob = dbg.get_nondebug_quantized_model()
+        else:
+            blob = conv.convert()
         path.write_bytes(blob)
         files[v] = path
         print(f"{v}: {len(blob)/1e6:.2f} MB in {time.perf_counter()-t0:.0f} s", flush=True)
