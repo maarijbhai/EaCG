@@ -142,6 +142,18 @@ class AugConfig:
     p_sharpen: float = 0.5                           # phone ISP unsharp mask
     sharpen_amount: tuple[float, float] = (0.3, 1.2)
     jpeg_quality: tuple[int, int] = (60, 95)
+    # The scan path (added for run b3, results/ml/sheets_a2_b2): with the
+    # camera stage on every example, bright pristine images became rare and
+    # b2's presence head switched off on them -- coverage 0.838 on clean
+    # fold-9 rows against 1.000 augmented, and rows of the clean printed
+    # sheet mostly "absent". A flatbed scan or a well-lit photo looks like
+    # that. This fraction skips the camera stage for a scanner's: bright
+    # paper, full contrast and colour, light blur and noise, light or no JPEG.
+    p_scan: float = 0.25
+    scan_paper_level: tuple[float, float] = (235.0, 255.0)
+    scan_blur_sigma_px: tuple[float, float] = (0.0, 0.7)
+    scan_noise_sigma: tuple[float, float] = (0.0, 2.0)
+    scan_jpeg_quality: tuple[int, int] = (85, 100)
     # Placement of the canonical window, as an imperfect locator places it.
     # The locator's centre is the classical mask's median row, which the
     # row above or text can pull; 4 mm is the jitter the 48 mm window was
@@ -382,8 +394,26 @@ def _apply_h(hm: np.ndarray, rows: np.ndarray, cols: np.ndarray):
     return v[1] / v[2], v[0] / v[2]
 
 
+def _scan(img: np.ndarray, cfg: AugConfig, rng: np.random.Generator) -> np.ndarray:
+    """A scanner's rendering: even bright light, full colour, little else."""
+    paper = rng.uniform(*cfg.scan_paper_level) + rng.normal(0, 2.0, 3)
+    x = img.astype(np.float32) * (np.clip(paper, 0, 255) / 255.0).astype(np.float32)
+    sig = rng.uniform(*cfg.scan_blur_sigma_px)
+    if sig > 0.05:
+        x = cv2.GaussianBlur(x, (0, 0), sig)
+    x += rng.normal(0, rng.uniform(*cfg.scan_noise_sigma), x.shape).astype(np.float32)
+    x = np.clip(x, 0, 255).astype(np.uint8)
+    q = int(rng.integers(cfg.scan_jpeg_quality[0], cfg.scan_jpeg_quality[1] + 1))
+    if q >= 100:
+        return x                                    # a lossless scan
+    ok, buf = cv2.imencode(".jpg", x, [cv2.IMWRITE_JPEG_QUALITY, q])
+    return cv2.imdecode(buf, cv2.IMREAD_COLOR)
+
+
 def _photometric(img: np.ndarray, cfg: AugConfig,
                  rng: np.random.Generator) -> np.ndarray:
+    if rng.random() < cfg.p_scan:
+        return _scan(img, cfg, rng)
     h, w = img.shape[:2]
     # Ink is subtractive: the sheet's white becomes the paper's colour. Paper
     # tint and colour temperature fold into one per-channel gain.
