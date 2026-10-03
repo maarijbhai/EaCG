@@ -202,12 +202,12 @@ def main(argv=None) -> int:
             # softmax, a multiply and a sum per column; nearly all compute is
             # in the convolutions, which stay int8.
             conv.optimizations = [tf.lite.Optimize.DEFAULT]
+            conv.representative_dataset = lambda: ([t[None]] for t in rep)
             dbg_opts = tf.lite.experimental.QuantizationDebugOptions(
                 denylisted_ops=["SOFTMAX", "MUL", "SUM"])
             dbg = tf.lite.experimental.QuantizationDebugger(
                 converter=conv, debug_dataset=lambda: ([t[None]] for t in rep[:50]),
                 debug_options=dbg_opts)
-            conv.representative_dataset = lambda: ([t[None]] for t in rep)
             blob = dbg.get_nondebug_quantized_model()
         else:
             blob = conv.convert()
