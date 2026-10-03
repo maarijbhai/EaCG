@@ -13,7 +13,7 @@ models, and the open question is whether that pipeline survives
 compression onto consumer mobile hardware, and at what cost in latency,
 memory and reconstruction fidelity.
 
-## Current state — read this first (updated 2026-10-02)
+## Current state — read this first (updated 2026-10-03)
 
 **Requirement numbering — read this before citing an FR.** Two schemes are
 in play and they collide. The thesis report uses a flat **FR1–FR11**
@@ -25,94 +25,113 @@ nested FR-1.1…FR-8.7 in which FR-8.x is *deployment characterisation* and
 the quality gate is FR-3.4. So "FR8" means the quality gate in the report
 and something entirely different in the tex table. Say which you mean.
 
-**Where the project is.** The whole classical pipeline runs **on the Galaxy
-A30s on a real photograph of a printed PTB-XL record**, and every result is
-scored against that record's true waveform. Photo path, on the phone and on
-the desktop alike: four corners (hand-placed; see below) → perspective
-rectify → locate the lead II rhythm strip and cut the 1 mV pulse → level the
-strip locally → binarise → isolate trace from text → calibrate → trace → FR8
-gate → score against the truth → export CSV. Classical Phase 0 is done
-(grid detrend, harmonic-lock test, midpoint threshold replacing Otsu).
-**The ML phase is under way** (started 2026-09-30): a learned tracer
-(model B, row head) is trained and has been scored on real photographs on
-the desktop; nothing ML runs on the phone yet. Plan and progress:
-`docs/ml_plan.md`, whose "Progress" section at the top is current.
+**THE GOAL CHANGED on 2026-10-02: the whole sheet.** The app is to digitise
+an entire standard 3x4 + lead II rhythm printout -- all 12 leads -- with the
+learned tracer, on the phone. Supervisor agreed; deadline end of October
+(movable); the user chose "both 12 leads AND the ML tracer on the phone,
+cut write-up time if needed"; standard 3x4 layout only (lead identity by
+position; other layouts are a stated limitation).
 
-**ML result so far** (desktop, six real A30s photographs of PTB-XL 40,
-matched corners/warp/calibration; `results/ml/photo_compare_b1.csv`,
-`photo_compare_a1.csv`). Aligned PCC / R-peak ratio, "--" where the trace's
-alignment spans < 8.5 s and no figure may be quoted:
+**Where the project is.** The classical rhythm-strip pipeline runs on the
+Galaxy A30s on real photographs of a printed PTB-XL record (corners ->
+rectify -> locate strip, cut pulse -> level -> binarise -> isolate -> calibrate
+-> trace -> FR8 gate -> score -> CSV). On the DESKTOP, the whole sheet now
+works end to end: classical FR4 segmentation, separator-tick calibration, and
+the learned tracer b3 on every lead. **Nothing ML, and nothing 12-lead, runs
+on the phone yet.** Plan: `docs/ml_plan.md` (its Progress section predates
+the 12-lead pivot; this section is current).
 
-| photo | classical | model A (a1, ink mask) | model B (b1, row head) |
+**The full-sheet pipeline (desktop), each step with its measured reason:**
+- `segment.locate_sheet`: four rows from the ink profile with LAYOUT
+  spacing (>= 11% of page height; the rhythm locator's 7% picked a phantom
+  row on unevenly lit photos), and recording time zero from the calibration
+  pulse's TOP edge in all four rows (median; within 3 px of truth on all
+  seven sheets, where the rhythm locator was 1-1.5 s late on soft photos).
+- `segment.tick_scale`: the time scale from the nine lead-separator ticks at
+  2.5/5.0/7.5 s (8-9 of 9 found on every sheet; +0.04% on the clean print).
+  The duration anchor needs the rhythm trace's last column and was -10.3% on
+  0928_01 (0/12 cells placed) and +2-3% on two others; on a full sheet a
+  scale error grows with each later cell.
+- `segment.segment_leads`: 13 cells from rows + time base (`LAYOUT_3X4`).
+- Classical tracer per row: `segment.trace_row` -- binarise (2x2 opening; 3x3
+  erased the photo trace), isolate, separator ticks blanked +-1 mm, and the
+  trace FOLLOWED per cell (`trace_positions_tracked`) because printed lead
+  labels under each cell's start pulled the all-ink centroid into false dips.
+- Learned tracer: once per ROW (a 3x4 row is one continuous 10 s trace of
+  four leads), 64 mm window (`--canon-h 512`; precordial leads swing +-35 mm
+  at p99 and a 48 mm window clipped 18% of rows), tiled inference
+  (`train_tracer.predict_tiled`, 1,024-column tiles: a 512 x 2048 frame does
+  not fit WSL's GPU), output cut into cells.
+- Scorer: `python/score_12lead.py` (classical) and `ml/eval_sheets.py`
+  (models, same scorer); cells use a +-100 ms lag-bounded alignment (an
+  unbounded one slid 2.5 s cells by a heartbeat) and an aligned figure needs
+  >= 85% of the cell's 2.5 s.
+
+**Result (`results/ml/sheets_a3_b3.csv`, `results/kitphoto/leads12.csv`):**
+lead PCC / R-peak ratio, median of the 12 leads, tick calibration:
+
+| sheet | classical | model A (a3) | **model B (b3)** |
 |---|---|---|---|
-| 0928_01 | 0.851 / 0.728 | **0.891** / 0.700 | 0.832 / **0.948** |
-| 0929_01 | 0.873 / 0.595 | **0.939** / 0.681 | 0.922 / **0.935** |
-| 0929_02 | -- | **0.936** / 0.643 | 0.840 / **0.913** |
-| 0929_03 | -- | **0.937** / 0.655 | 0.921 / **0.913** |
-| 0929_04 | -- | **0.937** / 0.649 | 0.932 / **0.918** |
-| 0929_05 | 0.890 / 0.675 | **0.919** / 0.687 | 0.915 / **0.890** |
+| clean print | 0.992 / 0.89 | 0.987 / 0.82 | **0.998 / 0.97** |
+| 0928_01 | 0.862 / 0.58 | 0.976 / 0.77 | **0.990 / 0.93** |
+| 0929_01 (soft) | 0.237 / 0.01 | 0.966 / 0.73 | **0.983 / 0.91** |
+| 0929_02 (soft) | 0.450 / 0.15 | 0.924 / 0.74 | **0.993 / 0.91** |
+| 0929_03 (soft) | 0.504 / 0.11 | 0.960 / 0.76 | **0.991 / 0.91** |
+| 0929_04 (soft) | 0.483 / 0.13 | 0.953 / 0.76 | **0.994 / 0.92** |
+| 0929_05 | 0.952 / 0.75 | 0.979 / 0.79 | **0.994 / 0.93** |
 
-**The ablation split exactly as `ml_plan.md` §8 predicted before training:**
-model A (seeing which ink is trace) buys the PCC -- best of the three on all
-six photos, 98-100% coverage -- but keeps the classical R-peak under-read
-(0.64-0.70; a *perfect* mask read by column centroid tops out at 0.80,
-`results/ml/label_ceiling`). Model B (reading the waveform per column) buys
-the amplitude (R 0.89-0.95) at a PCC between classical and A. Neither does
-both. Decision rule 1 (PCC >= classical + 0.08 AND R >= 0.90): B meets the R
-and coverage parts; A's PCC gains over classical are +0.04 / +0.07 / +0.03,
-closer to the margin but short; neither meets the whole rule. Combining
-them is the obvious idea and deliberately NOT tried yet: designing it
-against these photos would contaminate the test. History: run **b0** scored
-PCC 0.997 on simulated validation yet dropped whole beats on real photos; a
-camera-response augmentation (`22c82ac`) closed that gap for b1 and a1 alike.
-**Caveats:** one record, and these photos' appearance informed that
-augmentation, so they are no longer a clean test set -- PTB-XL 9, 38, 57 are.
+b3 over all 78 photo leads: all scorable, median 0.989, p10 0.942, worst
+0.879. **Caveats:** one record (PTB-XL 40); its photos informed the
+augmentation (camera stage after b0, `22c82ac`); and none of this has run
+on the phone. Model lineage: b0 (rhythm only, simulated-looking aug) -> b1
+(+camera aug) -> b2 (all four rows, 64 mm, from b1) -> b3 (+scan path, from
+b2: b2's presence head switched off on bright pristine images -- coverage
+0.838 on clean fold-9 rows, `results/ml/val_clean_b2_b3.csv`; b3 1.000).
+Model A (a1->a2->a3, ink mask + centroid) is the ablation, not the product:
+it cannot pass R >= 0.90 (perfect-mask ceiling 0.81).
 
-**Best measured result** (PTB-XL 40, one real photograph, phone run 7,
-`results/device/photo_scores.csv`): all 10 R peaks within ~10 ms, duration
-anchor **−0.25%** against the truth, as-is PCC 0.81, aligned PCC **0.83**
-over 9.9 s, pipeline 2.0 s on the A30s. Desktop on the same photo with
-accurate corners: aligned PCC 0.86. **What is still wrong:** R peaks read at
-**~0.70** of true height (column-centroid bias of the classical tracer — the
-control condition, deliberately not "fixed"; it is the ML target); R timing
-wobbles ±10–20 ms (corner placement); on soft or unevenly lit photos the
-pulse's thin edges vanish and the lead-in rule takes an early beat for the
-pulse (duration anchor −10 to −18%, photos `ptbxl40_20260929_01..04`); the
-FR8 gate cannot see a duration-anchor error (circular by construction).
+**Earlier rhythm-strip-only results** (b1, a1 on the six PTB-XL 40 photos,
+`results/ml/photo_compare_{b1,a1}.csv`) and the classical phone runs
+(`results/device/photo_scores.csv`, best: run 7, aligned PCC 0.83, R peaks
+~0.70, 2.0 s on the A30s) remain valid and committed.
 
-**Where to pick up next session (2026-10-02):**
-1. **The user is bringing photographs of PTB-XL 9, 38, 57** (PDFs in
-   `out/kit_targets/<name>/<name>.pdf`). This is the clean test of BOTH
-   models, so a1 and b1 are FROZEN (`out/ml_runs/{a1,b1}/best.weights.h5`,
-   epochs 15 and 17) — change nothing about the models, augmentation or
-   decoding before scoring them. When photos
-   arrive in `data/kit_photos/` as `ptbxl<id>_<date>_<nn>.jpg`: register each
-   (`score_kit_photo.py --add ... --target ... --corners "x,y x,y x,y x,y"
-   --no-refine`; corners must be checked by eye), run the classical scorer,
-   then ONCE per model `bash ml/wsl_run.sh python ml/eval_photos.py --run b1
-   --only ptbxl9` (and `ptbxl38`, `ptbxl57`, and again with `--run a1`);
-   `--only` writes each record to its own CSV, keeping the new records apart
-   from PTB-XL 40. Commit the results whatever they show.
-2. Then, per `docs/ml_plan.md` §6 (two-week plan, deadline ~2026-10-14;
-   model A is done, a day early): INT8 LiteRT
-   export and INT8-vs-FP32 on the real photos; the Kotlin port
-   (`strips.to_canonical` with golden vectors, LiteRT behind a switch) — the
-   critical path; memory instrumentation and latency on the A30s.
-3. **How ML work runs.** Training and model inference run in WSL2 Ubuntu
+**Where to pick up next session (2026-10-03):**
+1. **b3 is FROZEN** (`out/ml_runs/b3/best.weights.h5`, epoch 4) as the model
+   for the clean test and the phone. Change nothing about it, the
+   augmentation, segmentation or decoding before the new photos are scored.
+2. **The user is photographing PTB-XL 9, 38, 57** (PDFs in
+   `out/kit_targets/<name>/<name>.pdf`). When photos arrive in
+   `data/kit_photos/` as `ptbxl<id>_<date>_<nn>.jpg`: register each in
+   `python/kit_photos.json` (`score_kit_photo.py --add ...`, corners checked by
+   eye), then score ONCE: `python python/score_12lead.py` (classical) and
+   `bash ml/wsl_run.sh python ml/eval_sheets.py --runs a3,b3 --only ptbxl38`
+   (per record). Commit whatever it shows.
+3. **INT8 LiteRT export of b3** (`ml/export_tflite.py`, started 2026-10-03):
+   FP32 / FP16 / INT8 at the tile shape, each checked against Keras on clean
+   and augmented fold-9 rows (decision rule: INT8 within 0.02 PCC and 0.03 R
+   of FP32, else FP16). Then a first latency/memory reading on the A30s.
+4. Then the phone port (critical path): `locate_sheet` + `tick_scale` +
+   `segment_leads` in Kotlin, `strips.to_canonical` with golden vectors,
+   LiteRT b3 per row with tiling, per-lead CSV export. Memory instrumentation.
+5. Robustness (queued): hard cast shadows, glare and creases in the
+   augmentation (photometric, labels exact) + a short fine-tune from b3; a
+   real "stress" photo set of the new sheets (hand shadow, lamp glare,
+   folded sheet). Literature reports learned digitisers beating thresholding
+   on such artefacts -- check citations; our own evidence so far covers
+   uneven lighting and soft shadows only.
+6. **How ML work runs.** Training and model inference run in WSL2 Ubuntu
    (`ml/setup_wsl.sh` builds the venv; `ml/wsl_run.sh <cmd>` runs inside it
-   from the repo root; data copied to `~/data/ml_strips`). From Git Bash
-   prefix `MSYS_NO_PATHCONV=1` or the `/mnt/c/...` path gets rewritten. **Long
-   training runs: the user runs them by hand in a WSL terminal** — Claude
-   Code's background-job reaper killed two runs on low host memory, and a
-   process detached inside WSL dies when `wsl.exe` returns. Usable GPU memory
-   under WSL is ~1.8 GB: train on 512-column crops at batch 2, mixed precision,
-   and run full-width inference one strip at a time.
-4. Open, not done: memory instrumentation on the A30s (decision rule 3
-   needs it); `score_kit_photo.py` does not enforce the 8.5 s overlap rule on
-   `pcc_aligned` (the phone and `ingest_device_exports.py` do); why strip
-   levelling estimated 2.6° on run 7 (guard refused it, correctly); the pulse
-   misfire on soft photos; classical FR4; merge the branch to `main` (56+
-   commits ahead, never merged).
+   from the repo root; data in `~/data/ml_strips` (rhythm) and
+   `~/data/ml_rows` (four rows)). From Git Bash prefix `MSYS_NO_PATHCONV=1`.
+   **Long training runs: the user runs them by hand in a WSL terminal**
+   (Claude Code's background reaper killed two runs; a process detached in
+   WSL dies when `wsl.exe` returns), and do not run GPU jobs while one
+   trains (~1.8 GB usable). Train on crops at batch 2, mixed precision;
+   infer with `predict_tiled`.
+7. Open, not done: memory instrumentation on the A30s; a gate check from the
+   tick-vs-duration-anchor disagreement (a printed, external anchor);
+   `score_kit_photo.py` 8.5 s rule; level the 3x4 rows (only the rhythm strip
+   is levelled); merge the branch to `main` (never merged).
 
 **The photo path, and the measured reasons for each of its steps** (each
 has a commit message with the numbers):
@@ -211,11 +230,13 @@ ECG-App/
 ├── python/ecgproto/
 │   ├── digitise.py   FR3/FR5-FR7: detrend, _resolve_harmonic, midpoint
 │   │                 threshold, binarise_trace(method, open_kernel)
-│   ├── segment.py    locate_rhythm_strip, level_strip, isolate_trace
+│   ├── segment.py    locate_rhythm_strip, level_strip, isolate_trace; FR4:
+│   │                 locate_sheet, tick_scale, segment_leads, trace_row
 │   ├── page.py       refine_corners;  pulse.py  1 mV pulse height (not wired
 │   │                 into the gate yet);  quality.py FR8;  deskew.py FR2
 │   └── evaluate.py, synth.py, layout.py, ptbxl.py, grid_reference.py (stale)
-├── python/  score_kit_photo.py (desktop scorer + simulate self-test),
+├── python/  score_12lead.py (whole-sheet scorer: FR4 + every lead),
+│            score_kit_photo.py (desktop scorer + simulate self-test),
 │            make_kit_target.py (print targets), make_kit_assets.py (app
 │            truth), ingest_device_exports.py, rerun_results.py +
 │            compare_results.py (before/after), run_*.py (experiments)
@@ -224,10 +245,13 @@ ECG-App/
 │             device/ (phone runs) ml/ (training data manifests, label
 │             ceiling, training histories, photo_compare_<run>.csv)
 ├── ml/       the learned tracer (TensorFlow, runs in WSL2): make_strips.py
-│             (training bands + labels -> data/ml_strips/), strips.py (canonical
-│             frame, augmentation, targets, --ceiling/--selftest),
-│             train_tracer.py (model A/B, training), eval_photos.py (real
-│             photos vs classical, matched), setup_wsl.sh, wsl_run.sh
+│             (training bands + labels -> data/ml_strips/; --all-rows ->
+│             data/ml_rows/), strips.py (canonical frame, augmentation,
+│             targets, --ceiling/--selftest), train_tracer.py (model A/B,
+│             training, predict_tiled), eval_photos.py (rhythm strip vs
+│             classical), eval_sheets.py (all 12 leads vs classical),
+│             eval_val_clean.py (scan-image check), plot_traces.py,
+│             export_tflite.py, setup_wsl.sh, wsl_run.sh
 ├── docs/     ml_plan.md (the ML plan), photo_protocol.md (§8: print and
 │             photograph the kit sheets), STATUS.md (2026-09-23 snapshot, stale)
 ├── out/      gitignored, regenerable: kit_targets/ (printable PDFs), kitphoto/
