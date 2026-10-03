@@ -94,18 +94,14 @@ class TfliteTracer:
     def __init__(self, path: Path):
         import tensorflow as tf
         self.it = tf.lite.Interpreter(model_path=str(path), num_threads=4)
-        self.it.allocate_tensors()
-        self.inp = self.it.get_input_details()[0]
-        self.outs = {d["name"]: d for d in self.it.get_output_details()}
+        # The signature keeps the Keras output names ("row", "presence");
+        # the raw tensor names do not, and both outputs have one shape.
+        self.run = self.it.get_signature_runner()
+        self.in_name = list(self.run.get_input_details())[0]
 
     def __call__(self, x, training=False):
-        self.it.set_tensor(self.inp["index"], np.asarray(x, np.float32))
-        self.it.invoke()
-        res = {}
-        for name, d in self.outs.items():
-            key = "row" if "row" in name else "presence"
-            res[key] = self.it.get_tensor(d["index"])
-        return res
+        out = self.run(**{self.in_name: np.asarray(x, np.float32)})
+        return {k: np.asarray(v) for k, v in out.items()}
 
 
 class KerasTracer:
@@ -155,6 +151,8 @@ def main(argv=None) -> int:
     p.add_argument("--width", type=int, default=1024)
     p.add_argument("--n-rep", type=int, default=200)
     p.add_argument("--variants", default="fp32,fp16,int8")
+    p.add_argument("--reuse", action="store_true",
+                   help="reuse .tflite files already in out/ml_export")
     args = p.parse_args(argv)
 
     rec = json.loads((RESULTS / f"train_{args.run}.json").read_text())["params"]
@@ -181,6 +179,11 @@ def main(argv=None) -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     files = {}
     for v in args.variants.split(","):
+        path = OUT / f"{args.run}_{h}x{w}_{v}.tflite"
+        if path.exists() and args.reuse:
+            files[v] = path
+            print(f"{v}: reusing {path.name}", flush=True)
+            continue
         conv = tf.lite.TFLiteConverter.from_keras_model(model)
         if v == "fp16":
             conv.optimizations = [tf.lite.Optimize.DEFAULT]
@@ -192,7 +195,6 @@ def main(argv=None) -> int:
             # int8 kernel; the body (convolutions) is int8.
         t0 = time.perf_counter()
         blob = conv.convert()
-        path = OUT / f"{args.run}_{h}x{w}_{v}.tflite"
         path.write_bytes(blob)
         files[v] = path
         print(f"{v}: {len(blob)/1e6:.2f} MB in {time.perf_counter()-t0:.0f} s", flush=True)
