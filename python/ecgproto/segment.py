@@ -808,3 +808,114 @@ def locate_sheet(image: np.ndarray) -> SheetLocation:
         t0, src = float(loc.t0_x), "rhythm_locator"
     return SheetLocation(rows=rows, t0_x=t0, t0_per_row=edges, x_end=int(loc.x1),
                          rhythm=loc, t0_source=src)
+
+
+# --------------------------------------------------------------------------
+# Time scale from the lead-separator ticks
+# --------------------------------------------------------------------------
+
+#: A 3x4 printout marks each lead change with a short thick vertical bar
+#: across the row's baseline (ecg-image-kit: 3x the trace width, ~0.8 mm,
+#: several mm tall), exactly 2.5, 5.0 and 7.5 s after time zero. Nine of
+#: them pin the time scale far better than the duration anchor, which needs
+#: the rhythm trace's LAST inked column: on ptbxl40_20260928_01 the rhythm
+#: locator stopped 26 mm short (anchor -10.3%), and on _29_01 / _29_04 it
+#: overran (+2.9 / +2.2%); the ticks give +1.2 / +0.7 / +0.8% against the
+#: corner-derived nominal scale, and +0.04% on the clean printed sheet.
+TICK_MIN_HEIGHT_MM = 4.0        # a tick is several mm tall
+TICK_WIDTH_MM = 0.45            # min-filter width: bars ~0.8 mm, trace ~0.26 mm
+TICK_BASE_BAND_MM = 1.0         # the bar must cross within 1 mm of the row centre
+TICK_FIRST_WINDOW = 0.25        # pass 1: +-25% around the 2.5 s prediction
+TICK_WINDOW = 0.04              # pass 2: +-4% around each refined prediction
+TICK_MIN_FOUND = 3
+
+
+@dataclass(frozen=True)
+class TickScale:
+    px_per_mm: float                # median over the ticks found; NaN if too few
+    n_found: int
+    spread_pct: float               # max-min of the per-tick estimates, % of median
+    positions: tuple                # (row, k, x) for each tick found
+
+
+def _baseline_runs(mask: np.ndarray, base_y: int, band: int) -> np.ndarray:
+    """Per column: length of the ink run that crosses the row centre band."""
+    h, w = mask.shape
+    run = np.zeros(w)
+    lo = max(0, base_y - band)
+    sub = mask[lo:base_y + band + 1]
+    has = sub.any(axis=0)
+    for x in np.flatnonzero(has):
+        col = mask[:, x]
+        ys = np.flatnonzero(sub[:, x])
+        y = lo + int(ys[len(ys) // 2])
+        a = y
+        while a > 0 and col[a - 1]:
+            a -= 1
+        b = y
+        while b < h - 1 and col[b + 1]:
+            b += 1
+        run[x] = b - a + 1
+    return run
+
+
+def tick_scale(image: np.ndarray, sheet: SheetLocation,
+               open_kernel: int = 2) -> TickScale:
+    """The time scale from the separator ticks of the three 3x4 rows.
+
+    Pass 1 finds the 2.5 s tick of each row in a wide window around the
+    duration anchor's prediction (which may be 10%+ out) and re-estimates the
+    scale from them; pass 2 finds all nine in narrow windows around that.
+    A column scores the MIN, over a tick-wide window, of the baseline-crossing
+    run length, so only a bar that is tall across its whole width scores --
+    a QRS stroke is thinner and slopes across columns.
+    """
+    m = dig.binarise_trace(image, open_kernel=open_kernel)
+    approx = sheet.anchor_px_per_mm
+    wt = max(2, int(round(TICK_WIDTH_MM * approx)))
+    band = int(round(TICK_BASE_BAND_MM * approx))
+    runs = {r: _baseline_runs(m, sheet.rows[r], band) for r in range(3)}
+    score = {r: np.array([runs[r][x:x + wt].min() for x in range(len(runs[r]) - wt)])
+             for r in range(3)}
+    t0 = sheet.t0_x
+    cell_px = CELL_S * dig.MM_PER_S
+
+    first = []
+    for r in range(3):
+        xe = t0 + cell_px * approx
+        lo = max(0, int(t0 + (1 - TICK_FIRST_WINDOW) * (xe - t0)))
+        hi = min(len(score[r]), int(t0 + (1 + TICK_FIRST_WINDOW) * (xe - t0)))
+        if hi <= lo:
+            continue
+        j = lo + int(np.argmax(score[r][lo:hi]))
+        if score[r][j] >= TICK_MIN_HEIGHT_MM * approx:
+            first.append((j + (wt - 1) / 2.0 - t0) / cell_px)
+    if first:
+        approx = float(np.median(first))
+
+    est, pos = [], []
+    for r in range(3):
+        sc, run = score[r], runs[r]
+        for k in (1, 2, 3):
+            xe = t0 + k * cell_px * approx
+            half = TICK_WINDOW * k * cell_px * approx
+            lo, hi = max(0, int(xe - half)), min(len(sc), int(xe + half))
+            if hi <= lo:
+                continue
+            j = lo + int(np.argmax(sc[lo:hi]))
+            if sc[j] < TICK_MIN_HEIGHT_MM * approx:
+                continue
+            # Centre of the contiguous tall columns around the peak.
+            a0 = max(0, j - 3 * wt)
+            cols = np.flatnonzero(run[a0:j + 4 * wt] >= 0.5 * sc[j]) + a0
+            xc = j + (wt - 1) / 2.0
+            if cols.size:
+                segs = np.split(cols, np.flatnonzero(np.diff(cols) > 1) + 1)
+                xc = float(min(segs, key=lambda s: abs(s.mean() - xc)).mean())
+            est.append((xc - t0) / (k * cell_px))
+            pos.append((r, k, round(xc, 1)))
+    if len(est) < TICK_MIN_FOUND:
+        return TickScale(float("nan"), len(est), float("nan"), tuple(pos))
+    e = np.asarray(est)
+    med = float(np.median(e))
+    return TickScale(med, len(e), float(100 * np.ptp(e) / med), tuple(pos))

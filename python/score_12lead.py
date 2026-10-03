@@ -215,7 +215,12 @@ def score_sheet(sheet: np.ndarray, target: skp.Target, truth: SheetTruth,
     head = dict(head, t0_source=sl.t0_source,
                 t0_rows_found=int(np.isfinite(sl.t0_per_row).sum()),
                 rows_found=" ".join(map(str, sl.rows)))
+    ticks = segment.tick_scale(sheet, sl)
+    head = dict(head, ticks_found=ticks.n_found,
+                ticks_spread_pct=round(ticks.spread_pct, 3) if ticks.n_found else "")
     cals = {"known": target.px_per_mm, "duration": anchor}
+    if np.isfinite(ticks.px_per_mm):
+        cals["ticks"] = ticks.px_per_mm
     def classical(sh, lay, r):
         pos, x0 = segment.trace_row(sh, lay, r, open_kernel)
         return x0 + np.arange(len(pos), dtype=np.float64), pos
