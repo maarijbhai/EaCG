@@ -44,6 +44,11 @@ android {
     buildFeatures {
         compose = true
     }
+    // The learned tracer is memory-mapped straight out of the APK, which
+    // needs it stored uncompressed; the benchmark's golden tile likewise.
+    androidResources {
+        noCompress += listOf("tflite", "rgb")
+    }
 }
 
 dependencies {
@@ -56,6 +61,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.opencv)
+    // LiteRT (formerly TensorFlow Lite): the on-device runtime for the
+    // learned tracer, CPU / XNNPACK. CLAUDE.md "Technical decisions".
+    implementation(libs.litert)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

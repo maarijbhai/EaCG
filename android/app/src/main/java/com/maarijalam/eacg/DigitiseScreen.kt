@@ -422,6 +422,10 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
         // Its own state, because it has its own image and its own truth.
         PhotoScoreSection()
 
+        // The learned tracer's latency, memory and fidelity on this phone,
+        // before the 12-lead Kotlin port is written against it.
+        TracerBenchmarkSection()
+
         Button(
             onClick = {
                 picker.launch(

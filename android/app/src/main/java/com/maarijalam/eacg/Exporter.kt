@@ -35,10 +35,16 @@ object Exporter {
         target: KitTargets.Target?,
         photoLabel: String
     ): String = withContext(Dispatchers.IO) {
-        val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val stamp = stamp()
         val name = "eacg_${target?.name ?: "photo"}_$stamp.csv"
-        val text = render(run, target, photoLabel, stamp)
+        exportText(context, name, render(run, target, photoLabel, stamp))
+    }
 
+    fun stamp(): String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+
+    /** Any CSV into Downloads/EaCG/ (see the class comment); returns where. */
+    suspend fun exportText(context: Context, name: String, text: String): String =
+        withContext(Dispatchers.IO) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
                 put(MediaStore.Downloads.DISPLAY_NAME, name)
