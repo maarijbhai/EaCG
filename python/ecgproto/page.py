@@ -304,14 +304,29 @@ FIND_RANSAC_TOL = 0.004          # inlier band, fraction of the long side
 FIND_RANSAC_ITERS = 400
 
 
-def _ransac_line(pts: np.ndarray, tol: float, rng) -> tuple[np.ndarray, np.ndarray]:
-    """(point, unit direction) of the line most of `pts` agree on."""
+#: The RANSAC draws come from this 31-bit LCG (the one the port fixtures
+#: already share), not NumPy's generator, so PageCorners.kt reproduces the
+#: same lines exactly: every intermediate fits a signed 64-bit integer.
+LCG_SEED, LCG_MULT, LCG_ADD, LCG_MASK = 12345, 1103515245, 12345, 0x7FFFFFFF
+
+
+def _ransac_line(pts: np.ndarray, tol: float, rng=None) -> tuple[np.ndarray, np.ndarray]:
+    """(point, unit direction) of the line most of `pts` agree on.
+
+    Ties go to the earliest draw; the inliers are refitted by least squares.
+    """
     n = len(pts)
     if n < 10:
         raise RuntimeError("too few edge points")
     best, best_in = None, -1
+    state = LCG_SEED
     for _ in range(FIND_RANSAC_ITERS):
-        i, j = rng.choice(n, 2, replace=False)
+        state = (state * LCG_MULT + LCG_ADD) & LCG_MASK
+        i = (state >> 8) % n
+        state = (state * LCG_MULT + LCG_ADD) & LCG_MASK
+        j = (state >> 8) % n
+        if i == j:
+            continue
         d = pts[j] - pts[i]
         L = np.hypot(*d)
         if L < 1e-6:
@@ -375,7 +390,6 @@ def find_sheet_corners(photo: np.ndarray, refine: bool = True,
     # straight remainder of the edge. Outline and hull fits inherited such
     # holes: corners 15-66 mm off on two 2026-09-29 photos. Assumes the
     # sheet is roughly upright in the frame (within ~20 degrees).
-    rng = np.random.default_rng(0)
     ys, xs = np.nonzero(region)
     if xs.size < 100:
         raise RuntimeError("sheet region too small")
@@ -396,7 +410,7 @@ def find_sheet_corners(photo: np.ndarray, refine: bool = True,
             vals = last if side == "right" else first
             t = np.flatnonzero(rows).astype(np.float64)
             pts = np.stack([vals[rows], t], 1)            # (x, y)
-        lines.append(_ransac_line(pts, FIND_RANSAC_TOL * max(region.shape), rng))
+        lines.append(_ransac_line(pts, FIND_RANSAC_TOL * max(region.shape)))
     # lines in order top, right, bottom, left; corner i = previous & next.
     lines = [lines[3], lines[0], lines[1], lines[2]]     # left, top, right, bottom
     # TL = left & top, TR = top & right, BR = right & bottom, BL = bottom & left.

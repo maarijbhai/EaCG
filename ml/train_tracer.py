@@ -65,7 +65,7 @@ sys.path.insert(0, str(REPO / "ml"))
 sys.path.insert(0, str(REPO / "python"))
 
 import strips as S  # noqa: E402
-from ecgproto import evaluate  # noqa: E402
+from ecgproto import canonical as _canon, evaluate  # noqa: E402
 
 K_SAMPLES = 4
 SIGMA_PX = 1.0
@@ -290,51 +290,12 @@ def mask_loss(y_true, logits):
     return bce + tf.reduce_mean(dice)
 
 
-#: Tiled inference: tile width and the margin discarded at each tile's inner
-#: edges, canonical input columns. A full 512 x 2048 frame does not fit the
-#: ~1.8 GB of GPU memory WSL leaves usable (measured: OOM in BatchNorm on the
-#: first full-width validation of a 64 mm model), and the phone will need
-#: the same for memory. 128 columns (16 mm) clears the network's horizontal
-#: context: 4 stride-2 stages and two dilated 3x3 blocks at 1/16.
-TILE_W = 1024
-TILE_MARGIN = 128
-#: Frames up to this many pixels run in one call, as a1/b1 were evaluated,
-#: so their committed results reproduce exactly. Tiled against full width on
-#: five b1 validation strips: mean row difference 0.0001-0.004 px, worst
-#: column 0.88 px (0.1 mm), presence identical.
-FULL_FRAME_MAX_PX = 384 * 2048
-
-
-def predict_tiled(model, image: np.ndarray, tile_w: int = TILE_W,
-                  margin: int = TILE_MARGIN) -> dict:
-    """Run a fully convolutional tracer over overlapping width tiles.
-
-    `image` is one canonical RGB uint8 frame (H, W, 3). Returns the same
-    outputs a single full-width call would, as numpy without the batch
-    axis: per output column for "rows"/"presence" (2 per input column),
-    per input column for "mask". Each tile keeps only its middle, so every
-    kept column saw at least `margin` columns of context either side
-    (except at the frame's own ends, as a full-width call would).
-    """
-    h, w = image.shape[:2]
-    if w <= tile_w or h * w <= FULL_FRAME_MAX_PX:
-        out = model(image[None], training=False)
-        return {k: np.asarray(v)[0] for k, v in out.items()}
-    step = tile_w - 2 * margin
-    starts = list(range(0, w - tile_w, step)) + [w - tile_w]
-    acc = {}
-    for x0 in starts:
-        out = model(image[None, :, x0:x0 + tile_w], training=False)
-        out = {k: np.asarray(v)[0] for k, v in out.items()}
-        keep0 = 0 if x0 == 0 else margin
-        keep1 = tile_w if x0 + tile_w >= w else tile_w - margin
-        for k, v in out.items():
-            u = v.shape[-1] // tile_w             # 2 for rows/presence, 1 for mask
-            if k not in acc:
-                acc[k] = np.zeros(v.shape[:-1] + (w * u,), v.dtype)
-            a, b = (x0 + keep0) * u, (x0 + keep1) * u
-            acc[k][..., a:b] = v[..., keep0 * u:keep1 * u]
-    return acc
+# Tiled inference lives in python/ecgproto/canonical.py (shared with the
+# phone's reference path).
+TILE_W = _canon.TILE_W
+TILE_MARGIN = _canon.TILE_MARGIN
+FULL_FRAME_MAX_PX = _canon.FULL_FRAME_MAX_PX
+predict_tiled = _canon.predict_tiled
 
 
 def decode_rows(logits: np.ndarray, pres_logits: np.ndarray) -> np.ndarray:

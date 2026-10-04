@@ -51,7 +51,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import run_photo as rp  # noqa: E402
 import score_kit_photo as skp  # noqa: E402
-from ecgproto import digitise as dig, evaluate, ptbxl, segment  # noqa: E402
+from ecgproto import digitise as dig, evaluate, ptbxl, segment, sheet  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 RESULTS = REPO / "results" / "kitphoto"
@@ -112,50 +112,9 @@ class SheetTruth:
                 "start": s0, "end": s1}
 
 
-def on_sheet_columns(xs: np.ndarray, rows: np.ndarray) -> tuple[np.ndarray, int]:
-    """A trace at arbitrary columns -> one row per whole sheet column.
-
-    Identity for the classical tracer (already one per column). For a model,
-    interpolates between its outputs and keeps a sheet column NaN where the
-    nearer outputs were NaN, so a presence gap stays a gap.
-    """
-    xs = np.asarray(xs, np.float64)
-    rows = np.asarray(rows, np.float64)
-    grid = np.arange(int(np.ceil(xs[0])), int(np.floor(xs[-1])) + 1)
-    fin = np.isfinite(rows)
-    if fin.sum() < 2:
-        return np.full(len(grid), np.nan), int(grid[0])
-    out = np.interp(grid, xs[fin], rows[fin], left=np.nan, right=np.nan)
-    gap = np.interp(grid, xs, (~fin).astype(np.float64)) > 0.5
-    out[gap] = np.nan
-    return out, int(grid[0])
-
-
-def cell_signal(pos: np.ndarray, x_origin: int, cell: segment.LeadCell,
-                px_per_mm_x: float, px_per_mm_y: float,
-                layout: segment.LeadLayout | None = None) -> np.ndarray:
-    """A cell's slice of a row trace -> mV at FS over the cell's window.
-
-    Time is measured from the cell's own start (cell.x0 at the calibration
-    in use), so sample 0 is the lead's first sample if segmentation and
-    calibration are right. mV is relative to the cell's median, as every
-    tracer here reports amplitude.
-    """
-    x = np.arange(len(pos)) + x_origin
-    keep = (x >= cell.x0) & (x < cell.x1) & np.isfinite(pos)
-    n = int(round(cell.duration_s * FS))
-    if keep.sum() < 10:
-        return np.full(n, np.nan)
-    xs, rs = x[keep].astype(np.float64), pos[keep]
-    if layout is not None and layout.row_knots:
-        # The row's column -> time map (tick knots when measured).
-        t = layout.time_at(cell.row, xs) - cell.t_start_s
-    else:
-        t = (xs - cell.x0) / (px_per_mm_x * dig.MM_PER_S)
-    mv = -(rs - np.median(rs)) / (px_per_mm_y * dig.MM_PER_MV)
-    ts = np.arange(n) / FS
-    out = np.interp(ts, t, mv, left=np.nan, right=np.nan)
-    return out
+# Moved to ecgproto.sheet (the phone path's reference); re-exported.
+on_sheet_columns = sheet.on_sheet_columns
+cell_signal = sheet.cell_signal
 
 
 def score_lead(sig: np.ndarray, truth: np.ndarray, duration_s: float) -> dict:

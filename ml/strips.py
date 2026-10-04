@@ -74,7 +74,7 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "python"))
 
-from ecgproto import evaluate  # noqa: E402
+from ecgproto import canonical as _canon, evaluate  # noqa: E402
 from make_kit_target import (MINOR_GRID_RGB, apply_minor_blend,  # noqa: E402
                              minor_grid_blend)
 
@@ -218,50 +218,17 @@ def list_stems(split: str, root: Path = DATA, only_ok: bool = True) -> list[str]
 # the canonical frame -- shared with inference
 # --------------------------------------------------------------------------
 
-@dataclass(frozen=True)
-class CanonMap:
-    """Native -> canonical: x' = (x + 0.5) * k - 0.5 - x0, same for y."""
-    k: float
-    x0: int
-    y0: int
-
-    def points(self, rows: np.ndarray, cols: np.ndarray):
-        return ((rows + 0.5) * self.k - 0.5 - self.y0,
-                (cols + 0.5) * self.k - 0.5 - self.x0)
-
-    def column_to_source_x(self, c: np.ndarray) -> np.ndarray:
-        return (c + self.x0 + 0.5) / self.k - 0.5
+# The frame's geometry lives in python/ecgproto/canonical.py, shared with
+# desktop evaluation and the phone (one definition, golden-vector tested).
+CanonMap = _canon.CanonMap
 
 
 def to_canonical(img: np.ndarray, px_per_mm: float, x_start: float,
                  center_row: float, pad=None, height: int | None = None
                  ) -> tuple[np.ndarray, CanonMap]:
-    """Resample `img` to CANON_PX_PER_MM and cut the CANON_H x CANON_W window.
-
-    `x_start` is the source column that becomes canonical column 0, and
-    `center_row` the source row that becomes row CANON_H / 2 (both to the
-    nearest canonical pixel). Out-of-image pixels take `pad`, by default the
-    per-channel median of `img` -- paper, not white, because a photo's paper
-    is not white and a white border is an edge no real crop has.
-    """
-    H = CANON_H if height is None else height
-    k = CANON_PX_PER_MM / px_per_mm
-    small = cv2.resize(img, None, fx=k, fy=k, interpolation=cv2.INTER_AREA)
-    if small.ndim == 2:          # resize drops a single channel's axis
-        small = small[..., None]
-    x0 = int(round((x_start + 0.5) * k - 0.5))
-    y0 = int(round((center_row + 0.5) * k - 0.5)) - H // 2
-    if pad is None:
-        # Every 7th pixel: the median of paper is not sensitive to it.
-        pad = np.median(img.reshape(-1, img.shape[2])[::7], axis=0)
-    out = np.empty((H, CANON_W, img.shape[2]), img.dtype)
-    out[:] = np.asarray(pad, dtype=np.float64).astype(img.dtype)
-    sy0, sx0 = max(0, y0), max(0, x0)
-    sy1 = min(small.shape[0], y0 + H)
-    sx1 = min(small.shape[1], x0 + CANON_W)
-    if sy1 > sy0 and sx1 > sx0:
-        out[sy0 - y0:sy1 - y0, sx0 - x0:sx1 - x0] = small[sy0:sy1, sx0:sx1]
-    return out, CanonMap(k, x0, y0)
+    """`ecgproto.canonical.to_canonical` at this module's CANON_H by default."""
+    return _canon.to_canonical(img, px_per_mm, x_start, center_row,
+                               CANON_H if height is None else height, pad=pad)
 
 
 # --------------------------------------------------------------------------

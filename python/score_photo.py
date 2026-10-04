@@ -133,45 +133,9 @@ def pick_corners(image: np.ndarray) -> np.ndarray:
     return np.asarray(picked, dtype=np.float32) / scale
 
 
-def rectify(
-    image: np.ndarray, corners: np.ndarray
-) -> tuple[np.ndarray, dict]:
-    """Perspective-warp the quad to a rectangle. Returns (image, geometry).
-
-    Output size is the mean length of each pair of opposite edges, measured
-    in the photograph. Nothing about the strip's true dimensions enters
-    here; that knowledge is reserved for scoring the result.
-    """
-    tl, tr, br, bl = corners
-    edge = lambda a, b: float(np.hypot(*(a - b)))
-    top, bottom = edge(tl, tr), edge(bl, br)
-    left, right = edge(tl, bl), edge(tr, br)
-
-    out_w = int(round((top + bottom) / 2.0))
-    out_h = int(round((left + right) / 2.0))
-    if out_w < 16 or out_h < 16:
-        raise ValueError(
-            f"the four corners enclose only {out_w}x{out_h} px; "
-            "they are probably in the wrong order or units"
-        )
-
-    dst = np.array([[0, 0], [out_w - 1, 0], [out_w - 1, out_h - 1], [0, out_h - 1]],
-                   dtype=np.float32)
-    matrix = cv2.getPerspectiveTransform(corners.astype(np.float32), dst)
-    warped = cv2.warpPerspective(image, matrix, (out_w, out_h),
-                                 flags=cv2.INTER_CUBIC,
-                                 borderMode=cv2.BORDER_REPLICATE)
-
-    geometry = {
-        "edge_top_px": top, "edge_bottom_px": bottom,
-        "edge_left_px": left, "edge_right_px": right,
-        # Opposite edges of a rectangle photographed square are equal; the
-        # ratio is a direct read on how oblique the camera was.
-        "keystone_horizontal": max(top, bottom) / min(top, bottom),
-        "keystone_vertical": max(left, right) / min(left, right),
-        "out_w": out_w, "out_h": out_h,
-    }
-    return warped, geometry
+# rectify moved to ecgproto.sheet (the phone path's reference); imported
+# here so existing callers keep working.
+from ecgproto.sheet import rectify  # noqa: E402
 
 
 def harmonic_of(estimate: float, truth: float) -> tuple[float, float] | None:
