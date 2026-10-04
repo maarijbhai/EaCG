@@ -79,7 +79,9 @@ def main(argv=None) -> int:
             done = [r for r in rows if r.get("photo") == stem and r.get("tracer") == name
                     and not r.get("rhythm") and r.get("pcc_asis") not in (None, "")]
             print(f"{stem} {name:28s} {res.calibration} {res.ticks_found}/9 ticks  "
-                  f"lead PCC as-is median {np.median([r['pcc_asis'] for r in done]):.3f}",
+                  f"lead PCC as-is median {np.median([r['pcc_asis'] for r in done]):.3f}  "
+                  f"SNR {np.median([r['snr_db_asis'] for r in done]):.1f} / shifted "
+                  f"{np.median([r['shifted_snr_db_asis'] for r in done]):.1f} dB",
                   flush=True)
     S12.RESULTS = RESULTS
     print(S12.persist(rows, {"model": args.model, "corners": args.corners,

@@ -125,7 +125,16 @@ def score_lead(sig: np.ndarray, truth: np.ndarray, duration_s: float) -> dict:
         return out
     sig_f = rp.fill_nan(sig)
     m = evaluate.evaluate_all(truth, sig_f, FS)
+    # SNR on median-removed signals: cell_signal returns mV about the cell's
+    # own median, because a printed trace carries no absolute baseline, so
+    # the truth's DC offset would otherwise count as error that no
+    # digitiser could remove. Shifted SNR is the Challenge 2024 convention
+    # (+-50 ms, evaluate_all's default).
+    t0, s0 = truth - np.median(truth), sig_f - np.median(sig_f)
+    shifted, _ = evaluate.shifted_snr_db(t0, s0, int(round(0.05 * FS)))
     out.update({"pcc_asis": round(float(m.pcc), 4),
+                "snr_db_asis": round(float(evaluate.snr_db(t0, s0)), 3),
+                "shifted_snr_db_asis": round(float(shifted), 3),
                 "rmse_mv_asis": round(float(m.rmse_mv), 4),
                 "gain_ratio": round(float(m.gain_ratio), 4),
                 "r_ratio": round(evaluate.r_peak_ratio(truth, sig_f, FS)[0], 4)})
@@ -251,9 +260,11 @@ def summarise(rows: list[dict]) -> None:
         cells = [r for r in rs if not r["rhythm"]]
         f = lambda k: [float(r[k]) for r in cells if r.get(k, "") != ""]
         pa, ra, ins = f("pcc_aligned"), f("r_ratio_aligned"), f("cell_truth_inside")
+        sn, ss = f("snr_db_asis"), f("shifted_snr_db_asis")
+        med = lambda v: np.median(v) if v else float("nan")
         print(f"  {ph:22s} {cal:8s} {tr:10s} cells located {sum(v >= 0.95 for v in ins)}/12"
-              f"  scorable {len(pa)}/12  PCCa median {np.median(pa) if pa else float('nan'):.3f}"
-              f"  R {np.median(ra) if ra else float('nan'):.2f}")
+              f"  scorable {len(pa)}/12  PCCa median {med(pa):.3f}  R {med(ra):.2f}"
+              f"  SNR {med(sn):.1f} / shifted {med(ss):.1f} dB")
 
 
 def main(argv=None) -> int:
