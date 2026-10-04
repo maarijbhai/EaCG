@@ -106,6 +106,22 @@ and accuracy paramount, so ml_plan decision rules 2 (latency) and 3
 reason; raise with the supervisor). Do not slim the model for speed; do not
 trade accuracy for latency.
 
+**Grid-fit geometry (2026-10-04, desktop only, not yet on the phone).**
+`ecgproto/gridfit.py`: after corner rectification, a homography fitted to
+every 5 mm rule sample (redness response, band medians, rules indexed and
+chained, Huber fit), one warp from the photo; `digitise_sheet(geometry=
+"grid")`; the grid's px/mm is passed to `locate_sheet` as a search hint
+(the duration anchor misplaced the pulse/tick searches on 0928_01).
+Measured against registration (`python/run_geometry.py`,
+`results/kitphoto/geometry.csv`): page distortion 0.27-1.75 mm RMS -> 0.035-
+0.094 mm; corners stop mattering (auto+grid = truth+grid). End to end
+(`results/ml/phone_path_b3_512x1024_fp16{,_grid}.csv`, 3,200 px decode,
+auto corners, b3 FP16, 72 leads): median lead PCC 0.865 -> **0.966**, p10
+0.005 -> 0.841, >= 0.90 30 -> 53; median SNR 5.8 -> **11.4 dB**, shifted
+12.7 -> 16.9 dB. `score_lead` now reports `snr_db_asis` and
+`shifted_snr_db_asis` (median-removed, +-50 ms). **Next: port gridfit to
+Kotlin** (golden vectors), then a phone run. Still one record (PTB-XL 40).
+
 **Where to pick up next session (2026-10-03):**
 1. **b3 is FROZEN** (`out/ml_runs/b3/best.weights.h5`, epoch 4) as the model
    for the clean test and the phone. Change nothing about it, the
