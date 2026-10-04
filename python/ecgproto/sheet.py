@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 import cv2
 import numpy as np
 
-from . import canonical, digitise as dig, gridfit, page, segment
+from . import canonical, digitise as dig, gridfit, page, segment, timemap
 
 FS = 500.0
 #: How far before recording time zero the learned tracer's canonical crop
@@ -111,6 +111,8 @@ def cell_signal(pos: np.ndarray, x_origin: int, cell: segment.LeadCell,
         return np.full(n, np.nan)
     xs, rs = x[keep].astype(np.float64), pos[keep]
     if layout is not None and layout.row_knots:
+        if layout.row_knots[cell.row] is None:      # time map unavailable
+            return np.full(n, np.nan)
         t = layout.time_at(cell.row, xs) - cell.t_start_s
     else:
         t = (xs - cell.x0) / (px_per_mm_x * dig.MM_PER_S)
@@ -155,10 +157,50 @@ class SheetResult:
     layout: segment.LeadLayout = field(repr=False)
     geometry: str = "corners"       # what was actually used
     grid_fit: gridfit.GridFit | None = field(default=None, repr=False)
+    time_map: str = "ticks"
+    unavailable: dict = field(default_factory=dict)   # row -> reason (time map)
+    # What retime() needs to re-cut the same row traces under another map.
+    page: np.ndarray | None = field(default=None, repr=False)
+    location: segment.SheetLocation | None = field(default=None, repr=False)
+    ticks: segment.TickScale | None = field(default=None, repr=False)
+    rows: dict | None = field(default=None, repr=False)
+
+
+def cut_leads(rows: dict, layout: segment.LeadLayout, px: float) -> dict:
+    """Row traces -> every lead, mV at FS, under `layout`'s time map."""
+    leads = {}
+    for cell in layout.cells:
+        pos, x0 = rows[cell.row]
+        leads[(cell.name, cell.row == 3)] = cell_signal(pos, x0, cell, px, px, layout)
+    return leads
+
+
+def retime(res: SheetResult, mode: str) -> SheetResult:
+    """The same row traces cut under another time map (timemap.MODES).
+
+    Only the column -> time map changes: geometry, calibration of amplitude,
+    segmentation of rows and the traces themselves are the result's own.
+    """
+    from dataclasses import replace
+    if mode == res.time_map:
+        return res
+    base = res.layout
+    tk = res.ticks if res.calibration == "ticks" else None
+    ends = None
+    if mode == "rowstart_end":
+        ends = [timemap.row_end_x(res.page, base, r) for r in range(4)]
+    grid_px = res.grid_fit.px_per_mm if (res.grid_fit is not None
+                                         and res.geometry == "grid") else None
+    knots, unavailable = timemap.row_knots(mode, base, res.location.t0_per_row,
+                                           ends, grid_px)
+    layout = segment.segment_leads(res.page, res.location.as_strip_location(),
+                                   res.px_per_mm, tk, knots_override=knots)
+    return replace(res, leads=cut_leads(res.rows, layout, res.px_per_mm),
+                   layout=layout, time_map=mode, unavailable=unavailable)
 
 
 def digitise_sheet(photo: np.ndarray, tracer, corners: np.ndarray | None = None,
-                   geometry: str = "corners") -> SheetResult:
+                   geometry: str = "corners", time_map: str = "ticks") -> SheetResult:
     """Photograph of a 3x4 + rhythm printout -> every lead in mV at 500 Hz.
 
     geometry="grid" regularises the page on its printed 5 mm grid after the
@@ -188,10 +230,10 @@ def digitise_sheet(photo: np.ndarray, tracer, corners: np.ndarray | None = None,
     else:
         px, cal, tk = sl.anchor_px_per_mm, "duration", None
     layout = segment.segment_leads(rect, sl.as_strip_location(), px, tk)
+    # The tracers run on the shipped (tick) layout whatever the time map:
+    # the map changes only how traced columns are turned into time.
     rows = {r: on_sheet_columns(*tracer(rect, layout, r)) for r in range(4)}
-    leads = {}
-    for cell in layout.cells:
-        pos, x0 = rows[cell.row]
-        leads[(cell.name, cell.row == 3)] = cell_signal(pos, x0, cell, px, px, layout)
-    return SheetResult(leads, np.asarray(corners, np.float64), refined, rect.shape[:2],
-                       float(px), cal, ticks.n_found, sl.t0_source, layout, used, fit)
+    res = SheetResult(cut_leads(rows, layout, px), np.asarray(corners, np.float64),
+                      refined, rect.shape[:2], float(px), cal, ticks.n_found,
+                      sl.t0_source, layout, used, fit, "ticks", {}, rect, sl, ticks, rows)
+    return retime(res, time_map)

@@ -564,7 +564,8 @@ class LeadLayout:
 
 
 def segment_leads(image: np.ndarray, loc: StripLocation,
-                  px_per_mm_x: float, ticks: "TickScale | None" = None) -> LeadLayout:
+                  px_per_mm_x: float, ticks: "TickScale | None" = None,
+                  knots_override: tuple | None = None) -> LeadLayout:
     """Cut a page-cropped 3x4 + rhythm sheet into its 13 traces.
 
     Rows come from `loc.row_peaks`, the row-profile peaks the rhythm-strip
@@ -578,6 +579,10 @@ def segment_leads(image: np.ndarray, loc: StripLocation,
 
     The calibration is the caller's, as for the rhythm strip: the duration
     anchor on a photograph. Nothing here measures scale.
+
+    `knots_override` (timemap.row_knots) replaces the per-row time map; a
+    row whose entry is None is unavailable -- its cells keep the default
+    extents and `sheet.cell_signal` returns NaN for them.
     """
     h, w = image.shape[:2]
     peaks = sorted(int(p) for p in loc.row_peaks)
@@ -631,9 +636,13 @@ def segment_leads(image: np.ndarray, loc: StripLocation,
         xs.append(xs[-1] + (RECORDING_S - ts[-1]) * px_per_s)
         ts.append(RECORDING_S)
         knots.append((tuple(xs), tuple(ts)))
+    base = list(knots)
+    if knots_override is not None:
+        knots = list(knots_override)
 
     def x_at(r, t):
-        return float(np.interp(t, knots[r][1], knots[r][0]))
+        k = knots[r] if knots[r] is not None else base[r]
+        return float(np.interp(t, k[1], k[0]))
 
     cells = []
     for r, names in enumerate(LAYOUT_3X4):
