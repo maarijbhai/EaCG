@@ -1,0 +1,41 @@
+{
+  "generated_by": "python/score_12lead.py",
+  "utc": "2026-10-04T13:23:19+00:00",
+  "git_commit": "b040b1f070e0bf032daf3fe535e4e2f7a38b71e6",
+  "git_dirty": false,
+  "params": {
+    "runs": "b3",
+    "only": "",
+    "lead_in_mm": 4.0,
+    "corners": "python/kit_photos.json as placed",
+    "tensorflow": "2.21.0",
+    "min_overlap_fraction": 0.85,
+    "cell_max_lag_s": 0.1,
+    "layout": [
+      [
+        "I",
+        "aVR",
+        "V1",
+        "V4"
+      ],
+      [
+        "II",
+        "aVL",
+        "V2",
+        "V5"
+      ],
+      [
+        "III",
+        "aVF",
+        "V3",
+        "V6"
+      ]
+    ],
+    "separator_guard_mm": 1.0
+  },
+  "versions": {
+    "python": "3.12.3",
+    "numpy": "2.5.3",
+    "opencv": "5.0.0"
+  }
+}
