@@ -132,7 +132,8 @@ def on_sheet_columns(xs: np.ndarray, rows: np.ndarray) -> tuple[np.ndarray, int]
 
 
 def cell_signal(pos: np.ndarray, x_origin: int, cell: segment.LeadCell,
-                px_per_mm_x: float, px_per_mm_y: float) -> np.ndarray:
+                px_per_mm_x: float, px_per_mm_y: float,
+                layout: segment.LeadLayout | None = None) -> np.ndarray:
     """A cell's slice of a row trace -> mV at FS over the cell's window.
 
     Time is measured from the cell's own start (cell.x0 at the calibration
@@ -146,7 +147,11 @@ def cell_signal(pos: np.ndarray, x_origin: int, cell: segment.LeadCell,
     if keep.sum() < 10:
         return np.full(n, np.nan)
     xs, rs = x[keep].astype(np.float64), pos[keep]
-    t = (xs - cell.x0) / (px_per_mm_x * dig.MM_PER_S)
+    if layout is not None and layout.row_knots:
+        # The row's column -> time map (tick knots when measured).
+        t = layout.time_at(cell.row, xs) - cell.t_start_s
+    else:
+        t = (xs - cell.x0) / (px_per_mm_x * dig.MM_PER_S)
     mv = -(rs - np.median(rs)) / (px_per_mm_y * dig.MM_PER_MV)
     ts = np.arange(n) / FS
     out = np.interp(ts, t, mv, left=np.nan, right=np.nan)
@@ -227,13 +232,14 @@ def score_sheet(sheet: np.ndarray, target: skp.Target, truth: SheetTruth,
     tracers = {"classical": classical}
     tracers.update(extra_tracers or {})
     for cal, px in cals.items():
-        layout = segment.segment_leads(sheet, loc, px)
+        layout = segment.segment_leads(sheet, loc, px,
+                                       ticks if cal == "ticks" else None)
         for tname, fn in tracers.items():
             row_traces = {r: fn(sheet, layout, r) for r in range(4)}
             for cell in layout.cells:
                 tr = truth.leads[(cell.name, cell.row == 3)]
                 pos, x0 = on_sheet_columns(*row_traces[cell.row])
-                sig = cell_signal(pos, x0, cell, px, px)
+                sig = cell_signal(pos, x0, cell, px, px, layout)
                 r = dict(head, calibration=cal, px_per_mm_used=round(px, 4),
                          px_per_mm_error_pct=round(100 * (px / target.px_per_mm - 1), 3),
                          tracer=tname, lead=cell.name,

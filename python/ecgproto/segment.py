@@ -538,6 +538,15 @@ class LeadLayout:
     px_per_s: float                 # from the caller's calibration
     row_y: tuple[int, ...]          # the four row centres
     row_bands: tuple[tuple[int, int], ...]
+    #: Per row, the column -> recording-time map as knots (xs, ts), linear
+    #: between them. Two knots (uniform scale) unless separator ticks were
+    #: given, in which case every tick found is a knot: see segment_leads.
+    row_knots: tuple = ()
+
+    def time_at(self, row: int, x):
+        xs, ts = self.row_knots[row]
+        return np.interp(x, xs, ts, left=np.nan, right=np.nan) if len(xs) > 2 else \
+            ts[0] + (np.asarray(x, np.float64) - xs[0]) * (ts[1] - ts[0]) / (xs[1] - xs[0])
 
     def cell(self, name: str, rhythm: bool = False) -> LeadCell:
         for c in self.cells:
@@ -547,7 +556,7 @@ class LeadLayout:
 
 
 def segment_leads(image: np.ndarray, loc: StripLocation,
-                  px_per_mm_x: float) -> LeadLayout:
+                  px_per_mm_x: float, ticks: "TickScale | None" = None) -> LeadLayout:
     """Cut a page-cropped 3x4 + rhythm sheet into its 13 traces.
 
     Rows come from `loc.row_peaks`, the row-profile peaks the rhythm-strip
@@ -573,17 +582,51 @@ def segment_leads(image: np.ndarray, loc: StripLocation,
         bands.append((max(0, int(round(y - up))), min(h, int(round(y + dn)))))
     px_per_s = px_per_mm_x * dig.MM_PER_S
     t0 = float(loc.t0_x)
+    # The column -> time map per row. With `ticks`, every separator tick
+    # found is a knot at its exact lead boundary (2.5 / 5.0 / 7.5 s), so each
+    # cell gets its own local scale: a photograph is not uniformly scaled
+    # (an imperfect corner leaves a perspective residue), and one global
+    # scale put PTB-XL 40's V1-V6 tens of ms early, measured on the
+    # 2026-10-04 full-sheet figures. The rhythm strip, which has no ticks,
+    # uses the mean tick column over the three rows. Ends are extrapolated
+    # at the global scale.
+    found = {}
+    if ticks is not None:
+        for r, k, x in ticks.positions:
+            found.setdefault(r, {})[k] = float(x)
+    knots = []
+    for r in range(4):
+        if r < 3:
+            ks = found.get(r, {})
+        else:
+            ks = {}
+            for k in (1, 2, 3):
+                xs_k = [found[rr][k] for rr in found if k in found[rr]]
+                if xs_k:
+                    ks[k] = float(np.mean(xs_k))
+        xs, ts = [t0], [0.0]
+        for k in sorted(ks):
+            xs.append(ks[k])
+            ts.append(k * CELL_S)
+        xs.append(xs[-1] + (RECORDING_S - ts[-1]) * px_per_s)
+        ts.append(RECORDING_S)
+        knots.append((tuple(xs), tuple(ts)))
+
+    def x_at(r, t):
+        return float(np.interp(t, knots[r][1], knots[r][0]))
+
     cells = []
     for r, names in enumerate(LAYOUT_3X4):
         for k, name in enumerate(names):
-            x0 = t0 + k * CELL_S * px_per_s
             cells.append(LeadCell(name, r, k, k * CELL_S, CELL_S,
-                                  int(round(x0)), int(round(x0 + CELL_S * px_per_s)),
+                                  int(round(x_at(r, k * CELL_S))),
+                                  int(round(x_at(r, (k + 1) * CELL_S))),
                                   bands[r][0], bands[r][1], float(peaks[r])))
     cells.append(LeadCell("II", 3, 0, 0.0, RECORDING_S, int(round(t0)),
-                          int(round(t0 + RECORDING_S * px_per_s)),
+                          int(round(x_at(3, RECORDING_S))),
                           bands[3][0], bands[3][1], float(peaks[3])))
-    return LeadLayout(tuple(cells), t0, px_per_s, tuple(peaks), tuple(bands))
+    return LeadLayout(tuple(cells), t0, px_per_s, tuple(peaks), tuple(bands),
+                      tuple(knots))
 
 
 def trace_row(image: np.ndarray, layout: LeadLayout, row: int,
@@ -598,9 +641,9 @@ def trace_row(image: np.ndarray, layout: LeadLayout, row: int,
     boundaries (SEPARATOR_GUARD_MM either side).
     """
     y0, y1 = layout.row_bands[row]
-    x0 = int(round(layout.t0_x))
-    x1 = int(round(layout.t0_x + RECORDING_S * layout.px_per_s))
-    x1 = min(x1, image.shape[1])
+    row_cells = [c for c in layout.cells if c.row == row]
+    x0 = min(c.x0 for c in row_cells)
+    x1 = min(max(c.x1 for c in row_cells), image.shape[1])
     band = image[y0:y1, x0:x1]
     mask = isolate_trace(dig.binarise_trace(band, open_kernel=open_kernel))
     if not tracked:
@@ -610,17 +653,15 @@ def trace_row(image: np.ndarray, layout: LeadLayout, row: int,
         # every boundary, and the jump there is the signal's, not a fault.
         px_mm = layout.px_per_s / dig.MM_PER_S
         pos = np.full(mask.shape[1], np.nan)
-        n_cells = 4 if row < 3 else 1
-        span = (CELL_S if row < 3 else RECORDING_S) * layout.px_per_s
-        for k in range(n_cells):
-            a = int(round(k * span))
-            b = mask.shape[1] if k == n_cells - 1 else int(round((k + 1) * span))
+        for i, c in enumerate(row_cells):
+            a = max(0, c.x0 - x0)
+            b = mask.shape[1] if i == len(row_cells) - 1 else max(a, c.x1 - x0)
             pos[a:b] = trace_positions_tracked(mask[:, a:b], px_mm)
         pos = pos + y0
     if row < 3:
         guard = SEPARATOR_GUARD_MM * layout.px_per_s / dig.MM_PER_S
-        for k in (1, 2, 3):
-            xb = k * CELL_S * layout.px_per_s
+        for c in row_cells[1:]:
+            xb = c.x0 - x0
             lo, hi = int(np.floor(xb - guard)), int(np.ceil(xb + guard))
             pos[max(0, lo):max(0, min(len(pos), hi + 1))] = np.nan
     return pos, x0
