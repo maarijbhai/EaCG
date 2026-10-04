@@ -95,6 +95,17 @@ it cannot pass R >= 0.90 (perfect-mask ceiling 0.81).
 (`results/device/photo_scores.csv`, best: run 7, aligned PCC 0.83, R peaks
 ~0.70, 2.0 s on the A30s) remain valid and committed.
 
+**Priority decision (user, 2026-10-04): accuracy over speed.** The phone
+benchmark (`results/device/tracer_bench_*.csv`): b3 is exact on the A30s
+(matches the desktop to 0.0004 px mean on a real tile) but slow -- INT8 with
+float decode ~955 ms per tile, ~11.5 s model time per full sheet, 170 MB;
+FP16 ~18.7 s, 357 MB; 2 and 4 threads identical (threading apparently
+ineffective -- unexplained). The user judged speed unimportant for the app
+and accuracy paramount, so ml_plan decision rules 2 (latency) and 3
+(memory) are now REPORTED, not gates (amended in ml_plan section 4 with the
+reason; raise with the supervisor). Do not slim the model for speed; do not
+trade accuracy for latency.
+
 **Where to pick up next session (2026-10-03):**
 1. **b3 is FROZEN** (`out/ml_runs/b3/best.weights.h5`, epoch 4) as the model
    for the clean test and the phone. Change nothing about it, the

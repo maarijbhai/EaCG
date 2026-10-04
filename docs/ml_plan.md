@@ -342,6 +342,20 @@ calibration**:
 3. **Memory.** Peak additional native + heap **≤ 150 MB**. Memory must be
    instrumented first; it is not today.
 
+> **Amended 2026-10-04, after measurement, by the user's decision: rules 2
+> and 3 are demoted from gates to reported characterisation.** Measured on
+> the A30s (`results/device/tracer_bench_*.csv`): b3 INT8 (float decode)
+> takes ~955 ms per 512 x 1,024 tile, ~11.5 s of model time for a full
+> 12-lead sheet (12 tiles), 170 MB native heap; FP16 ~18.7 s and 357 MB.
+> Both rules were written for a rhythm-strip tracer; the goal is now the
+> whole sheet, and the user judged accuracy more important than speed for
+> this app ("speed isn't too important for the phone app; accuracy is more
+> important"). Decision rule 1 (accuracy) is unchanged and remains the
+> gate. Latency and memory are still measured and reported, with the
+> original thresholds quoted beside them, so a reader sees what was
+> declared, what was measured, and that the rule was changed and why --
+> rather than a quietly moved goalpost. To raise with the supervisor.
+
 If the model fails a rule, it stays out and the failure is reported, with its
 numbers. **Never remove or "improve away" the classical path.** It is the
 control, and every ML claim is relative to it.

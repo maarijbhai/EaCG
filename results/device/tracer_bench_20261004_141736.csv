@@ -1,0 +1,11 @@
+# generated_by: EaCG TracerBenchmark
+# local_time: 20261004_141736
+# device: samsung SM-A307FN (API 30)
+# tiles_per_sheet: 12
+# warm_calls: 36
+# note: model call only; canonicalisation/segmentation/decode not timed
+variant,threads,model_mb,load_ms,cold_ms,warm_mean_ms,warm_p95_ms,warm_min_ms,sheet_ms_est,native_heap_load_mb,native_heap_peak_mb,pss_mb,max_row_diff_px,mean_row_diff_px,presence_agree,error
+int8f,2,0.551,246,963,954.3,972,951,11452,169.7,169.7,284.1,0.6778,0.00037,1.0000,
+int8f,4,0.551,139,954,959.3,1002,952,11511,169.1,169.3,313.5,0.6778,0.00037,1.0000,
+fp16,2,0.783,255,1554,1559.5,1602,1551,18714,357.3,357.4,526.8,0.0002,0.00005,1.0000,
+fp16,4,0.783,203,1554,1563.8,1621,1547,18765,357.4,358.5,466.2,0.0002,0.00005,1.0000,
