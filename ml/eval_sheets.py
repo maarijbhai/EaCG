@@ -68,6 +68,11 @@ def main(argv=None) -> int:
     p.add_argument("--runs", default="a1,b1")
     p.add_argument("--only", default="", help="photos whose stem starts with this")
     p.add_argument("--no-clean", action="store_true")
+    p.add_argument("--corners", choices=("registered", "auto", "truth"),
+                   default="registered",
+                   help="registered: python/kit_photos.json; auto: "
+                        "page.find_sheet_corners (no clicks); truth: registration "
+                        "to the printed PNG (ecgproto.corner_truth)")
     args = p.parse_args(argv)
 
     import tensorflow as tf
@@ -88,7 +93,7 @@ def main(argv=None) -> int:
 
     reg = skp.load_registry()["photos"]
     rows = []
-    if not args.no_clean and not args.only:
+    if not args.no_clean and not args.only and args.corners == "registered":
         for name in sorted({e["target"] for e in reg.values()}):
             t = skp.Target(name)
             rows += S12.score_sheet(t.sheet, t, S12.SheetTruth(t),
@@ -99,13 +104,31 @@ def main(argv=None) -> int:
             continue
         t = skp.Target(e["target"])
         photo = rp.read_oriented(skp.PHOTOS / e.get("file", f"{stem}.jpg"))
-        sheet = skp.warp_to_sheet(photo, np.asarray(e["corners_px"], np.float32), t)
-        rows += S12.score_sheet(sheet, t, S12.SheetTruth(t),
-                                {"photo": stem, "target": t.name, "ecg_id": t.ecg_id},
+        reg_c = np.asarray(e["corners_px"], np.float32)
+        info = {"photo": stem, "target": t.name, "ecg_id": t.ecg_id,
+                "corners_source": args.corners}
+        if args.corners == "auto":
+            from ecgproto import page
+            try:
+                fc = page.find_sheet_corners(photo)
+            except RuntimeError as exc:
+                rows.append(dict(info, error=f"corners: {exc}"))
+                continue
+            corners = fc.corners.astype(np.float32)
+            info["corners_refined"] = fc.refined
+        elif args.corners == "truth":
+            from ecgproto import corner_truth
+            corners = corner_truth.find_true_corners(photo, t.sheet, reg_c,
+                                                     t.px_per_mm).corners.astype(np.float32)
+        else:
+            corners = reg_c
+        sheet = skp.warp_to_sheet(photo, corners, t)
+        rows += S12.score_sheet(sheet, t, S12.SheetTruth(t), info,
                                 extra_tracers=tracers)
     S12.summarise(rows)
     S12.RESULTS = RESULTS
-    name = "sheets_" + args.runs.replace(",", "_") + (f"_{args.only}" if args.only else "")
+    name = ("sheets_" + args.runs.replace(",", "_") + (f"_{args.only}" if args.only else "")
+            + ("" if args.corners == "registered" else f"_corners_{args.corners}"))
     print(S12.persist(rows, {"runs": args.runs, "only": args.only,
                              "lead_in_mm": LEAD_IN_MM,
                              "corners": "python/kit_photos.json as placed",
