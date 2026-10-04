@@ -180,7 +180,8 @@ def digitise_sheet(photo: np.ndarray, tracer, corners: np.ndarray | None = None,
             fit = None
     elif geometry != "corners":
         raise ValueError(f"geometry must be 'corners' or 'grid', got {geometry!r}")
-    sl = segment.locate_sheet(rect)
+    sl = segment.locate_sheet(rect, fit.px_per_mm if fit is not None and used == "grid"
+                              else None)
     ticks = segment.tick_scale(rect, sl)
     if np.isfinite(ticks.px_per_mm):
         px, cal, tk = ticks.px_per_mm, "ticks", ticks

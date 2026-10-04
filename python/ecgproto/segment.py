@@ -796,6 +796,20 @@ class SheetLocation:
     x_end: int                      # last inked column of the rhythm strip
     rhythm: StripLocation           # locate_rhythm_strip's own answer
     t0_source: str                  # "pulses" or "rhythm_locator"
+    scale_hint: float = float("nan")  # px/mm from a printed ruler (the grid fit)
+
+    @property
+    def search_px_per_mm(self) -> float:
+        """The scale the pulse and tick SEARCHES are placed with.
+
+        The grid fit's px/mm when given, else the duration anchor. The anchor
+        needs the rhythm trace's last inked column, and on the grid-
+        regularised ptbxl40_20260928_01 the rhythm locator stopped at 1,860
+        of ~2,830 px (anchor 6.96 against the grid's 10.62 px/mm): no pulse
+        and no tick fell in their search windows. Only the searches use it;
+        the calibration is still the ticks.
+        """
+        return self.scale_hint if np.isfinite(self.scale_hint) else self.anchor_px_per_mm
 
     @property
     def anchor_px_per_mm(self) -> float:
@@ -848,7 +862,7 @@ def pulse_falling_edge(mask: np.ndarray, row_y: int, px_per_mm: float) -> float:
     return float(first[-1]) - 0.5 * line_px
 
 
-def locate_sheet(image: np.ndarray) -> SheetLocation:
+def locate_sheet(image: np.ndarray, scale_hint: float | None = None) -> SheetLocation:
     """Rows, recording time zero and the duration anchor for a whole sheet.
 
     Rows from `sheet_rows` (layout spacing). Time zero from the pulses of
@@ -860,7 +874,8 @@ def locate_sheet(image: np.ndarray) -> SheetLocation:
     m = dig.binarise_trace(image)
     rows = sheet_rows(image, m)
     loc = locate_rhythm_strip(image, mask=m)
-    approx = loc.recording_width_px / (RECORDING_S * dig.MM_PER_S)
+    approx = (scale_hint if scale_hint is not None and np.isfinite(scale_hint)
+              else loc.recording_width_px / (RECORDING_S * dig.MM_PER_S))
     edges = tuple(pulse_falling_edge(m, y, approx) for y in rows)
     found = [e for e in edges if np.isfinite(e)]
     if found:
@@ -868,7 +883,8 @@ def locate_sheet(image: np.ndarray) -> SheetLocation:
     else:
         t0, src = float(loc.t0_x), "rhythm_locator"
     return SheetLocation(rows=rows, t0_x=t0, t0_per_row=edges, x_end=int(loc.x1),
-                         rhythm=loc, t0_source=src)
+                         rhythm=loc, t0_source=src,
+                         scale_hint=float("nan") if scale_hint is None else float(scale_hint))
 
 
 # --------------------------------------------------------------------------
@@ -932,7 +948,7 @@ def tick_scale(image: np.ndarray, sheet: SheetLocation,
     a QRS stroke is thinner and slopes across columns.
     """
     m = dig.binarise_trace(image, open_kernel=open_kernel)
-    approx = sheet.anchor_px_per_mm
+    approx = sheet.search_px_per_mm
     wt = max(2, int(round(TICK_WIDTH_MM * approx)))
     band = int(round(TICK_BASE_BAND_MM * approx))
     runs = {r: _baseline_runs(m, sheet.rows[r], band) for r in range(3)}
