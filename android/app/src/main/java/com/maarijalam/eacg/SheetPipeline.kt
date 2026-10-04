@@ -175,13 +175,16 @@ object SheetPipeline {
      */
     suspend fun run(
         context: Context, photo: Bitmap, corners: DoubleArray?, tracer: Tracer,
-        truth12: Map<String, DoubleArray>?, model: LiteRtModel? = null
+        truth12: Map<String, DoubleArray>?, model: LiteRtModel? = null,
+        /** For corners found by [SheetCorners.find] earlier and passed in. */
+        cornersAuto: Boolean = corners == null,
+        cornersRefined: Boolean? = null
     ): Result = withContext(Dispatchers.Default) {
         val t = linkedMapOf<String, Long>()
         var mark = System.nanoTime()
         fun lap(k: String) { val n = System.nanoTime(); t[k] = (n - mark) / 1_000_000; mark = n }
 
-        var refined: Boolean? = null
+        var refined: Boolean? = cornersRefined
         val c = corners ?: SheetCorners.find(photo).let { refined = it.refined; it.corners }
         lap("corners")
         val src = ImageWarp.toMat(photo)
@@ -228,7 +231,7 @@ object SheetPipeline {
             } finally {
                 ownModel?.close()
             }
-            Result(tracer, c, corners == null, refined, rect.cols(), rect.rows(), px,
+            Result(tracer, c, cornersAuto, refined, rect.cols(), rect.rows(), px,
                 if (useTicks) "ticks" else "duration", ticks.nFound,
                 if (pulseT0.isFinite()) "pulses" else "rhythm_locator", leads, t,
                 ImageWarp.previewBitmap(rect))

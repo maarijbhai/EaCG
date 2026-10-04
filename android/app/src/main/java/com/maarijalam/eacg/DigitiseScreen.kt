@@ -422,6 +422,10 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
         // Its own state, because it has its own image and its own truth.
         PhotoScoreSection()
 
+        // The goal: a whole 3x4 + rhythm printout, photograph to 12 leads,
+        // corners found automatically, learned tracer (SheetPipeline).
+        SheetSection()
+
         // The learned tracer's latency, memory and fidelity on this phone,
         // before the 12-lead Kotlin port is written against it.
         TracerBenchmarkSection()
