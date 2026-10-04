@@ -16,6 +16,11 @@ Writes, under android/app/src/main/assets/kit/:
     <name>_II.csv        the lead II rhythm strip, one mV value per line,
                          PTB-XL at 500 Hz -- all 10 s, which is what the
                          rhythm strip prints.
+    <name>_12lead.csv    all 12 leads, 10 s at 500 Hz, a header line of
+                         lead names (the printout's spelling: aVR, not AVR)
+                         then one comma-separated row per sample. Each 3x4
+                         cell is scored against its own 2.5 s window of its
+                         lead (the full-sheet path, SheetPipeline.kt).
 
 Flat text for the same reason `TruthWaveform` reads flat text: a parser for
 .npy or JSON on the device is a porting hazard in exchange for kilobytes.
@@ -27,6 +32,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ecgproto import ptbxl
 from score_kit_photo import TARGETS, Target
 
 REPO = Path(__file__).resolve().parents[1]
@@ -46,6 +52,13 @@ def main() -> int:
         (ASSETS / csv).write_text(
             "\n".join(repr(float(v)) for v in t.lead_signal) + "\n",
             encoding="utf-8")
+        csv12 = f"{name}_12lead.csv"
+        names12 = ["I", "II", "III", "aVR", "aVL", "aVF",
+                   "V1", "V2", "V3", "V4", "V5", "V6"]
+        assert [n.upper() for n in names12] == list(ptbxl.LEAD_NAMES)
+        rows12 = [",".join(names12)] + [
+            ",".join(repr(float(v)) for v in t.truth[i]) for i in range(len(t.truth))]
+        (ASSETS / csv12).write_text("\n".join(rows12) + "\n", encoding="utf-8")
         lines.append(" ".join([
             f"name={name}",
             f"ecg_id={t.ecg_id}",
@@ -55,6 +68,7 @@ def main() -> int:
             f"fs={t.fs!r}",
             f"n={len(t.lead_signal)}",
             f"truth={csv}",
+            f"truth12={csv12}",
         ]))
         print(f"  {name}: {len(t.lead_signal)} samples, "
               f"{t.width_mm:.3f} x {t.height_mm:.3f} mm")

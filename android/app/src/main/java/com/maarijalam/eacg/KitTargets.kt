@@ -27,7 +27,9 @@ object KitTargets {
         val heightMm: Double,
         val fs: Double,
         val n: Int,
-        val truthAsset: String
+        val truthAsset: String,
+        /** All 12 leads, 10 s, header line of names; null for older asset sets. */
+        val truth12Asset: String? = null
     ) {
         val label: String get() = "PTB-XL $ecgId"
     }
@@ -51,7 +53,8 @@ object KitTargets {
                         heightMm = f("height_mm").toDouble(),
                         fs = f("fs").toDouble(),
                         n = f("n").toInt(),
-                        truthAsset = "kit/" + f("truth")
+                        truthAsset = "kit/" + f("truth"),
+                        truth12Asset = kv["truth12"]?.let { "kit/$it" }
                     )
                 }
                 .toList()

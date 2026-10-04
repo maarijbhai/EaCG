@@ -1,5 +1,5 @@
 # written by python/make_kit_assets.py; one printed sheet per line
-name=ptbxl38_kit_500hz_300dpi ecg_id=38 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl38_kit_500hz_300dpi_II.csv
-name=ptbxl40_kit_500hz_300dpi ecg_id=40 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl40_kit_500hz_300dpi_II.csv
-name=ptbxl57_kit_500hz_300dpi ecg_id=57 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl57_kit_500hz_300dpi_II.csv
-name=ptbxl9_kit_500hz_300dpi ecg_id=9 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl9_kit_500hz_300dpi_II.csv
+name=ptbxl38_kit_500hz_300dpi ecg_id=38 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl38_kit_500hz_300dpi_II.csv truth12=ptbxl38_kit_500hz_300dpi_12lead.csv
+name=ptbxl40_kit_500hz_300dpi ecg_id=40 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl40_kit_500hz_300dpi_II.csv truth12=ptbxl40_kit_500hz_300dpi_12lead.csv
+name=ptbxl57_kit_500hz_300dpi ecg_id=57 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl57_kit_500hz_300dpi_II.csv truth12=ptbxl57_kit_500hz_300dpi_12lead.csv
+name=ptbxl9_kit_500hz_300dpi ecg_id=9 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl9_kit_500hz_300dpi_II.csv truth12=ptbxl9_kit_500hz_300dpi_12lead.csv

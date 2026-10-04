@@ -544,9 +544,17 @@ class LeadLayout:
     row_knots: tuple = ()
 
     def time_at(self, row: int, x):
-        xs, ts = self.row_knots[row]
-        return np.interp(x, xs, ts, left=np.nan, right=np.nan) if len(xs) > 2 else \
-            ts[0] + (np.asarray(x, np.float64) - xs[0]) * (ts[1] - ts[0]) / (xs[1] - xs[0])
+        """Recording time at column x: linear between knots, and EXTRAPOLATED
+        along the end segments beyond them. Not NaN outside: a cell's first
+        column can sit a fraction of a pixel before time zero (round(t0)),
+        and a NaN there reached np.interp as a sample position -- undefined
+        behaviour, caught by the Kotlin port (SheetPortFixturesTest)."""
+        xs, ts = (np.asarray(v, np.float64) for v in self.row_knots[row])
+        x = np.asarray(x, np.float64)
+        t = np.interp(x, xs, ts)
+        t = np.where(x < xs[0], ts[0] + (x - xs[0]) * (ts[1] - ts[0]) / (xs[1] - xs[0]), t)
+        t = np.where(x > xs[-1], ts[-1] + (x - xs[-1]) * (ts[-1] - ts[-2]) / (xs[-1] - xs[-2]), t)
+        return t
 
     def cell(self, name: str, rhythm: bool = False) -> LeadCell:
         for c in self.cells:
