@@ -9,6 +9,9 @@ measured before the port exists:
     -> corners           page.find_sheet_corners (no clicks), or given
     -> rectify           size from the corners alone: the phone cannot know
                          the sheet's true size (rectify, as score_photo)
+    -> regularise        optional (geometry="grid"): gridfit.fit_grid makes
+                         the printed 5 mm grid exactly regular, one warp
+                         from the photograph
     -> locate            segment.locate_sheet: four rows, time zero
     -> calibrate         segment.tick_scale: the separator ticks, falling
                          back to the duration anchor
@@ -29,7 +32,7 @@ from dataclasses import dataclass, field
 import cv2
 import numpy as np
 
-from . import canonical, digitise as dig, page, segment
+from . import canonical, digitise as dig, gridfit, page, segment
 
 FS = 500.0
 #: How far before recording time zero the learned tracer's canonical crop
@@ -150,16 +153,33 @@ class SheetResult:
     ticks_found: int
     t0_source: str
     layout: segment.LeadLayout = field(repr=False)
+    geometry: str = "corners"       # what was actually used
+    grid_fit: gridfit.GridFit | None = field(default=None, repr=False)
 
 
-def digitise_sheet(photo: np.ndarray, tracer, corners: np.ndarray | None = None
-                   ) -> SheetResult:
-    """Photograph of a 3x4 + rhythm printout -> every lead in mV at 500 Hz."""
+def digitise_sheet(photo: np.ndarray, tracer, corners: np.ndarray | None = None,
+                   geometry: str = "corners") -> SheetResult:
+    """Photograph of a 3x4 + rhythm printout -> every lead in mV at 500 Hz.
+
+    geometry="grid" regularises the page on its printed 5 mm grid after the
+    corner rectification; if the fit is refused the corner page is kept and
+    `SheetResult.geometry` says "corners".
+    """
     refined = None
     if corners is None:
         fc = page.find_sheet_corners(photo)
         corners, refined = fc.corners, fc.refined
     rect, _ = rectify(photo, corners)
+    used, fit = "corners", None
+    if geometry == "grid":
+        try:
+            fit = gridfit.fit_grid(rect, segment.locate_sheet(rect).anchor_px_per_mm)
+            rect, _ = gridfit.regularise(photo, corners, rect.shape, fit)
+            used = "grid"
+        except (RuntimeError, ValueError):
+            fit = None
+    elif geometry != "corners":
+        raise ValueError(f"geometry must be 'corners' or 'grid', got {geometry!r}")
     sl = segment.locate_sheet(rect)
     ticks = segment.tick_scale(rect, sl)
     if np.isfinite(ticks.px_per_mm):
@@ -173,4 +193,4 @@ def digitise_sheet(photo: np.ndarray, tracer, corners: np.ndarray | None = None
         pos, x0 = rows[cell.row]
         leads[(cell.name, cell.row == 3)] = cell_signal(pos, x0, cell, px, px, layout)
     return SheetResult(leads, np.asarray(corners, np.float64), refined, rect.shape[:2],
-                       float(px), cal, ticks.n_found, sl.t0_source, layout)
+                       float(px), cal, ticks.n_found, sl.t0_source, layout, used, fit)

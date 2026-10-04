@@ -23,6 +23,7 @@ import sys
 import time
 from pathlib import Path
 
+import cv2
 import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
@@ -43,6 +44,10 @@ def main(argv=None) -> int:
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--model", default="b3_512x1024_fp16")
     p.add_argument("--corners", choices=("auto", "registered"), default="auto")
+    p.add_argument("--geometry", choices=("corners", "grid"), default="corners")
+    # The phone decodes every photograph to 3,200 px on its long side
+    # (ImageSource.kt); 0 keeps the file's full resolution.
+    p.add_argument("--decode-px", type=int, default=3200)
     args = p.parse_args(argv)
     from export_tflite import TfliteTracer
     tfl = TfliteTracer(ASSETS / f"{args.model}.tflite")
@@ -56,17 +61,24 @@ def main(argv=None) -> int:
         t = skp.Target(e["target"])
         truth = S12.SheetTruth(t)
         photo = rp.read_oriented(skp.PHOTOS / e.get("file", f"{stem}.jpg"))
-        corners = None if args.corners == "auto" else np.asarray(e["corners_px"], np.float32)
+        sc = 1.0
+        if args.decode_px and max(photo.shape[:2]) > args.decode_px:
+            sc = args.decode_px / max(photo.shape[:2])
+            photo = cv2.resize(photo, None, fx=sc, fy=sc, interpolation=cv2.INTER_AREA)
+        corners = (None if args.corners == "auto"
+                   else np.asarray(e["corners_px"], np.float32) * sc)
         for name, tr in tracers.items():
             t0 = time.perf_counter()
             try:
-                res = sheet.digitise_sheet(photo, tr, corners)
+                res = sheet.digitise_sheet(photo, tr, corners, args.geometry)
             except (RuntimeError, ValueError) as exc:
                 rows.append({"photo": stem, "tracer": name, "error": str(exc)})
                 continue
             el = time.perf_counter() - t0
             head = {"photo": stem, "target": t.name, "ecg_id": t.ecg_id, "tracer": name,
                     "corners_source": args.corners, "corners_refined": res.corners_refined,
+                    "geometry": res.geometry, "decode_px": args.decode_px,
+                    "grid_fit_rms_mm": round(res.grid_fit.rms_mm, 3) if res.grid_fit else "",
                     "rect": f"{res.rect_shape[1]}x{res.rect_shape[0]}",
                     "calibration": res.calibration, "ticks_found": res.ticks_found,
                     "px_per_mm": round(res.px_per_mm, 4), "t0_source": res.t0_source,
@@ -85,9 +97,11 @@ def main(argv=None) -> int:
                   flush=True)
     S12.RESULTS = RESULTS
     print(S12.persist(rows, {"model": args.model, "corners": args.corners,
+                             "geometry": args.geometry, "decode_px": args.decode_px,
                              "path": "ecgproto.sheet.digitise_sheet"},
-                      f"phone_path_{args.model}" + ("" if args.corners == "auto"
-                                                    else f"_{args.corners}")))
+                      f"phone_path_{args.model}"
+                      + ("" if args.corners == "auto" else f"_{args.corners}")
+                      + ("" if args.geometry == "corners" else f"_{args.geometry}")))
     return 0
 
 
