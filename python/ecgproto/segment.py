@@ -594,6 +594,18 @@ def segment_leads(image: np.ndarray, loc: StripLocation,
     if ticks is not None:
         for r, k, x in ticks.positions:
             found.setdefault(r, {})[k] = float(x)
+    # A tick missing in one row borrows its column-mates' mean position:
+    # after rectification the three rows' k-th ticks are nearly vertically
+    # aligned, and on ptbxl40_20260929_01 the one missing tick (row 0, 7.5 s)
+    # left V4 extrapolated at the global scale and ~20 ms early.
+    for r in range(3):
+        if r not in found:
+            continue
+        for k in (1, 2, 3):
+            if k not in found[r]:
+                mates = [found[rr][k] for rr in found if rr != r and k in found[rr]]
+                if mates:
+                    found[r][k] = float(np.mean(mates))
     knots = []
     for r in range(4):
         if r < 3:
