@@ -5,10 +5,13 @@ import android.graphics.Bitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
+import org.opencv.core.MatOfByte
+import org.opencv.core.MatOfInt
 import org.opencv.core.MatOfPoint2f
 import org.opencv.core.Point
 import org.opencv.core.Rect
 import org.opencv.core.Size
+import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
@@ -59,8 +62,32 @@ object SheetPipeline {
         val t0Source: String,
         val leads: List<LeadResult>,
         val timingsMs: Map<String, Long>,
-        val rectPreview: Bitmap?
+        val rectPreview: Bitmap?,
+        /** The rectified page at full resolution, as JPEG (for Records). */
+        val pageJpeg: ByteArray? = null,
+        /** Per row 0-3: the traced row positions on the page, one per column from x0. */
+        val rowTraces: List<RowTrace> = emptyList()
     )
+
+    /** One printed row's trace in page pixels: pos[i] is the row at column x0 + i. */
+    class RowTrace(val x0: Int, val pos: DoubleArray)
+
+    /**
+     * RGBA page -> JPEG bytes, in native memory: a full-resolution page is
+     * ~23 MB as a Java bitmap, against a ~200 MB heap (ImageWarp.previewBitmap).
+     */
+    fun encodeJpeg(rgba: Mat, quality: Int = 90): ByteArray {
+        val bgr = Mat()
+        val buf = MatOfByte()
+        val params = MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, quality)
+        try {
+            Imgproc.cvtColor(rgba, bgr, Imgproc.COLOR_RGBA2BGR)
+            check(Imgcodecs.imencode(".jpg", bgr, buf, params)) { "JPEG encoding failed" }
+            return buf.toArray()
+        } finally {
+            bgr.release(); buf.release(); params.release()
+        }
+    }
 
     // ------------------------------------------------------------ model
 
@@ -208,6 +235,7 @@ object SheetPipeline {
 
             val ownModel = if (tracer == Tracer.MODEL && model == null) LiteRtModel(context) else null
             val leads = ArrayList<LeadResult>()
+            var rowTraces: List<RowTrace> = emptyList()
             try {
                 val traces = (0 until 4).map { r ->
                     val (xs, ys) = when (tracer) {
@@ -228,13 +256,16 @@ object SheetPipeline {
                     leads += LeadResult(cell.name, cell.rhythm, cell.tStartS, sig, sc?.first, sc?.second)
                 }
                 lap("cut+score")
+                rowTraces = traces.map { (pos, x0) -> RowTrace(x0, pos) }
             } finally {
                 ownModel?.close()
             }
+            // Not timed as a pipeline stage: it is for the Records tab only.
+            val jpeg = runCatching { encodeJpeg(rect) }.getOrNull()
             Result(tracer, c, cornersAuto, refined, rect.cols(), rect.rows(), px,
                 if (useTicks) "ticks" else "duration", ticks.nFound,
                 if (pulseT0.isFinite()) "pulses" else "rhythm_locator", leads, t,
-                ImageWarp.previewBitmap(rect))
+                ImageWarp.previewBitmap(rect), jpeg, rowTraces)
         } finally {
             rect.release()
         }

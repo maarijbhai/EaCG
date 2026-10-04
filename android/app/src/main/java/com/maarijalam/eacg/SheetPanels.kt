@@ -120,7 +120,16 @@ fun SheetSection(modifier: Modifier = Modifier) {
                     cornersAuto = state.cornersAuto, cornersRefined = state.cornersRefined)
                 val total = r.timingsMs.values.sum()
                 state = state.copy(busy = false, result = r, truth12 = truth,
-                    status = "Done in ${total} ms.")
+                    status = "Done in ${total} ms. Saving to Records...")
+                // Every digitisation is kept (RecordStore); a failed save is
+                // reported but never discards the result on screen.
+                val saved = runCatching {
+                    val csv = SheetPipeline.csv(r, "picked ${bmp.width}x${bmp.height}",
+                        state.target?.name, Exporter.stamp())
+                    RecordStore.save(context, r, bmp, state.target?.name, csv)
+                }
+                state = state.copy(status = "Done in ${total} ms. " + saved.fold(
+                    { "Saved to Records." }, { "Not saved to Records: ${it.message}" }))
             } catch (c: CancellationException) {
                 throw c
             } catch (e: Throwable) {
@@ -222,7 +231,7 @@ private fun SheetResultPanel(r: SheetPipeline.Result, truth12: Map<String, Doubl
 
 /** One printed row: each lead's digitised trace (blue) over its truth (grey). */
 @Composable
-private fun LeadRow(leads: List<SheetPipeline.LeadResult>, truth12: Map<String, DoubleArray>?) {
+internal fun LeadRow(leads: List<SheetPipeline.LeadResult>, truth12: Map<String, DoubleArray>?) {
     val blue = Color(0xFF2A78D6)
     val grey = Color(0x99555555)
     val grid = Color(0x33E34948)
