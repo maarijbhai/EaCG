@@ -1,11 +1,13 @@
 {
   "generated_by": "python/score_12lead.py",
-  "utc": "2026-10-04T16:43:39+00:00",
-  "git_commit": "77ef289e0ffe72ad68a58cd1705c1b797fd2a79a",
+  "utc": "2026-10-04T17:45:49+00:00",
+  "git_commit": "16f9dd060421fdfe792970c1efcace59fe0e09eb",
   "git_dirty": false,
   "params": {
     "model": "b3_512x1024_fp16",
     "corners": "auto",
+    "geometry": "corners",
+    "decode_px": 3200,
     "path": "ecgproto.sheet.digitise_sheet",
     "min_overlap_fraction": 0.85,
     "cell_max_lag_s": 0.1,
