@@ -1,0 +1,20 @@
+{
+  "generated_by": "python/run_ticks.py",
+  "utc": "2026-10-04T18:43:52+00:00",
+  "git_commit": "4b0a36c25417060bb1b8d38e88ada8628e9244b2",
+  "git_dirty": false,
+  "params": {
+    "decode_px": 3200,
+    "corners": "auto",
+    "open_kernel": 2,
+    "tick_min_height_mm": 4.0,
+    "tick_width_mm": 0.45,
+    "tick_window": 0.04,
+    "tick_first_window": 0.25
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "opencv": "5.0.0"
+  }
+}
