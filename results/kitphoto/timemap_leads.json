@@ -1,0 +1,25 @@
+{
+  "generated_by": "ml/run_timemap.py",
+  "utc": "2026-10-04T18:15:54+00:00",
+  "git_commit": "5e5cdd7e19605313016fa53a2745c0cacfaced08",
+  "git_dirty": false,
+  "params": {
+    "model": "b3_512x1024_fp16",
+    "decode_px": 3200,
+    "corners": "auto",
+    "modes": [
+      "ticks",
+      "rowstart",
+      "rowstart_end",
+      "grid"
+    ],
+    "max_shift_s": 0.2,
+    "min_pcc": 0.5,
+    "min_fit_points": 3
+  },
+  "versions": {
+    "python": "3.12.3",
+    "numpy": "2.5.3",
+    "opencv": "5.0.0"
+  }
+}
