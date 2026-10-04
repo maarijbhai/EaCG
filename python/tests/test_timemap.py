@@ -148,6 +148,32 @@ class RowKnots(unittest.TestCase):
         self.assertTrue(all(v is None for v in k))
         self.assertEqual(set(u), {0, 1, 2, 3})
 
+    def test_tick_origin_is_the_median_origin_the_ticks_imply(self):
+        # True origin 110 at 260 px/s; one tick 6 px off.
+        ticks = [(0, 1, 110 + 650.0), (0, 2, 110 + 1300.0), (1, 3, 110 + 1950.0 + 6),
+                 (2, 1, 110 + 650.0)]
+        self.assertAlmostEqual(timemap.tick_origin(ticks, 260.0), 110.0)
+        self.assertAlmostEqual(timemap.tick_origin(ticks, 260.0, 1.0), 109.0)
+        self.assertTrue(np.isnan(timemap.tick_origin(ticks[:2], 260.0)))
+
+    def test_grid_tickzero_takes_time_zero_from_the_ticks_not_the_pulse(self):
+        ticks = [(0, 1, 110 + 650.0), (1, 2, 110 + 1300.0), (2, 3, 110 + 1950.0)]
+        k, u = timemap.row_knots("grid_tickzero", self.lay, [100.0] * 4,
+                                 grid_px_per_mm=10.4, tick_positions=ticks)
+        self.assertEqual(u, {})
+        for r in range(4):
+            self.assertAlmostEqual(k[r][0][0], 110.0)          # not the pulse's 100
+            self.assertAlmostEqual(k[r][0][1], 110.0 + 2600.0)
+        k2, _ = timemap.row_knots("grid_tickzero_k2fix", self.lay, [100.0] * 4,
+                                  grid_px_per_mm=10.4, tick_positions=ticks)
+        self.assertAlmostEqual(k2[0][0][0], 109.0)
+
+    def test_grid_tickzero_with_too_few_ticks_is_unavailable(self):
+        k, u = timemap.row_knots("grid_tickzero", self.lay, [100.0] * 4,
+                                 grid_px_per_mm=10.4, tick_positions=[(0, 1, 760.0)])
+        self.assertTrue(all(v is None for v in k))
+        self.assertIn("ticks", u[0])
+
     def test_unknown_mode_raises(self):
         with self.assertRaises(ValueError):
             timemap.row_knots("rows", self.lay, [100.0] * 4)

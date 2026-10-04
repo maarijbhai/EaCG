@@ -19,6 +19,16 @@ one change at a time on the same row traces:
                   10.0 s (the per-row duration anchor)
     grid          time zero as ticks, then uniform at 25 mm/s on the grid
                   fit's px/mm: no ticks, no row end (only on a grid page)
+    grid_tickzero uniform at the grid's px/mm like `grid`, but time zero from
+                  the TICKS instead of the pulse edge: each tick found at
+                  k * 2.5 s implies an origin x - k * 2.5 s * px/s, and the
+                  median over all ticks found is time zero (no pulse edge,
+                  no row end). Measured reason: the pulse edge sits ~10 ms
+                  early (results/kitphoto/timemap_*.csv, 5d1d80a).
+    grid_tickzero_k2fix  as grid_tickzero, with the ticks moved 1 px left:
+                  they are found on a 2x2-opened mask, which cv2 shifts +1 px
+                  (row_end_x). A separate mode so the two effects are measured
+                  one at a time.
 
 A row whose map cannot be built (no own pulse, no detectable end, no grid
 fit) is UNAVAILABLE: its leads are NaN and the reason is reported. Nothing
@@ -33,7 +43,8 @@ import numpy as np
 
 from . import digitise as dig, segment
 
-MODES = ("ticks", "rowstart", "rowstart_end", "grid")
+MODES = ("ticks", "rowstart", "rowstart_end", "grid", "grid_tickzero",
+         "grid_tickzero_k2fix")
 #: Largest shift searched, s. Well beyond any time-zero or scale error that
 #: still leaves the waveform recognisable (1% of 10 s is 100 ms), and short of
 #: half a beat at up to 150 bpm, so the neighbouring beat cannot win.
@@ -135,8 +146,16 @@ def row_end_x(image: np.ndarray, layout: segment.LeadLayout, row: int,
     return float(x0 + cols[-1] - shift)
 
 
+def tick_origin(tick_positions, px_per_s: float, offset_px: float = 0.0) -> float:
+    """Time zero implied by the ticks at a known scale: median over ticks of
+    x - k * 2.5 s * px_per_s. NaN with fewer than segment.TICK_MIN_FOUND."""
+    o = [x - offset_px - k * segment.CELL_S * px_per_s for _, k, x in (tick_positions or ())]
+    return float(np.median(o)) if len(o) >= segment.TICK_MIN_FOUND else float("nan")
+
+
 def row_knots(mode: str, layout: segment.LeadLayout, t0_per_row,
-              row_ends=None, grid_px_per_mm: float | None = None):
+              row_ends=None, grid_px_per_mm: float | None = None,
+              tick_positions=None):
     """Per-row (xs, ts) knots for `mode`, and {row: reason} for rows that
     cannot have them (knots None)."""
     if mode not in MODES:
@@ -147,13 +166,21 @@ def row_knots(mode: str, layout: segment.LeadLayout, t0_per_row,
     for r in range(4):
         xs0, ts0 = (list(v) for v in layout.row_knots[r])
         inner = [(x, t) for x, t in zip(xs0, ts0) if 0.0 < t < segment.RECORDING_S]
-        if mode == "grid":
+        if mode.startswith("grid"):
             if grid_px_per_mm is None or not np.isfinite(grid_px_per_mm):
                 knots.append(None)
                 unavailable[r] = "no grid fit"
                 continue
             pps = grid_px_per_mm * dig.MM_PER_S
-            knots.append(((xs0[0], xs0[0] + segment.RECORDING_S * pps),
+            x0 = xs0[0]
+            if mode != "grid":
+                x0 = tick_origin(tick_positions, pps,
+                                 1.0 if mode == "grid_tickzero_k2fix" else 0.0)
+                if not np.isfinite(x0):
+                    knots.append(None)
+                    unavailable[r] = f"fewer than {segment.TICK_MIN_FOUND} ticks"
+                    continue
+            knots.append(((x0, x0 + segment.RECORDING_S * pps),
                           (0.0, segment.RECORDING_S)))
             continue
         start = float(t0_per_row[r]) if t0_per_row is not None else float("nan")

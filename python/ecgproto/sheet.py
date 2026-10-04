@@ -192,7 +192,8 @@ def retime(res: SheetResult, mode: str) -> SheetResult:
     grid_px = res.grid_fit.px_per_mm if (res.grid_fit is not None
                                          and res.geometry == "grid") else None
     knots, unavailable = timemap.row_knots(mode, base, res.location.t0_per_row,
-                                           ends, grid_px)
+                                           ends, grid_px,
+                                           res.ticks.positions if res.ticks else None)
     layout = segment.segment_leads(res.page, res.location.as_strip_location(),
                                    res.px_per_mm, tk, knots_override=knots)
     return replace(res, leads=cut_leads(res.rows, layout, res.px_per_mm),
