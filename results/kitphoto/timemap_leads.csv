@@ -60,6 +60,32 @@ ptbxl40_20260928_01,corners,classical,grid,ticks,8,aVF,False,2,False,no grid fit
 ptbxl40_20260928_01,corners,classical,grid,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260928_01,corners,classical,grid,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260928_01,corners,classical,grid,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,classical,grid_tickzero_k2fix,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260928_01,corners,b3,ticks,ticks,8,I,False,0,True,,0.9976,0.1722,-2.013,4.115,0.9828,0,,-40.0,0.7985,ok
 ptbxl40_20260928_01,corners,b3,ticks,ticks,8,aVR,False,0,True,,0.9992,0.9712,11.621,11.621,0.9722,1,,0.0,0.9714,ok
 ptbxl40_20260928_01,corners,b3,ticks,ticks,8,V1,False,0,True,,0.9992,0.8682,5.877,6.169,0.9874,2,,4.0,0.8767,ok
@@ -121,6 +147,32 @@ ptbxl40_20260928_01,corners,b3,grid,ticks,8,aVF,False,2,False,no grid fit,,,,,,1
 ptbxl40_20260928_01,corners,b3,grid,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260928_01,corners,b3,grid,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260928_01,corners,b3,grid,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260928_01,corners,b3,grid_tickzero_k2fix,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260928_01,grid,classical,ticks,ticks,8,I,False,0,True,,0.9816,0.4521,1.105,1.403,0.5258,0,,16.0,0.5248,ok
 ptbxl40_20260928_01,grid,classical,ticks,ticks,8,aVR,False,0,True,,0.964,0.889,7.045,7.743,0.9058,1,,4.0,0.9042,ok
 ptbxl40_20260928_01,grid,classical,ticks,ticks,8,V1,False,0,True,,0.9648,0.5712,1.703,1.783,0.601,2,,-4.0,0.5566,ok
@@ -185,6 +237,38 @@ ptbxl40_20260928_01,grid,classical,grid,ticks,8,II,True,3,True,,0.9986,0.775,3.3
 ptbxl40_20260928_01,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,1,1,10.0,0.975,ok
 ptbxl40_20260928_01,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,2,2,8.0,0.981,ok
 ptbxl40_20260928_01,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,3,3,8.0,0.8595,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,I,False,0,True,,0.9808,0.5022,1.313,1.403,0.5257,0,,8.0,0.5243,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,aVR,False,0,True,,0.964,0.8897,7.071,7.776,0.9066,1,,4.0,0.905,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,V1,False,0,True,,0.9624,0.577,1.748,1.82,0.6024,2,,-4.0,0.5593,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,V4,False,0,True,,0.5936,0.3021,-3.111,-3.083,0.3462,3,,,,UNRELIABLE
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,II,False,1,True,,0.9824,0.6404,-0.061,-0.02,0.6452,0,,4.0,0.6405,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,aVL,False,1,True,,0.9616,0.9274,8.678,14.156,0.9813,1,,6.0,0.981,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,V2,False,1,True,,0.8816,0.7328,3.589,3.889,0.756,2,,-8.0,0.8667,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,V5,False,1,True,,0.9824,0.4648,1.154,1.155,0.4654,3,,6.0,0.4373,UNRELIABLE
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,III,False,2,True,,0.9824,0.8983,7.236,13.558,0.9822,0,,-8.0,0.9782,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,aVF,False,2,True,,0.9648,0.9588,10.951,11.682,0.9653,1,,2.0,0.9654,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,V3,False,2,True,,0.9616,0.8552,6.11,8.494,0.9231,2,,-6.0,0.919,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,V6,False,2,True,,0.9808,0.8678,5.298,5.352,0.871,3,,-2.0,0.866,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,0.9976,0.9048,7.395,7.675,0.9169,0,0,6.0,0.8829,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,1,1,-2.0,0.9749,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,2,2,-4.0,0.9811,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,3,3,-4.0,0.8583,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,I,False,0,True,,0.9824,0.4649,1.161,1.397,0.5257,0,,12.0,0.5243,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,aVR,False,0,True,,0.9648,0.8376,5.423,7.765,0.9063,1,,8.0,0.9047,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,V1,False,0,True,,0.9632,0.5857,1.82,1.82,0.6,2,,0.0,0.5593,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,V4,False,0,True,,0.5936,0.3061,-3.078,-3.073,0.3448,3,,,,UNRELIABLE
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,II,False,1,True,,0.984,0.6268,-0.187,-0.01,0.6447,0,,8.0,0.6405,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,aVL,False,1,True,,0.9616,0.8441,5.432,14.11,0.9818,1,,10.0,0.9808,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,V2,False,1,True,,0.8816,0.7505,3.815,3.891,0.7562,2,,-4.0,0.8668,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,V5,False,1,True,,0.9808,0.4612,1.14,1.154,0.4656,3,,8.0,0.4373,UNRELIABLE
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,III,False,2,True,,0.984,0.9531,10.484,12.633,0.9759,0,,-4.0,0.9753,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,aVF,False,2,True,,0.9648,0.9162,7.922,11.757,0.9655,1,,6.0,0.9656,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,V3,False,2,True,,0.9616,0.9073,7.919,8.478,0.9228,2,,-4.0,0.9188,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,V6,False,2,True,,0.9792,0.8694,5.339,5.356,0.8713,3,,2.0,0.866,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,0.998,0.8935,6.818,7.377,0.917,0,0,10.0,0.8823,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,1,1,2.0,0.9752,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,2,2,0.0,0.9817,ok
+ptbxl40_20260928_01,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,3,3,0.0,0.8593,ok
 ptbxl40_20260928_01,grid,b3,ticks,ticks,8,I,False,0,True,,0.9952,0.9769,13.59,15.35,0.9963,0,,2.0,0.9848,ok
 ptbxl40_20260928_01,grid,b3,ticks,ticks,8,aVR,False,0,True,,0.9992,0.9818,14.311,15.091,0.9849,1,,2.0,0.9851,ok
 ptbxl40_20260928_01,grid,b3,ticks,ticks,8,V1,False,0,True,,1.0,0.9011,7.089,19.989,0.9952,2,,-8.0,0.9952,ok
@@ -249,6 +333,38 @@ ptbxl40_20260928_01,grid,b3,grid,ticks,8,II,True,3,True,,0.9966,0.8766,6.245,10.
 ptbxl40_20260928_01,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,1,1,8.0,0.9946,ok
 ptbxl40_20260928_01,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,2,2,6.0,0.9932,ok
 ptbxl40_20260928_01,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,3,3,2.0,0.9729,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,I,False,0,True,,0.9976,0.9677,12.165,21.004,0.9961,0,,-4.0,0.9961,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,aVR,False,0,True,,0.9992,0.9838,14.809,15.061,0.9848,1,,2.0,0.9849,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,V1,False,0,True,,0.9976,0.8794,6.231,20.482,0.9958,2,,-10.0,0.9958,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,V4,False,0,True,,0.996,0.953,10.695,21.04,0.9958,3,,-6.0,0.9958,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,II,False,1,True,,0.9976,0.9246,8.474,15.021,0.9934,0,,-6.0,0.9856,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,aVL,False,1,True,,0.9992,0.9581,10.99,15.243,0.9853,1,,4.0,0.9849,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,V2,False,1,True,,0.9976,0.9044,7.495,21.422,0.9968,2,,-12.0,0.9962,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,V5,False,1,True,,0.9976,0.9697,12.374,14.079,0.997,3,,-2.0,0.98,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,III,False,2,True,,0.9976,0.8211,4.754,16.208,0.9948,0,,-10.0,0.9888,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,aVF,False,2,True,,0.9992,0.9849,14.839,14.839,0.9849,1,,0.0,0.985,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,V3,False,2,True,,0.9976,0.8451,5.624,17.641,0.9904,2,,-8.0,0.9904,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,V6,False,2,True,,0.996,0.9896,16.637,18.97,0.997,3,,-2.0,0.9945,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,0.9966,0.9177,8.044,11.306,0.9613,0,0,-2.0,0.9717,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,1,1,-4.0,0.9944,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,2,2,-6.0,0.9928,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,3,3,-10.0,0.9722,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,I,False,0,True,,0.9976,0.9959,20.755,20.755,0.9959,0,,0.0,0.9959,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,aVR,False,0,True,,0.9992,0.9404,9.333,15.106,0.985,1,,4.0,0.985,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,V1,False,0,True,,0.9976,0.9506,10.099,20.662,0.996,2,,-6.0,0.996,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,V4,False,0,True,,0.9976,0.9944,19.802,21.729,0.9964,3,,-2.0,0.9964,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,II,False,1,True,,0.9976,0.9717,12.504,15.08,0.994,0,,-4.0,0.9858,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,aVL,False,1,True,,0.9992,0.8851,6.67,15.164,0.9859,1,,8.0,0.9846,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,V2,False,1,True,,0.9976,0.951,10.397,21.548,0.9966,2,,-8.0,0.9963,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,V5,False,1,True,,0.9992,0.978,13.701,13.91,0.996,3,,2.0,0.9791,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,III,False,2,True,,0.9976,0.9173,8.059,16.342,0.9943,0,,-6.0,0.9892,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,aVF,False,2,True,,0.9992,0.9402,9.136,14.849,0.985,1,,4.0,0.985,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,V3,False,2,True,,0.9976,0.9379,9.594,18.001,0.9912,2,,-6.0,0.9913,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,V6,False,2,True,,0.9976,0.9888,16.41,18.877,0.9966,3,,2.0,0.9943,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,0.9968,0.9382,9.159,9.233,0.943,0,0,2.0,0.9544,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,1,1,0.0,0.9948,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,2,2,-2.0,0.9939,ok
+ptbxl40_20260928_01,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,3,3,-6.0,0.9727,ok
 ptbxl40_20260929_01,corners,classical,ticks,ticks,8,I,False,0,True,,0.9552,0.0943,-0.351,-0.28,0.4288,0,,156.0,0.2824,UNRELIABLE
 ptbxl40_20260929_01,corners,classical,ticks,ticks,8,aVR,False,0,True,,0.5248,0.2571,0.12,0.134,0.2596,1,,,,UNRELIABLE
 ptbxl40_20260929_01,corners,classical,ticks,ticks,8,V1,False,0,True,,0.9472,0.2532,0.291,0.384,0.3718,2,,-128.0,0.3851,UNRELIABLE
@@ -310,6 +426,32 @@ ptbxl40_20260929_01,corners,classical,grid,ticks,8,aVF,False,2,False,no grid fit
 ptbxl40_20260929_01,corners,classical,grid,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260929_01,corners,classical,grid,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260929_01,corners,classical,grid,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,classical,grid_tickzero_k2fix,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260929_01,corners,b3,ticks,ticks,8,I,False,0,True,,0.9912,0.658,1.748,9.208,0.9936,0,,14.0,0.9419,ok
 ptbxl40_20260929_01,corners,b3,ticks,ticks,8,aVR,False,0,True,,0.9976,0.9464,9.728,9.759,0.9468,1,,-2.0,0.9468,ok
 ptbxl40_20260929_01,corners,b3,ticks,ticks,8,V1,False,0,True,,0.9976,0.8467,5.203,18.02,0.9923,2,,-12.0,0.9923,ok
@@ -371,6 +513,32 @@ ptbxl40_20260929_01,corners,b3,grid,ticks,8,aVF,False,2,False,no grid fit,,,,,,1
 ptbxl40_20260929_01,corners,b3,grid,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260929_01,corners,b3,grid,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260929_01,corners,b3,grid,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_01,corners,b3,grid_tickzero_k2fix,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260929_01,grid,classical,ticks,ticks,8,I,False,0,True,,0.9536,0.3246,-0.14,0.136,0.4085,0,,-42.0,0.369,UNRELIABLE
 ptbxl40_20260929_01,grid,classical,ticks,ticks,8,aVR,False,0,True,,0.9552,0.2346,0.004,0.009,0.2408,1,,2.0,0.2587,UNRELIABLE
 ptbxl40_20260929_01,grid,classical,ticks,ticks,8,V1,False,0,True,,0.9608,0.3399,0.527,0.733,0.4512,2,,-96.0,0.4488,UNRELIABLE
@@ -429,6 +597,38 @@ ptbxl40_20260929_01,grid,classical,grid,ticks,8,II,True,3,True,,0.9226,0.3183,-1
 ptbxl40_20260929_01,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,1,1,38.0,0.725,ok
 ptbxl40_20260929_01,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,2,2,36.0,0.9682,ok
 ptbxl40_20260929_01,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,3,3,32.0,0.9624,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,I,False,0,True,,0.9712,0.318,-0.182,0.271,0.4208,0,,-58.0,0.387,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,aVR,False,0,True,,0.948,0.2321,-0.02,-0.018,0.24,1,,2.0,0.2601,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,V1,False,0,True,,0.964,0.331,0.496,0.729,0.4513,2,,-100.0,0.4497,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,V4,False,0,True,,0.9536,0.0365,-0.096,0.322,0.2996,3,,62.0,0.2386,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,II,False,1,True,,0.8472,-0.0556,-8.181,-8.138,0.0383,0,,,,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,aVL,False,1,True,,0.9544,0.3547,0.4,0.438,0.4047,1,,-174.0,0.3691,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,V2,False,1,True,,0.964,-0.1477,-2.178,-2.105,-0.0881,2,,152.0,-0.079,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,V5,False,1,True,,0.6224,0.2727,0.226,0.229,0.2733,3,,,,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,III,False,2,True,,0.6464,0.086,-0.441,-0.213,0.2111,0,,,,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,aVF,False,2,True,,0.9576,0.6685,2.403,2.452,0.6771,1,,4.0,0.6622,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,V3,False,2,True,,0.9624,0.7158,3.172,3.172,0.7166,2,,0.0,0.695,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,V6,False,2,True,,0.9696,0.8203,5.007,5.007,0.836,3,,0.0,0.8121,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,0.9264,0.6647,1.794,1.805,0.6655,0,0,,,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,1,1,2.0,0.7252,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,2,2,0.0,0.9696,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,3,3,-4.0,0.9625,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,I,False,0,True,,0.9712,0.3204,-0.175,0.263,0.4208,0,,-54.0,0.3867,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,aVR,False,0,True,,0.948,0.2259,-0.027,-0.012,0.2376,1,,6.0,0.2595,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,V1,False,0,True,,0.964,0.3436,0.541,0.731,0.4512,2,,-94.0,0.4497,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,V4,False,0,True,,0.9544,0.0091,-0.152,0.301,0.2725,3,,68.0,0.2386,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,II,False,1,True,,0.8472,-0.0479,-8.153,-8.117,0.0382,0,,,,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,aVL,False,1,True,,0.9536,0.33,0.353,0.436,0.4048,1,,-170.0,0.3692,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,V2,False,1,True,,0.964,-0.1588,-2.24,-2.129,-0.0892,2,,156.0,-0.0793,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,V5,False,1,True,,0.6232,0.2707,0.219,0.234,0.274,3,,,,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,III,False,2,True,,0.6464,0.0702,-0.473,-0.21,0.2111,0,,,,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,aVF,False,2,True,,0.9584,0.6517,2.19,2.456,0.677,1,,8.0,0.6629,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,V3,False,2,True,,0.9616,0.7097,3.113,3.151,0.7141,2,,4.0,0.695,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,V6,False,2,True,,0.9696,0.8005,4.645,5.007,0.8363,3,,6.0,0.8124,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,0.9262,0.6572,1.695,1.804,0.6655,0,0,,,UNRELIABLE
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,1,1,6.0,0.7256,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,2,2,6.0,0.9679,ok
+ptbxl40_20260929_01,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,3,3,0.0,0.9626,ok
 ptbxl40_20260929_01,grid,b3,ticks,ticks,8,I,False,0,True,,0.9896,0.7449,3.516,10.56,0.9869,0,,12.0,0.9634,ok
 ptbxl40_20260929_01,grid,b3,ticks,ticks,8,aVR,False,0,True,,0.9992,0.9081,7.678,7.678,0.9112,1,,0.0,0.9082,ok
 ptbxl40_20260929_01,grid,b3,ticks,ticks,8,V1,False,0,True,,0.9976,0.8439,5.159,18.487,0.9932,2,,-12.0,0.9933,ok
@@ -487,6 +687,38 @@ ptbxl40_20260929_01,grid,b3,grid,ticks,8,II,True,3,True,,0.9964,0.4152,-0.343,14
 ptbxl40_20260929_01,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,1,1,34.0,0.9926,ok
 ptbxl40_20260929_01,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,2,2,32.0,0.9873,ok
 ptbxl40_20260929_01,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,3,3,28.0,0.9776,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,I,False,0,True,,0.9984,0.9367,9.184,9.254,0.988,0,,-2.0,0.9378,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,aVR,False,0,True,,0.9984,0.8633,6.183,6.183,0.9122,1,,0.0,0.8633,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,V1,False,0,True,,0.9984,0.7416,2.965,16.547,0.9935,2,,-16.0,0.9891,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,V4,False,0,True,,0.9944,0.9682,12.393,14.871,0.993,3,,-4.0,0.9821,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,II,False,1,True,,0.9968,0.9591,11.04,12.43,0.9819,0,,4.0,0.9712,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,aVL,False,1,True,,0.9984,0.8774,6.491,6.555,0.9832,1,,2.0,0.8793,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,V2,False,1,True,,0.9984,0.8714,6.218,19.718,0.9947,2,,-14.0,0.9947,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,V5,False,1,True,,0.9864,0.9743,13.258,18.806,0.9959,3,,-4.0,0.993,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,III,False,2,True,,0.9984,0.835,5.11,10.198,0.9894,0,,-8.0,0.9492,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,aVF,False,2,True,,0.9984,0.9649,11.65,11.65,0.9832,1,,0.0,0.9652,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,V3,False,2,True,,0.9984,0.8613,6.171,15.415,0.9846,2,,-8.0,0.9841,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,V6,False,2,True,,0.9944,0.9857,15.694,18.398,0.9971,3,,-2.0,0.9926,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,0.9968,0.9552,10.699,14.785,0.9833,0,0,-4.0,0.9919,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,1,1,-2.0,0.9927,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,2,2,-4.0,0.9875,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,3,3,-6.0,0.9774,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,I,False,0,True,,0.9984,0.9212,8.337,9.299,0.9881,0,,4.0,0.9385,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,aVR,False,0,True,,0.9984,0.8396,5.565,6.184,0.911,1,,4.0,0.8634,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,V1,False,0,True,,0.9984,0.8605,5.648,16.675,0.9939,2,,-10.0,0.9895,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,V4,False,0,True,,0.996,0.9781,13.989,15.244,0.9941,3,,2.0,0.9836,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,II,False,1,True,,0.9952,0.9071,7.664,12.535,0.9818,0,,8.0,0.972,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,aVL,False,1,True,,0.9984,0.8417,5.475,6.54,0.9829,1,,6.0,0.8788,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,V2,False,1,True,,0.9984,0.9383,9.395,19.393,0.9945,2,,-8.0,0.9943,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,V5,False,1,True,,0.9888,0.9907,17.633,18.465,0.9962,3,,2.0,0.9924,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,III,False,2,True,,0.9984,0.9249,8.512,10.317,0.989,0,,-4.0,0.9506,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,aVF,False,2,True,,0.9984,0.937,9.143,11.804,0.9829,1,,4.0,0.9662,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,V3,False,2,True,,0.9984,0.959,11.421,15.542,0.9845,2,,-4.0,0.9845,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,V6,False,2,True,,0.996,0.9838,15.15,18.268,0.9971,3,,2.0,0.9923,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,0.9974,0.9818,14.435,14.435,0.9818,0,0,0.0,0.9923,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,1,1,2.0,0.9931,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,2,2,2.0,0.9892,ok
+ptbxl40_20260929_01,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,3,3,-2.0,0.9791,ok
 ptbxl40_20260929_02,corners,classical,ticks,ticks,4,I,False,0,True,,0.972,-0.1545,-3.15,-2.969,-0.0392,0,,-200.0,0.0556,FAILED
 ptbxl40_20260929_02,corners,classical,ticks,ticks,4,aVR,False,0,True,,0.916,-0.0066,-8.889,-8.454,0.152,1,,-94.0,0.225,UNRELIABLE
 ptbxl40_20260929_02,corners,classical,ticks,ticks,4,V1,False,0,True,,0.0,,,,,2,,,,UNRELIABLE
@@ -542,6 +774,32 @@ ptbxl40_20260929_02,corners,classical,grid,ticks,4,aVF,False,2,False,no grid fit
 ptbxl40_20260929_02,corners,classical,grid,ticks,4,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260929_02,corners,classical,grid,ticks,4,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260929_02,corners,classical,grid,ticks,4,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero,ticks,4,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,classical,grid_tickzero_k2fix,ticks,4,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260929_02,corners,b3,ticks,ticks,4,I,False,0,True,,0.9984,-0.1049,-4.09,-3.883,0.0648,0,,-170.0,0.0563,UNRELIABLE
 ptbxl40_20260929_02,corners,b3,ticks,ticks,4,aVR,False,0,True,,0.9992,-0.1316,-6.571,-6.113,0.3309,1,,136.0,0.3984,UNRELIABLE
 ptbxl40_20260929_02,corners,b3,ticks,ticks,4,V1,False,0,True,,0.9968,0.0221,-3.981,-3.285,0.2766,2,,-70.0,0.2349,UNRELIABLE
@@ -597,6 +855,32 @@ ptbxl40_20260929_02,corners,b3,grid,ticks,4,aVF,False,2,False,no grid fit,,,,,,1
 ptbxl40_20260929_02,corners,b3,grid,ticks,4,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260929_02,corners,b3,grid,ticks,4,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260929_02,corners,b3,grid,ticks,4,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero,ticks,4,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_02,corners,b3,grid_tickzero_k2fix,ticks,4,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260929_02,grid,classical,ticks,ticks,9,I,False,0,True,,0.98,0.829,4.568,4.604,0.8643,0,,0.0,0.8355,ok
 ptbxl40_20260929_02,grid,classical,ticks,ticks,9,aVR,False,0,True,,0.944,0.7113,3.121,3.128,0.7144,1,,2.0,0.7036,ok
 ptbxl40_20260929_02,grid,classical,ticks,ticks,9,V1,False,0,True,,0.5936,0.3966,0.736,0.864,0.4314,2,,,,UNRELIABLE
@@ -655,6 +939,38 @@ ptbxl40_20260929_02,grid,classical,grid,ticks,9,II,True,3,True,,0.7438,0.5007,0.
 ptbxl40_20260929_02,grid,classical,grid,ticks,9,II,True,3,True,,,,,,,1,1,8.0,0.6917,ok
 ptbxl40_20260929_02,grid,classical,grid,ticks,9,II,True,3,True,,,,,,,2,2,8.0,0.639,ok
 ptbxl40_20260929_02,grid,classical,grid,ticks,9,II,True,3,True,,,,,,,3,3,10.0,0.9427,ok
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,I,False,0,True,,0.9848,0.8632,4.926,4.926,0.8678,0,,2.0,0.8641,ok
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,aVR,False,0,True,,0.94,0.6403,2.452,3.148,0.7143,1,,12.0,0.705,ok
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,V1,False,0,True,,0.5936,0.395,0.731,0.864,0.4312,2,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,V4,False,0,True,,0.0,,,,,3,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,II,False,1,True,,0.408,0.5571,1.053,1.123,0.5708,0,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,aVL,False,1,True,,0.9016,0.4129,0.538,0.679,0.5613,1,,16.0,0.4814,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,V2,False,1,True,,0.1608,-0.0939,-1.628,-1.617,-0.0584,2,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,V5,False,1,True,,0.0,,,,,3,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,III,False,2,True,,0.0,,,,,0,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,aVF,False,2,True,,0.0,,,,,1,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,V3,False,2,True,,0.0,,,,,2,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,V6,False,2,True,,0.0,,,,,3,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,II,True,3,True,,0.744,0.5386,1.096,1.124,,0,0,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,II,True,3,True,,,,,,,1,1,-2.0,0.6909,ok
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,II,True,3,True,,,,,,,2,2,-2.0,0.6429,ok
+ptbxl40_20260929_02,grid,classical,grid_tickzero,ticks,9,II,True,3,True,,,,,,,3,3,0.0,0.942,ok
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,I,False,0,True,,0.9864,0.8408,4.652,4.915,0.8642,0,,6.0,0.8642,ok
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,aVR,False,0,True,,0.94,0.5819,1.962,3.145,0.7141,1,,16.0,0.7051,ok
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,V1,False,0,True,,0.5936,0.4116,0.791,0.864,0.4313,2,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,V4,False,0,True,,0.0,,,,,3,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,II,False,1,True,,0.408,0.522,0.868,1.115,0.5696,0,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,aVL,False,1,True,,0.9016,0.36,0.453,0.68,0.5613,1,,20.0,0.4813,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,V2,False,1,True,,0.1608,-0.0919,-1.629,-1.629,-0.0592,2,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,V5,False,1,True,,0.0,,,,,3,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,III,False,2,True,,0.0,,,,,0,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,aVF,False,2,True,,0.0,,,,,1,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,V3,False,2,True,,0.0,,,,,2,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,V6,False,2,True,,0.0,,,,,3,,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,II,True,3,True,,0.744,0.5389,1.099,1.119,,0,0,,,UNRELIABLE
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,1,1,2.0,0.6913,ok
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,2,2,2.0,0.6418,ok
+ptbxl40_20260929_02,grid,classical,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,3,3,4.0,0.9423,ok
 ptbxl40_20260929_02,grid,b3,ticks,ticks,9,I,False,0,True,,0.9976,0.975,13.244,22.738,0.9973,0,,-4.0,0.9973,ok
 ptbxl40_20260929_02,grid,b3,ticks,ticks,9,aVR,False,0,True,,0.9984,0.9837,14.871,14.871,0.9837,1,,0.0,0.9838,ok
 ptbxl40_20260929_02,grid,b3,ticks,ticks,9,V1,False,0,True,,0.9984,0.8432,5.109,18.406,0.9938,2,,-12.0,0.9931,ok
@@ -713,6 +1029,38 @@ ptbxl40_20260929_02,grid,b3,grid,ticks,9,II,True,3,True,,0.9734,0.7829,2.788,4.3
 ptbxl40_20260929_02,grid,b3,grid,ticks,9,II,True,3,True,,,,,,,1,1,8.0,0.9654,ok
 ptbxl40_20260929_02,grid,b3,grid,ticks,9,II,True,3,True,,,,,,,2,2,10.0,0.976,ok
 ptbxl40_20260929_02,grid,b3,grid,ticks,9,II,True,3,True,,,,,,,3,3,8.0,0.9763,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,I,False,0,True,,0.9984,0.9439,9.736,11.515,0.9975,0,,-4.0,0.9627,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,aVR,False,0,True,,0.9984,0.8708,6.342,11.332,0.9844,1,,8.0,0.9607,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,V1,False,0,True,,0.9984,0.8371,4.944,18.411,0.9937,2,,-12.0,0.9931,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,V4,False,0,True,,0.9936,0.9766,13.682,16.774,0.9926,3,,-2.0,0.9885,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,II,False,1,True,,0.992,0.9585,10.966,15.123,0.9933,0,,4.0,0.986,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,aVL,False,1,True,,0.9936,0.8135,4.701,9.06,0.9859,1,,10.0,0.9333,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,V2,False,1,True,,0.9984,0.9253,8.601,19.143,0.9943,2,,-10.0,0.9939,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,V5,False,1,True,,0.9872,0.99,15.174,15.174,0.9917,3,,0.0,0.99,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,III,False,2,True,,0.98,0.8615,4.851,6.026,0.9032,0,,-6.0,0.8969,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,aVF,False,2,True,,0.9984,0.9559,10.459,11.72,0.9701,1,,2.0,0.9674,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,V3,False,2,True,,0.9984,0.9456,10.191,15.057,0.9856,2,,-4.0,0.9826,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,V6,False,2,True,,0.9304,0.9743,12.767,13.817,0.9903,3,,2.0,0.9823,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,II,True,3,True,,0.9736,0.8453,4.162,4.403,0.8545,0,0,-4.0,0.7035,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,II,True,3,True,,,,,,,1,1,-4.0,0.9669,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,II,True,3,True,,,,,,,2,2,0.0,0.9758,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero,ticks,9,II,True,3,True,,,,,,,3,3,-4.0,0.9763,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,I,False,0,True,,0.9984,0.9626,11.496,11.496,0.9973,0,,0.0,0.9625,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,aVR,False,0,True,,0.9984,0.7567,3.63,11.37,0.9838,1,,12.0,0.961,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,V1,False,0,True,,0.9984,0.9261,8.376,18.226,0.994,2,,-8.0,0.9928,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,V4,False,0,True,,0.9952,0.9864,16.042,16.889,0.9921,3,,2.0,0.9888,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,II,False,1,True,,0.9904,0.9001,7.328,15.096,0.9931,0,,8.0,0.9858,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,aVL,False,1,True,,0.9952,0.7004,2.666,9.062,0.9852,1,,14.0,0.9334,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,V2,False,1,True,,0.9968,0.9705,12.603,19.116,0.9944,2,,-6.0,0.9938,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,V5,False,1,True,,0.9888,0.9616,10.888,15.136,0.992,3,,4.0,0.9898,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,III,False,2,True,,0.9784,0.8965,6.024,6.024,0.9032,0,,0.0,0.8969,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,aVF,False,2,True,,0.9984,0.8947,6.732,11.731,0.9708,1,,6.0,0.9672,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,V3,False,2,True,,0.9984,0.9832,15.188,15.188,0.986,2,,0.0,0.9836,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,V6,False,2,True,,0.932,0.931,8.603,13.805,0.9899,3,,6.0,0.9821,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,II,True,3,True,,0.9736,0.8525,4.349,4.412,0.8549,0,0,0.0,0.7037,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,1,1,0.0,0.9666,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,2,2,4.0,0.976,ok
+ptbxl40_20260929_02,grid,b3,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,3,3,0.0,0.9761,ok
 ptbxl40_20260929_03,corners,classical,ticks,ticks,8,I,False,0,True,,0.9808,0.3088,0.535,0.535,0.4395,0,,138.0,0.313,UNRELIABLE
 ptbxl40_20260929_03,corners,classical,ticks,ticks,8,aVR,False,0,True,,0.9632,0.5941,1.927,1.927,0.5959,1,,0.0,0.5842,ok
 ptbxl40_20260929_03,corners,classical,ticks,ticks,8,V1,False,0,True,,0.9528,0.3963,0.682,0.811,0.423,2,,-22.0,0.3961,UNRELIABLE
@@ -768,6 +1116,32 @@ ptbxl40_20260929_03,corners,classical,grid,ticks,8,aVF,False,2,False,no grid fit
 ptbxl40_20260929_03,corners,classical,grid,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260929_03,corners,classical,grid,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260929_03,corners,classical,grid,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,classical,grid_tickzero_k2fix,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260929_03,corners,b3,ticks,ticks,8,I,False,0,True,,0.9976,0.9593,11.153,16.567,0.9947,0,,-4.0,0.9889,ok
 ptbxl40_20260929_03,corners,b3,ticks,ticks,8,aVR,False,0,True,,0.9992,0.9415,9.328,9.744,0.9481,1,,2.0,0.9481,ok
 ptbxl40_20260929_03,corners,b3,ticks,ticks,8,V1,False,0,True,,0.9976,0.7515,3.129,17.467,0.995,2,,-14.0,0.9913,ok
@@ -823,6 +1197,32 @@ ptbxl40_20260929_03,corners,b3,grid,ticks,8,aVF,False,2,False,no grid fit,,,,,,1
 ptbxl40_20260929_03,corners,b3,grid,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260929_03,corners,b3,grid,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260929_03,corners,b3,grid,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_03,corners,b3,grid_tickzero_k2fix,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260929_03,grid,classical,ticks,ticks,9,I,False,0,True,,0.9808,-0.0264,-0.768,-0.671,0.1111,0,,-184.0,0.2199,UNRELIABLE
 ptbxl40_20260929_03,grid,classical,ticks,ticks,9,aVR,False,0,True,,0.9616,0.5792,1.863,1.872,0.581,1,,-2.0,0.5673,ok
 ptbxl40_20260929_03,grid,classical,ticks,ticks,9,V1,False,0,True,,0.6792,0.3866,0.683,0.703,0.3949,2,,,,UNRELIABLE
@@ -881,6 +1281,38 @@ ptbxl40_20260929_03,grid,classical,grid,ticks,9,II,True,3,True,,0.8518,0.6489,2.
 ptbxl40_20260929_03,grid,classical,grid,ticks,9,II,True,3,True,,,,,,,1,1,12.0,0.575,ok
 ptbxl40_20260929_03,grid,classical,grid,ticks,9,II,True,3,True,,,,,,,2,2,8.0,0.7905,ok
 ptbxl40_20260929_03,grid,classical,grid,ticks,9,II,True,3,True,,,,,,,3,3,8.0,0.9405,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,I,False,0,True,,0.9848,-0.0234,-0.766,-0.655,0.0877,0,,-186.0,0.2137,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,aVR,False,0,True,,0.956,0.577,1.858,1.858,0.5811,1,,0.0,0.5613,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,V1,False,0,True,,0.68,0.3818,0.667,0.703,0.3949,2,,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,V4,False,0,True,,0.0,,,,,3,,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,II,False,1,True,,0.9848,0.765,3.922,3.939,0.7682,0,,2.0,0.7675,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,aVL,False,1,True,,0.9576,0.3242,0.326,0.357,0.3846,1,,-172.0,0.3937,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,V2,False,1,True,,0.9224,0.2603,-0.124,-0.067,0.2851,2,,-6.0,0.2712,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,V5,False,1,True,,0.056,-0.0638,-0.119,0.101,0.209,3,,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,III,False,2,True,,0.3832,0.305,0.393,0.516,0.344,0,,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,aVF,False,2,True,,0.9624,0.9628,11.193,11.193,0.9637,1,,0.0,0.9624,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,V3,False,2,True,,0.9632,0.5589,1.781,1.956,0.6767,2,,-6.0,0.5561,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,V6,False,2,True,,0.3744,0.5056,0.155,0.155,0.5128,3,,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,II,True,3,True,,0.852,0.6978,2.715,2.78,0.7026,0,0,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,II,True,3,True,,,,,,,1,1,0.0,0.576,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,II,True,3,True,,,,,,,2,2,-4.0,0.7961,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero,ticks,9,II,True,3,True,,,,,,,3,3,-4.0,0.9396,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,I,False,0,True,,0.9864,-0.0274,-0.777,-0.654,0.1059,0,,-182.0,0.2127,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,aVR,False,0,True,,0.956,0.5737,1.837,1.856,0.5811,1,,4.0,0.5613,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,V1,False,0,True,,0.6792,0.387,0.684,0.703,0.3949,2,,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,V4,False,0,True,,0.0,,,,,3,,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,II,False,1,True,,0.9864,0.7601,3.837,3.947,0.7685,0,,6.0,0.7675,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,aVL,False,1,True,,0.9576,0.2995,0.284,0.356,0.3745,1,,-168.0,0.3938,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,V2,False,1,True,,0.9224,0.2703,-0.067,-0.059,0.2857,2,,-2.0,0.2713,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,V5,False,1,True,,0.056,-0.0683,-0.126,0.075,0.2087,3,,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,III,False,2,True,,0.3832,0.3154,0.439,0.516,0.3446,0,,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,aVF,False,2,True,,0.9624,0.9327,8.715,11.167,0.9629,1,,4.0,0.9621,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,V3,False,2,True,,0.9632,0.5796,1.941,1.956,0.674,2,,-2.0,0.556,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,V6,False,2,True,,0.3752,0.4928,0.08,0.155,0.5136,3,,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,II,True,3,True,,0.8518,0.7021,2.775,2.783,0.7028,0,0,,,UNRELIABLE
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,1,1,4.0,0.5756,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,2,2,0.0,0.7956,ok
+ptbxl40_20260929_03,grid,classical,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,3,3,0.0,0.9403,ok
 ptbxl40_20260929_03,grid,b3,ticks,ticks,9,I,False,0,True,,0.9976,0.9674,12.114,19.403,0.995,0,,-4.0,0.9946,ok
 ptbxl40_20260929_03,grid,b3,ticks,ticks,9,aVR,False,0,True,,0.9976,0.9422,9.418,9.418,0.9422,1,,0.0,0.9421,ok
 ptbxl40_20260929_03,grid,b3,ticks,ticks,9,V1,False,0,True,,0.9976,0.87,5.913,17.462,0.9933,2,,-10.0,0.9914,ok
@@ -939,6 +1371,38 @@ ptbxl40_20260929_03,grid,b3,grid,ticks,9,II,True,3,True,,0.9944,0.8346,5.039,13.
 ptbxl40_20260929_03,grid,b3,grid,ticks,9,II,True,3,True,,,,,,,1,1,10.0,0.9891,ok
 ptbxl40_20260929_03,grid,b3,grid,ticks,9,II,True,3,True,,,,,,,2,2,12.0,0.9877,ok
 ptbxl40_20260929_03,grid,b3,grid,ticks,9,II,True,3,True,,,,,,,3,3,6.0,0.9661,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,I,False,0,True,,0.9984,0.9057,7.565,10.287,0.9958,0,,-6.0,0.9499,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,aVR,False,0,True,,0.9984,0.8944,7.188,7.856,0.9423,1,,4.0,0.9116,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,V1,False,0,True,,0.9968,0.7751,3.529,17.105,0.9934,2,,-14.0,0.9907,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,V4,False,0,True,,0.9952,0.9747,13.341,16.378,0.9941,3,,-2.0,0.9875,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,II,False,1,True,,0.9984,0.9843,14.984,14.984,0.9944,0,,0.0,0.9843,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,aVL,False,1,True,,0.9984,0.9049,7.563,9.246,0.99,1,,6.0,0.9368,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,V2,False,1,True,,0.9968,0.8977,7.253,19.881,0.995,2,,-12.0,0.9949,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,V5,False,1,True,,0.9896,0.9881,15.871,18.601,0.9949,3,,-2.0,0.9947,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,III,False,2,True,,0.9984,0.8726,6.18,15.3,0.9908,0,,-8.0,0.9847,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,aVF,False,2,True,,0.9984,0.979,13.686,13.686,0.9809,1,,0.0,0.9791,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,V3,False,2,True,,0.9968,0.919,8.48,16.131,0.9877,2,,-6.0,0.9864,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,V6,False,2,True,,0.988,0.9906,17.441,17.724,0.9962,3,,-2.0,0.9912,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,II,True,3,True,,0.9944,0.9654,11.731,13.266,0.976,0,0,-2.0,0.9942,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,II,True,3,True,,,,,,,1,1,-2.0,0.989,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,II,True,3,True,,,,,,,2,2,0.0,0.9863,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero,ticks,9,II,True,3,True,,,,,,,3,3,-6.0,0.9655,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,I,False,0,True,,0.9984,0.9464,10.001,10.275,0.9955,0,,-2.0,0.9498,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,aVR,False,0,True,,0.9968,0.8303,5.326,7.888,0.9428,1,,8.0,0.9121,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,V1,False,0,True,,0.9984,0.8764,6.133,17.046,0.9928,2,,-10.0,0.9906,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,V4,False,0,True,,0.9968,0.9857,15.794,16.6,0.9937,3,,2.0,0.9881,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,II,False,1,True,,0.9968,0.9614,11.345,15.006,0.9944,0,,4.0,0.9843,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,aVL,False,1,True,,0.9968,0.8284,5.081,9.282,0.9899,1,,10.0,0.9372,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,V2,False,1,True,,0.9984,0.9516,10.489,19.812,0.995,2,,-8.0,0.9948,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,V5,False,1,True,,0.9912,0.9868,15.562,18.488,0.9947,3,,2.0,0.9944,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,III,False,2,True,,0.9968,0.9597,11.156,15.17,0.9908,0,,-4.0,0.9843,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,aVF,False,2,True,,0.9968,0.946,9.696,13.817,0.9801,1,,4.0,0.9797,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,V3,False,2,True,,0.9984,0.9795,14.381,16.204,0.9875,2,,-2.0,0.9869,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,V6,False,2,True,,0.9896,0.9793,14.009,17.748,0.9961,3,,4.0,0.9912,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,II,True,3,True,,0.9944,0.9705,12.402,13.311,0.9762,0,0,2.0,0.9939,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,1,1,2.0,0.9892,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,2,2,4.0,0.9871,ok
+ptbxl40_20260929_03,grid,b3,grid_tickzero_k2fix,ticks,9,II,True,3,True,,,,,,,3,3,-2.0,0.9659,ok
 ptbxl40_20260929_04,corners,classical,ticks,ticks,9,I,False,0,True,,0.9824,0.4736,1.111,1.134,0.4839,0,,-8.0,0.4734,UNRELIABLE
 ptbxl40_20260929_04,corners,classical,ticks,ticks,9,aVR,False,0,True,,0.9624,0.4926,1.381,1.392,0.4968,1,,-4.0,0.5219,ok
 ptbxl40_20260929_04,corners,classical,ticks,ticks,9,V1,False,0,True,,0.9448,0.4179,0.749,0.765,0.4224,2,,-12.0,0.3807,UNRELIABLE
@@ -994,6 +1458,32 @@ ptbxl40_20260929_04,corners,classical,grid,ticks,9,aVF,False,2,False,no grid fit
 ptbxl40_20260929_04,corners,classical,grid,ticks,9,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260929_04,corners,classical,grid,ticks,9,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260929_04,corners,classical,grid,ticks,9,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero,ticks,9,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,classical,grid_tickzero_k2fix,ticks,9,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260929_04,corners,b3,ticks,ticks,9,I,False,0,True,,0.9984,0.9813,14.173,17.606,0.993,0,,-2.0,0.993,ok
 ptbxl40_20260929_04,corners,b3,ticks,ticks,9,aVR,False,0,True,,0.9984,0.9661,11.392,11.594,0.9681,1,,2.0,0.9681,ok
 ptbxl40_20260929_04,corners,b3,ticks,ticks,9,V1,False,0,True,,0.9976,0.8796,6.261,18.888,0.9939,2,,-10.0,0.9938,ok
@@ -1049,6 +1539,32 @@ ptbxl40_20260929_04,corners,b3,grid,ticks,9,aVF,False,2,False,no grid fit,,,,,,1
 ptbxl40_20260929_04,corners,b3,grid,ticks,9,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260929_04,corners,b3,grid,ticks,9,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260929_04,corners,b3,grid,ticks,9,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero,ticks,9,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_04,corners,b3,grid_tickzero_k2fix,ticks,9,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260929_04,grid,classical,ticks,ticks,8,I,False,0,True,,0.9496,0.1725,0.02,0.092,0.3844,0,,200.0,0.3489,FAILED
 ptbxl40_20260929_04,grid,classical,ticks,ticks,8,aVR,False,0,True,,0.9616,0.5786,1.902,1.917,0.5858,1,,-2.0,0.6096,ok
 ptbxl40_20260929_04,grid,classical,ticks,ticks,8,V1,False,0,True,,0.5888,0.2075,-1.139,-1.139,0.2091,2,,,,UNRELIABLE
@@ -1107,6 +1623,38 @@ ptbxl40_20260929_04,grid,classical,grid,ticks,8,II,True,3,True,,0.835,0.673,2.3,
 ptbxl40_20260929_04,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,1,1,6.0,0.7784,ok
 ptbxl40_20260929_04,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,2,2,12.0,0.6787,ok
 ptbxl40_20260929_04,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,3,3,8.0,0.9421,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,I,False,0,True,,0.9576,0.1773,0.034,0.115,0.3942,0,,200.0,0.3459,FAILED
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,aVR,False,0,True,,0.956,0.5697,1.848,1.848,0.5857,1,,0.0,0.6037,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,V1,False,0,True,,0.5896,0.2087,-1.129,-1.129,0.2095,2,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,V4,False,0,True,,0.0,,,,,3,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,II,False,1,True,,0.9864,0.8728,6.309,6.746,0.8895,0,,-8.0,0.889,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,aVL,False,1,True,,0.7832,-0.0733,-4.676,-4.382,0.0088,1,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,V2,False,1,True,,0.9224,0.101,-0.995,-0.844,0.1454,2,,-8.0,0.0318,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,V5,False,1,True,,0.056,-0.062,-0.114,0.106,0.2092,3,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,III,False,2,True,,0.4584,0.4318,0.824,0.909,0.4606,0,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,aVF,False,2,True,,0.9608,0.6142,-3.169,-2.874,0.6364,1,,4.0,0.6673,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,V3,False,2,True,,0.824,0.3703,-1.522,-1.473,0.4022,2,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,V6,False,2,True,,0.4024,0.6726,2.846,2.846,0.6726,3,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,0.8348,0.7203,2.904,2.92,0.7214,0,0,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,1,1,-4.0,0.7773,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,2,2,2.0,0.6837,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,3,3,-2.0,0.9412,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,I,False,0,True,,0.9576,0.1675,0.002,0.115,0.3898,0,,200.0,0.3293,FAILED
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,aVR,False,0,True,,0.956,0.559,1.789,1.847,0.5858,1,,4.0,0.6035,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,V1,False,0,True,,0.5896,0.2067,-1.14,-1.14,0.2086,2,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,V4,False,0,True,,0.0,,,,,3,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,II,False,1,True,,0.9864,0.8848,6.668,6.741,0.89,0,,-2.0,0.889,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,aVL,False,1,True,,0.7832,-0.0905,-4.664,-4.294,0.0107,1,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,V2,False,1,True,,0.9224,0.1313,-0.886,-0.844,0.1446,2,,-4.0,0.0319,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,V5,False,1,True,,0.056,-0.0663,-0.12,0.08,0.209,3,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,III,False,2,True,,0.4584,0.4428,0.872,0.908,0.4608,0,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,aVF,False,2,True,,0.9616,0.5887,-3.478,-2.873,0.6361,1,,8.0,0.6669,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,V3,False,2,True,,0.824,0.3798,-1.429,-1.429,0.4059,2,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,V6,False,2,True,,0.4024,0.6616,2.718,2.849,0.673,3,,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,0.8348,0.7172,2.865,2.922,0.7213,0,0,,,UNRELIABLE
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,1,1,0.0,0.7782,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,2,2,6.0,0.6817,ok
+ptbxl40_20260929_04,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,3,3,2.0,0.9418,ok
 ptbxl40_20260929_04,grid,b3,ticks,ticks,8,I,False,0,True,,0.9984,0.9472,10.061,17.495,0.9934,0,,-6.0,0.991,ok
 ptbxl40_20260929_04,grid,b3,ticks,ticks,8,aVR,False,0,True,,0.9968,0.9715,12.146,12.146,0.9715,1,,0.0,0.9717,ok
 ptbxl40_20260929_04,grid,b3,ticks,ticks,8,V1,False,0,True,,0.9984,0.8444,5.119,18.637,0.9936,2,,-12.0,0.9936,ok
@@ -1165,6 +1713,38 @@ ptbxl40_20260929_04,grid,b3,grid,ticks,8,II,True,3,True,,0.995,0.8555,5.597,13.5
 ptbxl40_20260929_04,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,1,1,10.0,0.9891,ok
 ptbxl40_20260929_04,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,2,2,10.0,0.9853,ok
 ptbxl40_20260929_04,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,3,3,6.0,0.966,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,I,False,0,True,,0.9984,0.9032,7.449,10.55,0.9935,0,,-6.0,0.9529,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,aVR,False,0,True,,0.9992,0.9133,8.003,9.534,0.9716,1,,4.0,0.9418,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,V1,False,0,True,,0.9984,0.7785,3.584,18.274,0.9933,2,,-14.0,0.993,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,V4,False,0,True,,0.9904,0.9771,13.796,16.98,0.9946,3,,-2.0,0.989,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,II,False,1,True,,0.9984,0.9846,15.116,15.116,0.9937,0,,0.0,0.9847,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,aVL,False,1,True,,0.9992,0.9052,7.577,9.509,0.988,1,,6.0,0.9411,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,V2,False,1,True,,0.9984,0.8936,7.075,19.96,0.9956,2,,-12.0,0.995,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,V5,False,1,True,,0.9888,0.9865,15.377,18.698,0.9956,3,,-2.0,0.9951,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,III,False,2,True,,0.9968,0.8738,6.209,15.22,0.9935,0,,-8.0,0.9843,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,aVF,False,2,True,,0.9992,0.9798,13.784,13.784,0.9798,1,,0.0,0.98,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,V3,False,2,True,,0.9984,0.914,8.216,15.875,0.9883,2,,-6.0,0.9857,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,V6,False,2,True,,0.9888,0.9913,17.785,17.785,0.9964,3,,0.0,0.9912,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,0.9948,0.9743,12.92,13.778,0.9791,0,0,-2.0,0.9926,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,1,1,-2.0,0.9911,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,2,2,0.0,0.9863,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,3,3,-4.0,0.9647,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,I,False,0,True,,0.9984,0.9478,10.104,10.552,0.9934,0,,-2.0,0.9529,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,aVR,False,0,True,,0.9992,0.8346,5.392,9.534,0.9715,1,,8.0,0.9417,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,V1,False,0,True,,0.9984,0.8813,6.294,18.124,0.9937,2,,-10.0,0.9927,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,V4,False,0,True,,0.992,0.9863,16.017,17.203,0.9943,3,,2.0,0.9896,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,II,False,1,True,,0.9968,0.9658,11.862,15.199,0.9936,0,,4.0,0.9849,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,aVL,False,1,True,,0.9992,0.8261,5.045,9.534,0.9876,1,,10.0,0.9414,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,V2,False,1,True,,0.9984,0.9482,10.194,19.984,0.9953,2,,-8.0,0.995,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,V5,False,1,True,,0.9904,0.9889,16.185,18.744,0.9949,3,,2.0,0.9949,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,III,False,2,True,,0.9952,0.9608,11.277,15.091,0.9928,0,,-4.0,0.9838,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,aVF,False,2,True,,0.9992,0.9331,8.745,13.815,0.98,1,,4.0,0.98,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,V3,False,2,True,,0.9984,0.9771,13.885,15.985,0.9881,2,,-2.0,0.9861,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,V6,False,2,True,,0.9904,0.9748,13.188,17.959,0.9965,3,,4.0,0.9916,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,0.995,0.967,11.886,13.696,0.9787,0,0,4.0,0.9929,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,1,1,2.0,0.9907,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,2,2,4.0,0.9865,ok
+ptbxl40_20260929_04,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,3,3,0.0,0.9655,ok
 ptbxl40_20260929_05,corners,classical,ticks,ticks,8,I,False,0,True,,0.9808,0.8265,4.01,4.046,0.8514,0,,-2.0,0.8294,ok
 ptbxl40_20260929_05,corners,classical,ticks,ticks,8,aVR,False,0,True,,0.9624,0.9311,8.823,11.589,0.9672,1,,4.0,0.9683,ok
 ptbxl40_20260929_05,corners,classical,ticks,ticks,8,V1,False,0,True,,0.9632,0.9233,7.908,10.219,0.9652,2,,-6.0,0.9636,ok
@@ -1226,6 +1806,32 @@ ptbxl40_20260929_05,corners,classical,grid,ticks,8,aVF,False,2,False,no grid fit
 ptbxl40_20260929_05,corners,classical,grid,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260929_05,corners,classical,grid,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260929_05,corners,classical,grid,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,classical,grid_tickzero_k2fix,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260929_05,corners,b3,ticks,ticks,8,I,False,0,True,,0.9984,0.917,8.106,15.633,0.993,0,,-6.0,0.9872,ok
 ptbxl40_20260929_05,corners,b3,ticks,ticks,8,aVR,False,0,True,,0.9984,0.9621,11.127,12.345,0.9726,1,,2.0,0.9736,ok
 ptbxl40_20260929_05,corners,b3,ticks,ticks,8,V1,False,0,True,,0.9992,0.8755,6.216,20.472,0.997,2,,-10.0,0.997,ok
@@ -1287,6 +1893,32 @@ ptbxl40_20260929_05,corners,b3,grid,ticks,8,aVF,False,2,False,no grid fit,,,,,,1
 ptbxl40_20260929_05,corners,b3,grid,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
 ptbxl40_20260929_05,corners,b3,grid,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
 ptbxl40_20260929_05,corners,b3,grid,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,I,False,0,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,aVR,False,0,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,V1,False,0,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,V4,False,0,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,II,False,1,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,aVL,False,1,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,V2,False,1,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,V5,False,1,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,III,False,2,False,no grid fit,,,,,,0,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,aVF,False,2,False,no grid fit,,,,,,1,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,V3,False,2,False,no grid fit,,,,,,2,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,V6,False,2,False,no grid fit,,,,,,3,,,,UNAVAILABLE
+ptbxl40_20260929_05,corners,b3,grid_tickzero_k2fix,ticks,8,II,True,3,False,no grid fit,,,,,,0,,,,UNAVAILABLE
 ptbxl40_20260929_05,grid,classical,ticks,ticks,8,I,False,0,True,,0.6976,0.0564,-8.748,-8.539,0.1316,0,,,,UNRELIABLE
 ptbxl40_20260929_05,grid,classical,ticks,ticks,8,aVR,False,0,True,,0.964,0.9724,12.625,13.642,0.9788,1,,2.0,0.9792,ok
 ptbxl40_20260929_05,grid,classical,ticks,ticks,8,V1,False,0,True,,0.9616,0.8175,4.781,6.027,0.8704,2,,-8.0,0.8622,ok
@@ -1351,6 +1983,38 @@ ptbxl40_20260929_05,grid,classical,grid,ticks,8,II,True,3,True,,0.9954,0.6797,1.
 ptbxl40_20260929_05,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,1,1,-2.0,0.9791,ok
 ptbxl40_20260929_05,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,2,2,6.0,0.2737,UNRELIABLE
 ptbxl40_20260929_05,grid,classical,grid,ticks,8,II,True,3,True,,,,,,,3,3,-4.0,0.9524,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,I,False,0,True,,0.6984,0.0509,-8.759,-8.535,0.1313,0,,,,UNRELIABLE
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,aVR,False,0,True,,0.9648,0.9645,11.63,13.26,0.9771,1,,2.0,0.9769,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,V1,False,0,True,,0.96,0.8261,4.969,6.059,0.8693,2,,-6.0,0.8629,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,V4,False,0,True,,0.9576,0.597,2.199,2.475,0.65,3,,-10.0,0.6599,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,II,False,1,True,,0.984,0.8771,6.401,7.44,0.9197,0,,-6.0,0.904,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,aVL,False,1,True,,0.96,0.9208,8.287,13.924,0.983,1,,6.0,0.9796,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,V2,False,1,True,,0.9016,0.3683,-0.115,-0.017,0.5032,2,,-6.0,0.534,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,V5,False,1,True,,0.976,0.4822,1.328,1.328,0.4828,3,,2.0,0.4539,UNRELIABLE
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,III,False,2,True,,0.9808,0.8586,5.687,11.272,0.9614,0,,-8.0,0.9617,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,aVF,False,2,True,,0.9632,0.9565,10.627,11.382,0.9678,1,,2.0,0.9637,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,V3,False,2,True,,0.9568,0.0746,-2.004,-2.004,0.084,2,,162.0,0.0814,UNRELIABLE
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,V6,False,2,True,,0.9792,0.4441,-2.413,-2.4,0.4486,3,,-4.0,0.4469,UNRELIABLE
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,0.9954,0.6759,1.454,1.509,0.6801,0,0,-2.0,0.9739,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,1,1,-2.0,0.9799,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,2,2,4.0,0.2739,UNRELIABLE
+ptbxl40_20260929_05,grid,classical,grid_tickzero,ticks,8,II,True,3,True,,,,,,,3,3,-6.0,0.9528,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,I,False,0,True,,0.6984,0.0751,-8.704,-8.548,0.1315,0,,,,UNRELIABLE
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,aVR,False,0,True,,0.9648,0.9057,7.601,13.32,0.9772,1,,6.0,0.9772,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,V1,False,0,True,,0.96,0.8614,5.838,6.056,0.8693,2,,-4.0,0.8631,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,V4,False,0,True,,0.956,0.6162,2.349,2.46,0.6475,3,,-6.0,0.66,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,II,False,1,True,,0.984,0.8847,6.631,6.815,0.9104,0,,-4.0,0.9044,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,aVL,False,1,True,,0.96,0.8313,5.059,13.923,0.9827,1,,10.0,0.9796,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,V2,False,1,True,,0.9016,0.3813,-0.032,-0.012,0.5031,2,,-4.0,0.534,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,V5,False,1,True,,0.976,0.4799,1.319,1.325,0.4828,3,,6.0,0.4538,UNRELIABLE
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,III,False,2,True,,0.9808,0.9173,7.915,9.801,0.9467,0,,-4.0,0.9622,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,aVF,False,2,True,,0.9632,0.9132,7.723,11.45,0.9676,1,,6.0,0.9639,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,V3,False,2,True,,0.9568,0.0695,-2.034,-2.033,0.0838,2,,166.0,0.0816,UNRELIABLE
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,V6,False,2,True,,0.9792,0.4487,-2.384,-2.384,0.4487,3,,0.0,0.4468,UNRELIABLE
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,0.9954,0.6771,1.464,1.504,0.6799,0,0,2.0,0.9742,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,1,1,2.0,0.9797,ok
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,2,2,8.0,0.2719,UNRELIABLE
+ptbxl40_20260929_05,grid,classical,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,3,3,-2.0,0.9531,ok
 ptbxl40_20260929_05,grid,b3,ticks,ticks,8,I,False,0,True,,0.9976,0.8032,4.332,17.385,0.9958,0,,-12.0,0.9905,ok
 ptbxl40_20260929_05,grid,b3,ticks,ticks,8,aVR,False,0,True,,1.0,0.9838,14.869,14.869,0.9838,1,,0.0,0.9838,ok
 ptbxl40_20260929_05,grid,b3,ticks,ticks,8,V1,False,0,True,,0.9984,0.8676,5.763,19.381,0.9946,2,,-10.0,0.9946,ok
@@ -1415,3 +2079,35 @@ ptbxl40_20260929_05,grid,b3,grid,ticks,8,II,True,3,True,,0.9938,0.9536,10.582,12
 ptbxl40_20260929_05,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,1,1,-4.0,0.9913,ok
 ptbxl40_20260929_05,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,2,2,-2.0,0.9863,ok
 ptbxl40_20260929_05,grid,b3,grid,ticks,8,II,True,3,True,,,,,,,3,3,-6.0,0.952,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,I,False,0,True,,1.0,0.7841,3.936,16.922,0.9965,0,,-12.0,0.9894,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,aVR,False,0,True,,0.9984,0.9821,14.481,14.481,0.9823,1,,0.0,0.9822,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,V1,False,0,True,,0.9976,0.8668,5.739,20.377,0.9958,2,,-10.0,0.9958,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,V4,False,0,True,,0.996,0.9835,15.216,17.184,0.9924,3,,-2.0,0.9896,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,II,False,1,True,,0.9984,0.9444,9.775,19.263,0.9942,0,,-6.0,0.9943,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,aVL,False,1,True,,0.9984,0.9527,10.465,14.895,0.9887,1,,4.0,0.9835,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,V2,False,1,True,,0.9976,0.9095,7.677,21.687,0.9964,2,,-12.0,0.9964,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,V5,False,1,True,,0.9912,0.9857,15.756,19.19,0.9943,3,,-2.0,0.9935,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,III,False,2,True,,1.0,0.8049,4.409,19.245,0.9949,0,,-10.0,0.9949,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,aVF,False,2,True,,0.9984,0.9789,13.579,13.579,0.9789,1,,0.0,0.979,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,V3,False,2,True,,0.9976,0.8641,6.233,17.262,0.9897,2,,-8.0,0.9897,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,V6,False,2,True,,0.9944,0.993,18.494,18.494,0.9953,3,,0.0,0.993,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,0.9938,0.938,9.331,12.436,0.9698,0,0,-2.0,0.9719,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,1,1,-4.0,0.9907,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,2,2,-4.0,0.9841,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero,ticks,8,II,True,3,True,,,,,,,3,3,-8.0,0.9517,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,I,False,0,True,,1.0,0.8864,6.717,16.874,0.9964,0,,-8.0,0.9893,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,aVR,False,0,True,,0.9984,0.9466,9.945,14.519,0.9823,1,,4.0,0.9823,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,V1,False,0,True,,0.9976,0.944,9.492,20.176,0.9955,2,,-6.0,0.9956,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,V4,False,0,True,,0.9976,0.9828,15.017,17.198,0.9924,3,,2.0,0.9896,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,II,False,1,True,,0.9968,0.9874,16.053,19.124,0.9941,0,,-2.0,0.9944,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,aVL,False,1,True,,0.9984,0.8744,6.282,14.918,0.9892,1,,8.0,0.9836,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,V2,False,1,True,,0.9976,0.9552,10.757,21.833,0.9965,2,,-8.0,0.9965,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,V5,False,1,True,,0.9928,0.9763,13.449,16.359,0.9876,3,,2.0,0.9876,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,III,False,2,True,,1.0,0.9075,7.617,19.055,0.9946,0,,-6.0,0.9946,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,aVF,False,2,True,,0.9984,0.957,10.588,13.653,0.9796,1,,2.0,0.9792,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,V3,False,2,True,,0.9976,0.95,10.554,17.163,0.9894,2,,-4.0,0.9895,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,V6,False,2,True,,0.996,0.9748,13.159,18.433,0.9933,3,,4.0,0.9929,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,0.9938,0.9697,12.413,12.413,0.9697,0,0,2.0,0.9718,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,1,1,0.0,0.9902,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,2,2,0.0,0.9847,ok
+ptbxl40_20260929_05,grid,b3,grid_tickzero_k2fix,ticks,8,II,True,3,True,,,,,,,3,3,-4.0,0.9522,ok

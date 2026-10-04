@@ -1,7 +1,7 @@
 {
   "generated_by": "ml/run_timemap.py",
-  "utc": "2026-10-04T18:15:55+00:00",
-  "git_commit": "5e5cdd7e19605313016fa53a2745c0cacfaced08",
+  "utc": "2026-10-04T18:50:23+00:00",
+  "git_commit": "5acb972583d877f92abef2ba8110be61a9a5e71a",
   "git_dirty": false,
   "params": {
     "model": "b3_512x1024_fp16",
@@ -11,7 +11,9 @@
       "ticks",
       "rowstart",
       "rowstart_end",
-      "grid"
+      "grid",
+      "grid_tickzero",
+      "grid_tickzero_k2fix"
     ],
     "max_shift_s": 0.2,
     "min_pcc": 0.5,
