@@ -157,8 +157,16 @@ object SheetLayout {
         return top.toIntArray()
     }
 
-    /** `segment.pulse_falling_edge`: the pulse top's right end, or NaN. */
-    fun pulseFallingEdge(mask: TraceExtractor.Mask, rowY: Int, pxPerMm: Double): Double {
+    /**
+     * `segment.mask_offset_px`: columns OpenCV's opening moves a mask right --
+     * 1 for an even kernel (no centre pixel), 0 for an odd one. Every position
+     * read off such a mask is one pixel late until this is subtracted; undone,
+     * plain SNR on the printed test sheets rose from 9.5-12 to 17.5-23.7 dB.
+     */
+    fun maskOffsetPx(openKernel: Int): Double = if (openKernel % 2 == 0) 1.0 else 0.0
+
+    /** `segment.pulse_falling_edge`: the pulse top's right end, or NaN; [offsetPx] subtracted. */
+    fun pulseFallingEdge(mask: TraceExtractor.Mask, rowY: Int, pxPerMm: Double, offsetPx: Double): Double {
         val h = mask.rows
         val w = mask.cols
         val yc = rowY - PULSE_TOP_MM * pxPerMm
@@ -179,7 +187,7 @@ object SheetLayout {
         }
         val lengthMm = (last - idx[0] + 1) / pxPerMm
         if (lengthMm < PULSE_WIDTH_MIN_MM || lengthMm > PULSE_WIDTH_MAX_MM) return Double.NaN
-        return last.toDouble() - 0.5 * (0.25 * pxPerMm)
+        return last.toDouble() - 0.5 * (0.25 * pxPerMm) - offsetPx
     }
 
     /** Median of the per-row pulse edges, or NaN when none was found. */
@@ -221,7 +229,7 @@ object SheetLayout {
      * rows, time zero and the duration anchor's approximate px/mm.
      */
     fun tickScale(mask: TraceExtractor.Mask, rows: IntArray, t0: Double,
-                  anchorPxPerMm: Double): TickScale {
+                  anchorPxPerMm: Double, offsetPx: Double): TickScale {
         var approx = anchorPxPerMm
         val wt = max(2, StripLocator.pyRound(TICK_WIDTH_MM * approx))
         val band = StripLocator.pyRound(TICK_BASE_BAND_MM * approx)
@@ -277,6 +285,7 @@ object SheetLayout {
                     val ref = xc
                     xc = segs.minByOrNull { s -> abs(s.average() - ref) }!!.average()
                 }
+                xc -= offsetPx                       // the mask's own one-pixel shift
                 est += (xc - t0) / (k * cellMm)
                 pos += Triple(r, k, Math.rint(xc * 10.0) / 10.0)
             }

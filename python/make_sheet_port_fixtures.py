@@ -181,7 +181,9 @@ def main() -> int:
         pos, xo = segment.trace_row(rect, layout, r, 2)
         assert xo == x0
         lines.append(f"row{r}.pos " + " ".join(fmt(v) for v in pos))
-        grid, g0 = sheet.on_sheet_columns(xo + np.arange(len(pos), dtype=np.float64), pos)
+        # As sheet.classical_row_tracer: mask columns are one pixel late.
+        grid, g0 = sheet.on_sheet_columns(xo - segment.mask_offset_px(2)
+                                          + np.arange(len(pos), dtype=np.float64), pos)
         for c in rc:
             sig = sheet.cell_signal(grid, g0, c, ticks.px_per_mm, ticks.px_per_mm, layout)
             tag = f"{c.name}{'_rh' if c.row == 3 else ''}"

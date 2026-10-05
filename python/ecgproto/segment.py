@@ -847,8 +847,25 @@ def sheet_rows(image: np.ndarray, mask: np.ndarray | None = None) -> tuple[int, 
     return tuple(int(p) for p in top4)
 
 
-def pulse_falling_edge(mask: np.ndarray, row_y: int, px_per_mm: float) -> float:
-    """Right end of the pulse's top segment in one row, or NaN."""
+def mask_offset_px(open_kernel: int) -> float:
+    """Columns cv2's opening moves a mask right: 1 for an even kernel, else 0.
+
+    An even kernel has no centre, so its anchor is off by half a pixel and
+    the opening shifts the ink one pixel right and down (measured: k = 2 and
+    4 shift +1, 3 and 5 do not). Every position read off such a mask -- the
+    pulse edge, a tick, a traced column -- is one pixel late until this is
+    subtracted. Measured with b3 (python/run_halfshift.py, --clean): every
+    time marker read +4 ms on the printed PNGs; undone, plain SNR on them
+    rose from 9.5-12 dB to 17.5-23.7 dB, equal to shifted SNR.
+    """
+    return 1.0 if open_kernel % 2 == 0 else 0.0
+
+
+def pulse_falling_edge(mask: np.ndarray, row_y: int, px_per_mm: float,
+                       offset_px: float = 0.0) -> float:
+    """Right end of the pulse's top segment in one row, or NaN.
+
+    `offset_px`: the mask's own shift (mask_offset_px), subtracted."""
     h, w = mask.shape
     yc = row_y - PULSE_TOP_MM * px_per_mm
     a = max(0, int(round(yc - PULSE_SLAB_MM * px_per_mm)))
@@ -868,7 +885,7 @@ def pulse_falling_edge(mask: np.ndarray, row_y: int, px_per_mm: float) -> float:
     # The falling edge is a line of finite width whose centre is time zero;
     # the segment's last inked column is its right-hand side.
     line_px = 0.25 * px_per_mm
-    return float(first[-1]) - 0.5 * line_px
+    return float(first[-1]) - 0.5 * line_px - offset_px
 
 
 #: The opening locate_sheet binarises with. 2x2, as the trace itself (the
@@ -898,12 +915,13 @@ def locate_sheet(image: np.ndarray, scale_hint: float | None = None) -> SheetLoc
     loc = locate_rhythm_strip(image, mask=m)
     approx = (scale_hint if scale_hint is not None and np.isfinite(scale_hint)
               else loc.recording_width_px / (RECORDING_S * dig.MM_PER_S))
-    edges = tuple(pulse_falling_edge(m, y, approx) for y in rows)
+    off = mask_offset_px(LOCATE_OPEN_KERNEL)
+    edges = tuple(pulse_falling_edge(m, y, approx, off) for y in rows)
     found = [e for e in edges if np.isfinite(e)]
     if found:
         t0, src = float(np.median(found)), "pulses"
     else:
-        t0, src = float(loc.t0_x), "rhythm_locator"
+        t0, src = float(loc.t0_x) - off, "rhythm_locator"
     return SheetLocation(rows=rows, t0_x=t0, t0_per_row=edges, x_end=int(loc.x1),
                          rhythm=loc, t0_source=src,
                          scale_hint=float("nan") if scale_hint is None else float(scale_hint))
@@ -1011,6 +1029,7 @@ def tick_scale(image: np.ndarray, sheet: SheetLocation,
             if cols.size:
                 segs = np.split(cols, np.flatnonzero(np.diff(cols) > 1) + 1)
                 xc = float(min(segs, key=lambda s: abs(s.mean() - xc)).mean())
+            xc -= mask_offset_px(open_kernel)       # the mask's own one-pixel shift
             est.append((xc - t0) / (k * cell_px))
             pos.append((r, k, round(xc, 1)))
     if len(est) < TICK_MIN_FOUND:

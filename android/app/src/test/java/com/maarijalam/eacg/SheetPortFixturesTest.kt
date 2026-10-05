@@ -107,7 +107,7 @@ class SheetPortFixturesTest {
         val approx = loc.recordingWidthPx / (SheetLayout.RECORDING_S * SheetLayout.MM_PER_S)
         assertEquals(double("locate.approx"), approx, 1e-9)
         val rows = ints("locate.rows")
-        val edges = DoubleArray(4) { SheetLayout.pulseFallingEdge(m, rows[it], approx) }
+        val edges = DoubleArray(4) { SheetLayout.pulseFallingEdge(m, rows[it], approx, SheetLayout.maskOffsetPx(2)) }
         close("pulse edges", doubles("locate.edges"), edges)
         assertEquals(double("locate.t0"), SheetLayout.t0FromPulses(edges), 1e-9)
     }
@@ -115,7 +115,7 @@ class SheetPortFixturesTest {
     @Test
     fun tickScaleMatches() {
         val t = SheetLayout.tickScale(mask("m2"), ints("locate.rows"), double("locate.t0"),
-            double("locate.anchor"))
+            double("locate.anchor"), SheetLayout.maskOffsetPx(2))
         assertEquals(row("ticks.n")[0].toInt(), t.nFound)
         assertEquals(double("ticks.px"), t.pxPerMm, 1e-9)
         val p = row("ticks.pos")
@@ -156,7 +156,7 @@ class SheetPortFixturesTest {
             val x0 = row("band$r.x0")[0].toInt()
             val pos = SheetLayout.traceRowFromMask(band, lay, r, x0)
             close("row $r pos", doubles("row$r.pos"), pos)
-            val xs = DoubleArray(pos.size) { (x0 + it).toDouble() }
+            val xs = DoubleArray(pos.size) { x0 + it - SheetLayout.maskOffsetPx(2) }
             val (grid, g0) = SheetLayout.onSheetColumns(xs, pos)
             for (c in lay.cells.filter { it.row == r }) {
                 val tag = c.name + if (c.rhythm) "_rh" else ""

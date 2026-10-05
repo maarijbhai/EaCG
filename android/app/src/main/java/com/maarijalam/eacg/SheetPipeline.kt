@@ -93,9 +93,10 @@ object SheetPipeline {
         val rows = SheetLayout.sheetRows(m2)
         val loc = StripLocator.locate(m2)
         val approx = scaleHint ?: (loc.recordingWidthPx / (SheetLayout.RECORDING_S * SheetLayout.MM_PER_S))
-        val edges = DoubleArray(4) { SheetLayout.pulseFallingEdge(m2, rows[it], approx) }
+        val off = SheetLayout.maskOffsetPx(OPEN_LOCATE)
+        val edges = DoubleArray(4) { SheetLayout.pulseFallingEdge(m2, rows[it], approx, off) }
         val pulseT0 = SheetLayout.t0FromPulses(edges)
-        val t0 = if (pulseT0.isFinite()) pulseT0 else loc.t0X
+        val t0 = if (pulseT0.isFinite()) pulseT0 else loc.t0X - off
         val anchor = (loc.x1 - t0) / (SheetLayout.RECORDING_S * SheetLayout.MM_PER_S)
         return Located(m2, rows, loc, edges, pulseT0, t0, anchor)
     }
@@ -196,7 +197,9 @@ object SheetPipeline {
         val band = Mat(rect, Rect(x0, y0, x1 - x0, y1 - y0)).clone()
         val m = try { StripLocator.isolateTrace(mask(band, OPEN_TRACE)) } finally { band.release() }
         val pos = SheetLayout.traceRowFromMask(m, layout, row, x0)
-        return DoubleArray(pos.size) { (x0 + it).toDouble() } to pos
+        // Mask column c holds the ink of image column c - offset (sheet.classical_row_tracer).
+        val off = SheetLayout.maskOffsetPx(OPEN_TRACE)
+        return DoubleArray(pos.size) { x0 + it - off } to pos
     }
 
     private fun modelRow(rect: Mat, layout: SheetLayout.LeadLayout, row: Int,
@@ -285,7 +288,7 @@ object SheetPipeline {
             // the calibration's fallback.
             val ticks = SheetLayout.tickScale(
                 if (OPEN_LOCATE == OPEN_TRACE) m2 else mask(rect, OPEN_TRACE), rows, t0,
-                fit?.pxPerMm ?: anchor)
+                fit?.pxPerMm ?: anchor, SheetLayout.maskOffsetPx(OPEN_TRACE))
             val useTicks = ticks.pxPerMm.isFinite()
             val px = if (useTicks) ticks.pxPerMm else anchor
             val layout = SheetLayout.segmentLeads(rect.rows(), rows, t0, px, if (useTicks) ticks else null)

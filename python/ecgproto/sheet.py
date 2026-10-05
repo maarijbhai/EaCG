@@ -124,7 +124,9 @@ def cell_signal(pos: np.ndarray, x_origin: int, cell: segment.LeadCell,
 def classical_row_tracer(open_kernel: int = 2):
     def tracer(img, layout, row):
         pos, x0 = segment.trace_row(img, layout, row, open_kernel)
-        return x0 + np.arange(len(pos), dtype=np.float64), pos
+        # Mask column c holds the ink of image column c - offset.
+        return (x0 - segment.mask_offset_px(open_kernel)
+                + np.arange(len(pos), dtype=np.float64)), pos
     return tracer
 
 

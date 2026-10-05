@@ -120,6 +120,46 @@ class LocateSheetOnAThinTrace(unittest.TestCase):
         self.assertAlmostEqual(sl.x_end - sl.t0_x, width_px, delta=4)
 
 
+class MaskOffsetIsUndone(unittest.TestCase):
+    """A position read off a 2x2-opened mask is one pixel late unless
+    corrected (segment.mask_offset_px). The invariant: the same drawing read
+    through a 2x2 and a 3x3 opening gives the same pulse edge and the same
+    ticks. Under the old rule they differ by exactly one pixel (checked)."""
+
+    def test_the_assumed_offset_is_what_cv2_does(self):
+        from ecgproto import digitise as dig
+        img = np.full((60, 400, 3), 245, np.uint8)
+        img[20:30, 100:300] = 20
+        for k in (2, 3, 4, 5):
+            cols = np.flatnonzero(dig.binarise_trace(img, open_kernel=k).any(axis=0))
+            self.assertEqual(cols[0] - 100, segment.mask_offset_px(k), f"kernel {k}")
+
+    def test_pulse_edge_and_ticks_agree_across_openings(self):
+        from ecgproto import digitise as dig
+        px = PX_PER_MM
+        img = np.full((900, 2400, 3), 245, np.uint8)
+        rows = (200, 420, 640, 820)
+        t0 = 120.0
+        for y in rows[:3]:
+            img[y - 1:y + 2, 60:2300] = 20                          # the trace's baseline
+            top = y - int(10 * px)
+            img[top:top + 4, 80:121] = 20                           # pulse top, 5 mm
+            img[top:y, 117:121] = 20                                # its falling edge
+            for k in (1, 2, 3):                                     # 0.75 mm bars, 6 mm tall
+                xc = int(t0 + k * segment.CELL_S * 25 * px)
+                img[y - int(3 * px):y + int(3 * px), xc - 3:xc + 3] = 20
+        loc = segment.StripLocation(x0=60, y0=780, x1=2300, y1=860, row_peaks=rows,
+                                    pulse_x1=None, t0_x=t0)
+        sl = segment.SheetLocation(rows=rows, t0_x=t0, t0_per_row=(t0,) * 4, x_end=2300,
+                                   rhythm=loc, t0_source="pulses", scale_hint=px)
+        edges = {k: segment.pulse_falling_edge(dig.binarise_trace(img, open_kernel=k), rows[0], px,
+                                               segment.mask_offset_px(k)) for k in (2, 3)}
+        self.assertEqual(edges[2], edges[3])
+        ticks = {k: segment.tick_scale(img, sl, open_kernel=k).positions for k in (2, 3)}
+        self.assertEqual(len(ticks[2]), 9)
+        self.assertEqual(ticks[2], ticks[3])
+
+
 KIT = Path(__file__).resolve().parents[2] / "out" / "kit_targets"
 
 

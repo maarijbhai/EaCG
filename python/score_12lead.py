@@ -52,6 +52,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import run_photo as rp  # noqa: E402
 import score_kit_photo as skp  # noqa: E402
 from ecgproto import digitise as dig, evaluate, ptbxl, segment, sheet  # noqa: E402
+from ecgproto import sheet as sheet_ref  # noqa: E402  (score_sheet's arg is named sheet)
 
 REPO = Path(__file__).resolve().parents[1]
 RESULTS = REPO / "results" / "kitphoto"
@@ -194,10 +195,7 @@ def score_sheet(sheet: np.ndarray, target: skp.Target, truth: SheetTruth,
     cals = {"known": target.px_per_mm, "duration": anchor}
     if np.isfinite(ticks.px_per_mm):
         cals["ticks"] = ticks.px_per_mm
-    def classical(sh, lay, r):
-        pos, x0 = segment.trace_row(sh, lay, r, open_kernel)
-        return x0 + np.arange(len(pos), dtype=np.float64), pos
-    tracers = {"classical": classical}
+    tracers = {"classical": sheet_ref.classical_row_tracer(open_kernel)}
     tracers.update(extra_tracers or {})
     for cal, px in cals.items():
         layout = segment.segment_leads(sheet, loc, px,
