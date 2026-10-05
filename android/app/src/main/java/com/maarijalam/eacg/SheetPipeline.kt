@@ -42,7 +42,13 @@ object SheetPipeline {
 
     const val MODEL_ASSET = "ml/b3_512x1024_fp16.tflite"
     const val LEAD_IN_MM = 4.0
-    const val OPEN_LOCATE = 3      // segment.locate_sheet: binarise_trace default
+    /**
+     * segment.LOCATE_OPEN_KERNEL. Was 3: a 3x3 opening shreds a 2-3 px
+     * photographed trace, and on ptbxl9_20261005_01 the phone read 6.52 px/mm
+     * from 3/9 ticks and lost every lead (results/device/sheet_scores.csv).
+     * Now the same 2x2 mask as the ticks, binarised once.
+     */
+    const val OPEN_LOCATE = 2
     const val OPEN_TRACE = 2       // the photo path's opening (PhotoPipeline.OPEN_KERNEL)
 
     enum class Tracer { MODEL, CLASSICAL }
@@ -218,16 +224,17 @@ object SheetPipeline {
         val rect = try { rectify(src, c) } finally { src.release() }
         lap("rectify")
         try {
-            val m3 = mask(rect, OPEN_LOCATE)
-            val rows = SheetLayout.sheetRows(m3)
-            val loc = StripLocator.locate(m3)
+            val m2 = mask(rect, OPEN_LOCATE)
+            val rows = SheetLayout.sheetRows(m2)
+            val loc = StripLocator.locate(m2)
             val approx = loc.recordingWidthPx / (SheetLayout.RECORDING_S * SheetLayout.MM_PER_S)
-            val edges = DoubleArray(4) { SheetLayout.pulseFallingEdge(m3, rows[it], approx) }
+            val edges = DoubleArray(4) { SheetLayout.pulseFallingEdge(m2, rows[it], approx) }
             val pulseT0 = SheetLayout.t0FromPulses(edges)
             val t0 = if (pulseT0.isFinite()) pulseT0 else loc.t0X
             val anchor = (loc.x1 - t0) / (SheetLayout.RECORDING_S * SheetLayout.MM_PER_S)
             lap("locate")
-            val ticks = SheetLayout.tickScale(mask(rect, OPEN_TRACE), rows, t0, anchor)
+            val ticks = SheetLayout.tickScale(
+                if (OPEN_LOCATE == OPEN_TRACE) m2 else mask(rect, OPEN_TRACE), rows, t0, anchor)
             val useTicks = ticks.pxPerMm.isFinite()
             val px = if (useTicks) ticks.pxPerMm else anchor
             val layout = SheetLayout.segmentLeads(rect.rows(), rows, t0, px, if (useTicks) ticks else null)

@@ -98,15 +98,16 @@ class SheetPortFixturesTest {
 
     @Test
     fun rowsAndPulseEdgesMatch() {
-        val m3 = mask("m3")
-        assertArrayEquals(ints("locate.rows"), SheetLayout.sheetRows(m3))
-        val loc = StripLocator.locate(m3)
+        // Locate binarises with the 2x2 opening, like the ticks (OPEN_LOCATE).
+        val m = mask("m2")
+        assertArrayEquals(ints("locate.rows"), SheetLayout.sheetRows(m))
+        val loc = StripLocator.locate(m)
         assertEquals(row("locate.loc_x1")[0].toInt(), loc.x1)
         assertEquals(double("locate.loc_t0"), loc.t0X, 1e-9)
         val approx = loc.recordingWidthPx / (SheetLayout.RECORDING_S * SheetLayout.MM_PER_S)
         assertEquals(double("locate.approx"), approx, 1e-9)
         val rows = ints("locate.rows")
-        val edges = DoubleArray(4) { SheetLayout.pulseFallingEdge(m3, rows[it], approx) }
+        val edges = DoubleArray(4) { SheetLayout.pulseFallingEdge(m, rows[it], approx) }
         close("pulse edges", doubles("locate.edges"), edges)
         assertEquals(double("locate.t0"), SheetLayout.t0FromPulses(edges), 1e-9)
     }

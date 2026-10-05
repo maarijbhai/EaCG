@@ -99,6 +99,27 @@ class LocateRhythmStrip(unittest.TestCase):
             segment.locate_rhythm_strip(image)
 
 
+class LocateSheetOnAThinTrace(unittest.TestCase):
+    """A photographed trace binarises 2-3 px wide; a 3x3 opening shreds it.
+
+    Measured on ptbxl9_20261005_01: the rhythm strip "ended" three quarters
+    of the way across, the duration anchor read 7.13 px/mm against ~9.9, and
+    every pulse and 8 of 9 ticks were missed. The render's ink is thinned by
+    one pixel to the same width; under the old 3x3 rule this anchor reads
+    7.156 (-10.5%), under 2x2 8.000.
+    """
+
+    def test_the_duration_anchor_survives_a_two_pixel_trace(self):
+        image, spec = layout.render_12lead(twelve_leads(), FS, px_per_mm=PX_PER_MM,
+                                           draw_labels=False, trace_thickness=2)
+        thin = cv2.dilate(image, np.ones((2, 2), np.uint8))   # ink one pixel thinner
+        sl = segment.locate_sheet(thin)
+        self.assertAlmostEqual(sl.anchor_px_per_mm / PX_PER_MM, 1.0, delta=0.005)
+        rhythm = spec.cell(layout.RHYTHM_LEAD, rhythm=True)
+        width_px = (rhythm.t_end_s - rhythm.t_start_s) * synth.MM_PER_S * PX_PER_MM
+        self.assertAlmostEqual(sl.x_end - sl.t0_x, width_px, delta=4)
+
+
 KIT = Path(__file__).resolve().parents[2] / "out" / "kit_targets"
 
 

@@ -871,6 +871,19 @@ def pulse_falling_edge(mask: np.ndarray, row_y: int, px_per_mm: float) -> float:
     return float(first[-1]) - 0.5 * line_px
 
 
+#: The opening locate_sheet binarises with. 2x2, as the trace itself (the
+#: photo path's OPEN_KERNEL): a 3x3 opening erases a 2-3 px photographed
+#: trace into fragments, and on ptbxl9_20261005_01 only 56% of the rhythm
+#: band's columns kept ink (94% at 2x2). isolate_trace then dropped the
+#: fragments as text, the rhythm strip "ended" at 1,924 of 2,699 px, the
+#: duration anchor read 7.13 px/mm (true ~9.9), the pulse search missed
+#: every pulse and the tick search 8 of 9 ticks: median lead PCC 0.04 with
+#: b3, 0.843 at 2x2 (results/device/sheet_scores.csv, 65b2973). Ticks were
+#: already found on a 2x2 mask, so time zero and ticks now come from the
+#: same mask (they differed by the even kernel's 1 px offset).
+LOCATE_OPEN_KERNEL = 2
+
+
 def locate_sheet(image: np.ndarray, scale_hint: float | None = None) -> SheetLocation:
     """Rows, recording time zero and the duration anchor for a whole sheet.
 
@@ -880,7 +893,7 @@ def locate_sheet(image: np.ndarray, scale_hint: float | None = None) -> SheetLoc
     pulse search comes from the rhythm locator's anchor; a t0 error of the
     size measured (up to 1.5 s, 15%) leaves the search slab on the pulse.
     """
-    m = dig.binarise_trace(image)
+    m = dig.binarise_trace(image, open_kernel=LOCATE_OPEN_KERNEL)
     rows = sheet_rows(image, m)
     loc = locate_rhythm_strip(image, mask=m)
     approx = (scale_hint if scale_hint is not None and np.isfinite(scale_hint)

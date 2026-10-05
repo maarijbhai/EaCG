@@ -13,7 +13,7 @@ stages that follow:
 
   corners   the grid region mask (1,200 px scale) -> extremes per side and
             the RANSAC inlier set (LCG-driven, so exact on both sides)
-  locate    the rectified page binarised (2x2 and 3x3 openings) -> the four
+  locate    the rectified page binarised (2x2 opening) -> the four
             rows, the rhythm locator, each row's pulse edge, time zero
   ticks     the separator ticks and the time scale
   segment   cells, bands and the per-row time knots
@@ -144,9 +144,10 @@ def main() -> int:
 
     # ---- locate, ticks, segment --------------------------------------------
     rect, _ = sheet.rectify(photo, fc.corners)
-    m3 = dig.binarise_trace(rect)
+    # One mask for locate and ticks: both binarise with a 2x2 opening
+    # (segment.LOCATE_OPEN_KERNEL, tick_scale's open_kernel).
+    assert segment.LOCATE_OPEN_KERNEL == 2
     m2 = dig.binarise_trace(rect, open_kernel=2)
-    emit_mask(lines, "m3", m3)
     emit_mask(lines, "m2", m2)
     sl = segment.locate_sheet(rect)
     lines.append("locate.rows " + " ".join(str(r) for r in sl.rows))
