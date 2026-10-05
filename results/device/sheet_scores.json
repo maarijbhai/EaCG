@@ -1,0 +1,16 @@
+{
+  "generated_by": "python/score_device_sheets.py",
+  "utc": "2026-10-05T09:26:20+00:00",
+  "git_commit": "c1168e6d8abb05ea9eef0b7003ed76baf027d85b",
+  "git_dirty": false,
+  "params": {
+    "exports": "data/device_exports/eacg_sheet_*.csv",
+    "fs": 500.0,
+    "max_shift_s": 0.2,
+    "min_pcc": 0.5
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2"
+  }
+}
