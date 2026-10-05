@@ -1,0 +1,18 @@
+{
+  "generated_by": "python/run_timing.py",
+  "utc": "2026-10-05T14:57:07+00:00",
+  "git_commit": "e14619a7eadfc97220bf12b888180f7d674ed587",
+  "git_dirty": false,
+  "params": {
+    "decode_px": 3200,
+    "corners": "auto",
+    "geometry": "grid",
+    "b3": true,
+    "truth": "corner_truth registration of the photo to the printed PNG"
+  },
+  "versions": {
+    "python": "3.12.3",
+    "numpy": "2.5.3",
+    "opencv": "5.0.0"
+  }
+}

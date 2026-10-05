@@ -1,0 +1,20 @@
+{
+  "generated_by": "python/run_halfshift.py",
+  "utc": "2026-10-05T14:59:52+00:00",
+  "git_commit": "0f939192d1b7419d4920acd3cfe07ed6abdb0efc",
+  "git_dirty": false,
+  "params": {
+    "decode_px": 3200,
+    "corners": "auto",
+    "geometry": "grid",
+    "tracer": "b3 FP16",
+    "max_shift_s": 0.1,
+    "half_cell_s": 1.25,
+    "source": "printed PNGs"
+  },
+  "versions": {
+    "python": "3.12.3",
+    "numpy": "2.5.3",
+    "opencv": "5.0.0"
+  }
+}
