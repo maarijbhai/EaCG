@@ -201,6 +201,7 @@ private fun RecordDetail(m: RecordStore.Meta, modifier: Modifier, onBack: () -> 
         }
         Text(when_(m.createdMs), style = MaterialTheme.typography.titleMedium)
         Text("${tracerLabel(m)} · corners ${if (m.cornersAuto) "automatic" else "by hand"} · " +
+            (m.geometry?.let { if (it == "grid") "grid fit · " else "corners only · " } ?: "") +
             String.format(Locale.US, "%s %.3f px/mm (%d/9 ticks)", m.calibration, m.pxPerMm, m.ticksFound) +
             (m.target?.let { " · test sheet $it" } ?: ""),
             style = MaterialTheme.typography.bodySmall,

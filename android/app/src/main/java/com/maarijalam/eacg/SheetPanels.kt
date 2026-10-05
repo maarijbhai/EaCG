@@ -54,7 +54,9 @@ private data class SheetState(
     val status: String = "",
     val result: SheetPipeline.Result? = null,
     val truth12: Map<String, DoubleArray>? = null,
-    val exported: String? = null
+    val exported: String? = null,
+    /** Regularise the page on its printed grid (SheetPipeline.Geometry.GRID). */
+    val gridFit: Boolean = true
 )
 
 /**
@@ -117,7 +119,8 @@ fun SheetSection(modifier: Modifier = Modifier) {
             try {
                 val truth = state.target?.truth12Asset?.let { SheetPipeline.loadTruth12(context, it) }
                 val r = SheetPipeline.run(context, bmp, corners, tracer, truth,
-                    cornersAuto = state.cornersAuto, cornersRefined = state.cornersRefined)
+                    cornersAuto = state.cornersAuto, cornersRefined = state.cornersRefined,
+                    geometry = if (state.gridFit) SheetPipeline.Geometry.GRID else SheetPipeline.Geometry.CORNERS)
                 val total = r.timingsMs.values.sum()
                 state = state.copy(busy = false, result = r, truth12 = truth,
                     status = "Done in ${total} ms. Saving to Records...")
@@ -170,6 +173,10 @@ fun SheetSection(modifier: Modifier = Modifier) {
                     },
                     enabled = !state.busy, refined = null)
                 CornerCheckRow(bmp, corners)
+                FilterChip(selected = state.gridFit, enabled = !state.busy,
+                    onClick = { state = state.copy(gridFit = !state.gridFit, result = null) },
+                    label = { Text("Grid fit: straighten the page on its printed 5 mm grid",
+                        style = MaterialTheme.typography.labelSmall) })
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { digitise(SheetPipeline.Tracer.MODEL) }, enabled = !state.busy,
                         modifier = Modifier.weight(1f)) { Text("Digitise (learned)") }
@@ -207,6 +214,10 @@ private fun SheetResultPanel(r: SheetPipeline.Result, truth12: Map<String, Doubl
     Text("${if (r.tracer == SheetPipeline.Tracer.MODEL) "Learned tracer (b3)" else "Classical tracer"}; " +
         "corners ${if (r.cornersAuto) "automatic" else "by hand"}; " +
         "${r.calibration} ${f("%.3f", r.pxPerMm)} px/mm (${r.ticksFound}/9 ticks); t0 from ${r.t0Source}",
+        style = MaterialTheme.typography.labelSmall)
+    Text(r.gridFit?.let {
+        "Geometry: grid fit (${f("%.3f", it.rmsMm)} mm residual, ${it.nVertical}x${it.nHorizontal} rules)"
+    } ?: ("Geometry: corners only" + (r.gridNote?.let { " -- $it" } ?: "")),
         style = MaterialTheme.typography.labelSmall)
     Text(r.timingsMs.entries.joinToString("  ") { "${it.key} ${it.value} ms" },
         style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)

@@ -60,7 +60,9 @@ object RecordStore {
         val photoW: Int, val photoH: Int,
         val medianPcc: Double?,          // only when scored against a test sheet
         val leadsScored: Int,
-        val totalMs: Long
+        val totalMs: Long,
+        /** "grid" or "corners"; null on records saved before the grid fit. */
+        val geometry: String? = null
     )
 
     fun root(context: Context) = File(context.filesDir, "records")
@@ -80,6 +82,7 @@ object RecordStore {
         put("photo_w", m.photoW); put("photo_h", m.photoH)
         put("median_pcc", m.medianPcc?.let { String.format(Locale.US, "%.4f", it) })
         put("leads_scored", m.leadsScored); put("total_ms", m.totalMs)
+        put("geometry", m.geometry)
         return StringWriter().also { p.store(it, "EaCG record") }.toString()
     }
 
@@ -95,7 +98,8 @@ object RecordStore {
             pageW = s("page_w").toInt(), pageH = s("page_h").toInt(),
             photoW = s("photo_w").toInt(), photoH = s("photo_h").toInt(),
             medianPcc = p.getProperty("median_pcc")?.toDouble(),
-            leadsScored = s("leads_scored").toInt(), totalMs = s("total_ms").toLong()
+            leadsScored = s("leads_scored").toInt(), totalMs = s("total_ms").toLong(),
+            geometry = p.getProperty("geometry")
         )
     }
 
@@ -186,7 +190,7 @@ object RecordStore {
             else 0.5 * (scored[scored.size / 2 - 1] + scored[scored.size / 2])
         val meta = Meta(id, now, r.tracer.name, target, r.calibration, r.pxPerMm, r.ticksFound,
             r.t0Source, r.cornersAuto, r.corners, r.rectW, r.rectH, photo.width, photo.height,
-            med, scored.size, r.timingsMs.values.sum())
+            med, scored.size, r.timingsMs.values.sum(), r.geometry)
         val root = root(context).apply { mkdirs() }
         val tmp = File(root, "$id.tmp").apply { deleteRecursively(); mkdirs() }
         try {

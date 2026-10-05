@@ -91,11 +91,10 @@ def _band_peaks(profile: np.ndarray, pitch_px: float) -> np.ndarray:
     """Sub-pixel rule positions in one band's profile."""
     k = int(round(pitch_px)) | 1
     p = profile - cv2.blur(profile.reshape(1, -1).astype(np.float32), (k, 1))[0]
-    peaks, prop = sps.find_peaks(p, distance=max(2, int(0.6 * pitch_px)),
-                                 prominence=0)
+    peaks = _peaks_by_distance(p, max(2, int(0.6 * pitch_px)))
     if len(peaks) < 3:
         return np.empty(0)
-    prom = prop["prominences"]
+    prom = sps.peak_prominences(p, peaks)[0]
     keep = prom >= MIN_REL_PROMINENCE * np.percentile(prom, 80)
     peaks = peaks[keep]
     peaks = peaks[(peaks > 0) & (peaks < len(p) - 1)]
@@ -103,6 +102,34 @@ def _band_peaks(profile: np.ndarray, pitch_px: float) -> np.ndarray:
     den = a - 2 * b + c
     off = np.where(np.abs(den) > 1e-9, 0.5 * (a - c) / np.where(den == 0, 1, den), 0.0)
     return peaks + np.clip(off, -0.5, 0.5)
+
+
+def _peaks_by_distance(x: np.ndarray, distance: int) -> np.ndarray:
+    """scipy.signal.find_peaks(x, distance=d), with ties broken stably.
+
+    SciPy ranks peaks for the distance rule with NumPy's default (unstable)
+    argsort, so between two equal maxima closer than `distance` the survivor
+    is an accident of the sort -- measured on ptbxl9_20261005_01: two maxima
+    of 12.005102 at 283 and 285, SciPy keeping 283. No port can reproduce
+    that, so the taller-first rule here ranks with a stable sort (the later
+    of two equal peaks wins), exactly as StripLocator.findPeaks does.
+    """
+    peaks, _ = sps.find_peaks(x)
+    if distance <= 1 or len(peaks) < 2:
+        return peaks
+    keep = np.ones(len(peaks), bool)
+    for j in np.argsort(x[peaks], kind="stable")[::-1]:
+        if not keep[j]:
+            continue
+        k = j - 1
+        while k >= 0 and peaks[j] - peaks[k] < distance:
+            keep[k] = False
+            k -= 1
+        k = j + 1
+        while k < len(peaks) and peaks[k] - peaks[j] < distance:
+            keep[k] = False
+            k += 1
+    return peaks[keep]
 
 
 #: A peak is kept only if a gap to a neighbour is within this fraction of a
@@ -137,11 +164,11 @@ def _index_band(xs: np.ndarray, pitch_px: float) -> tuple[np.ndarray, np.ndarray
     return xs, np.concatenate([[0], np.cumsum(steps)])
 
 
-def _rule_samples(resp: np.ndarray, pitch_px: float, axis: int):
-    """(along, across, index) samples of one rule family.
+def band_profiles(resp: np.ndarray, pitch_px: float, axis: int):
+    """(band centres, per-band median profiles, margin) for one rule family.
 
-    axis=0: vertical rules -- bands are horizontal slabs, profile over x.
-    axis=1: horizontal rules -- transpose and reuse.
+    The only image-sized step; everything after it works on these profiles
+    (which is what the Kotlin port's golden vectors ship).
     """
     r = resp if axis == 0 else resp.T
     h, w = r.shape
@@ -149,13 +176,24 @@ def _rule_samples(resp: np.ndarray, pitch_px: float, axis: int):
     band, step = int(round(BAND_MM * px_mm)), int(round(BAND_STEP_MM * px_mm))
     margin = int(round(EDGE_MARGIN_MM * px_mm))
     starts = list(range(margin, h - margin - band + 1, step))
-    if not starts:
+    return ([y0 + band / 2.0 for y0 in starts],
+            [np.median(r[y0:y0 + band, margin:w - margin], axis=0) for y0 in starts],
+            margin)
+
+
+def _rule_samples(resp: np.ndarray, pitch_px: float, axis: int):
+    """(along, across, index) samples of one rule family.
+
+    axis=0: vertical rules -- bands are horizontal slabs, profile over x.
+    axis=1: horizontal rules -- transpose and reuse.
+    """
+    centres, profiles, margin = band_profiles(resp, pitch_px, axis)
+    if not centres:
         return np.empty((0, 3))
     bands = []
-    for y0 in starts:
-        prof = np.median(r[y0:y0 + band, margin:w - margin], axis=0)
+    for yc, prof in zip(centres, profiles):
         xs, idx = _index_band(_band_peaks(prof, pitch_px) + margin, pitch_px)
-        bands.append((y0 + band / 2.0, xs, idx))
+        bands.append((yc, xs, idx))
     # Chain bands outward from the middle so one rule keeps one index.
     mid = len(bands) // 2
     offsets = {mid: 0}

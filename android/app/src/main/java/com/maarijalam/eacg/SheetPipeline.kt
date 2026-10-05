@@ -72,8 +72,33 @@ object SheetPipeline {
         /** The rectified page at full resolution, as JPEG (for Records). */
         val pageJpeg: ByteArray? = null,
         /** Per row 0-3: the traced row positions on the page, one per column from x0. */
-        val rowTraces: List<RowTrace> = emptyList()
+        val rowTraces: List<RowTrace> = emptyList(),
+        /** "grid" when the page was regularised on its printed grid, else "corners". */
+        val geometry: String = "corners",
+        /** The grid fit, when used. */
+        val gridFit: GridFit.Fit? = null,
+        /** Why the grid fit was not used, when it was asked for and refused. */
+        val gridNote: String? = null
     )
+
+    enum class Geometry { CORNERS, GRID }
+
+    /** What locate_sheet finds on a page; [searchPxPerMm] places the pulse search. */
+    private class Located(val m2: TraceExtractor.Mask, val rows: IntArray, val loc: StripLocator.Location,
+                          val edges: DoubleArray, val pulseT0: Double, val t0: Double, val anchor: Double)
+
+    /** segment.locate_sheet(page, scale_hint): rows, pulses, time zero, duration anchor. */
+    private fun locate(rect: Mat, scaleHint: Double?): Located {
+        val m2 = mask(rect, OPEN_LOCATE)
+        val rows = SheetLayout.sheetRows(m2)
+        val loc = StripLocator.locate(m2)
+        val approx = scaleHint ?: (loc.recordingWidthPx / (SheetLayout.RECORDING_S * SheetLayout.MM_PER_S))
+        val edges = DoubleArray(4) { SheetLayout.pulseFallingEdge(m2, rows[it], approx) }
+        val pulseT0 = SheetLayout.t0FromPulses(edges)
+        val t0 = if (pulseT0.isFinite()) pulseT0 else loc.t0X
+        val anchor = (loc.x1 - t0) / (SheetLayout.RECORDING_S * SheetLayout.MM_PER_S)
+        return Located(m2, rows, loc, edges, pulseT0, t0, anchor)
+    }
 
     /** One printed row's trace in page pixels: pos[i] is the row at column x0 + i. */
     class RowTrace(val x0: Int, val pos: DoubleArray)
@@ -211,7 +236,9 @@ object SheetPipeline {
         truth12: Map<String, DoubleArray>?, model: LiteRtModel? = null,
         /** For corners found by [SheetCorners.find] earlier and passed in. */
         cornersAuto: Boolean = corners == null,
-        cornersRefined: Boolean? = null
+        cornersRefined: Boolean? = null,
+        /** GRID: regularise the page on its printed 5 mm grid (ecgproto geometry="grid"). */
+        geometry: Geometry = Geometry.GRID
     ): Result = withContext(Dispatchers.Default) {
         val t = linkedMapOf<String, Long>()
         var mark = System.nanoTime()
@@ -221,20 +248,44 @@ object SheetPipeline {
         val c = corners ?: SheetCorners.find(photo).let { refined = it.refined; it.corners }
         lap("corners")
         val src = ImageWarp.toMat(photo)
-        val rect = try { rectify(src, c) } finally { src.release() }
-        lap("rectify")
+        var rect: Mat
+        var fit: GridFit.Fit? = null
+        var gridNote: String? = null
         try {
-            val m2 = mask(rect, OPEN_LOCATE)
-            val rows = SheetLayout.sheetRows(m2)
-            val loc = StripLocator.locate(m2)
-            val approx = loc.recordingWidthPx / (SheetLayout.RECORDING_S * SheetLayout.MM_PER_S)
-            val edges = DoubleArray(4) { SheetLayout.pulseFallingEdge(m2, rows[it], approx) }
-            val pulseT0 = SheetLayout.t0FromPulses(edges)
-            val t0 = if (pulseT0.isFinite()) pulseT0 else loc.t0X
-            val anchor = (loc.x1 - t0) / (SheetLayout.RECORDING_S * SheetLayout.MM_PER_S)
+            rect = rectify(src, c)
+            lap("rectify")
+            if (geometry == Geometry.GRID) {
+                // sheet.digitise_sheet: the fit's guess is the corner page's
+                // duration anchor, and the photo is warped once onto the
+                // regular page (no second resampling of the corner page).
+                try {
+                    val f = GridFit.fit(GridFit.redness(rect), locate(rect, null).anchor)
+                    val page = GridFit.regularise(src, c, rect.cols(), rect.rows(), f)
+                    rect.release()
+                    rect = page
+                    fit = f
+                } catch (e: Exception) {
+                    gridNote = "grid fit refused (${e.message}); the corner page was used"
+                }
+                lap("grid")
+            }
+        } finally {
+            src.release()
+        }
+        try {
+            val located = locate(rect, fit?.pxPerMm)
+            val m2 = located.m2
+            val rows = located.rows
+            val pulseT0 = located.pulseT0
+            val t0 = located.t0
+            val anchor = located.anchor
             lap("locate")
+            // The tick search is placed with the grid's scale when there is
+            // one (SheetLocation.search_px_per_mm); the duration anchor stays
+            // the calibration's fallback.
             val ticks = SheetLayout.tickScale(
-                if (OPEN_LOCATE == OPEN_TRACE) m2 else mask(rect, OPEN_TRACE), rows, t0, anchor)
+                if (OPEN_LOCATE == OPEN_TRACE) m2 else mask(rect, OPEN_TRACE), rows, t0,
+                fit?.pxPerMm ?: anchor)
             val useTicks = ticks.pxPerMm.isFinite()
             val px = if (useTicks) ticks.pxPerMm else anchor
             val layout = SheetLayout.segmentLeads(rect.rows(), rows, t0, px, if (useTicks) ticks else null)
@@ -272,7 +323,8 @@ object SheetPipeline {
             Result(tracer, c, cornersAuto, refined, rect.cols(), rect.rows(), px,
                 if (useTicks) "ticks" else "duration", ticks.nFound,
                 if (pulseT0.isFinite()) "pulses" else "rhythm_locator", leads, t,
-                ImageWarp.previewBitmap(rect), jpeg, rowTraces)
+                ImageWarp.previewBitmap(rect), jpeg, rowTraces,
+                if (fit != null) "grid" else "corners", fit, gridNote)
         } finally {
             rect.release()
         }
@@ -308,6 +360,10 @@ object SheetPipeline {
         meta("corners", if (r.cornersAuto) "automatic (refined=${r.cornersRefined})" else "user")
         meta("corners_px", r.corners.joinToString(" ") { f("%.2f", it) })
         meta("rect", "${r.rectW}x${r.rectH}")
+        meta("geometry", r.gridFit?.let {
+            "grid (fit rms ${f("%.3f", it.rmsMm)} mm, ${it.nVertical}x${it.nHorizontal} rules, " +
+                "${f("%.4f", it.pxPerMm)} px/mm, inliers ${f("%.3f", it.inlierFraction)})"
+        } ?: ("corners" + (r.gridNote?.let { " -- $it" } ?: "")))
         meta("calibration", "${r.calibration} ${f("%.4f", r.pxPerMm)} px/mm, ${r.ticksFound}/9 ticks, t0 from ${r.t0Source}")
         meta("timings_ms", r.timingsMs.entries.joinToString(" ") { "${it.key}=${it.value}" })
         for (l in r.leads) l.pcc?.let { meta("pcc_asis_${l.name}${if (l.rhythm) "_rhythm" else ""}", f("%.4f", it)) }
