@@ -139,6 +139,29 @@
         ]
       ],
       "note": "strongly oblique, sharpest; BR grid corner at the frame edge. Corners found automatically (paper mask, grid region, line fit per edge) and checked by eye: within ~1-3 mm, top-right a little inside. Old print without 1 mm rules."
+    },
+    "ptbxl9_20261005_01": {
+      "file": "ptbxl9_20261005_01.jpg",
+      "target": "ptbxl9_kit_500hz_300dpi",
+      "corners_px": [
+        [
+          538.8,
+          445.8
+        ],
+        [
+          5017.8,
+          511.0
+        ],
+        [
+          5444.7,
+          3676.2
+        ],
+        [
+          136.7,
+          3781.5
+        ]
+      ],
+      "note": "square-on, even light, sheet on a stack of paper. Corners from registration to the printed PNG (corner_truth, ECC 0.921), checked on close-ups. page.find_sheet_corners put TL/TR 4.9/6.8 mm out, on the paper stack's edge (coarse only). Phone runs: 20261005_104102 (3/9 ticks, 6.52 px/mm -- locate's 3x3 opening shredded the thin trace)."
     }
   }
 }
