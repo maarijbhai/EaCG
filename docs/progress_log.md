@@ -15,19 +15,19 @@ exported FP16 LiteRT exactly as the app bundles it.
 
 ---
 
-## 0. Where it stands (2026-10-05)
+## 0. Where it stands (2026-10-05; desktop numbers updated after §11)
 
 Four PTB-XL records printed with ecg-image-kit and photographed on the
 Galaxy A30s; the app digitises all 12 leads + rhythm on the phone.
 
 | record | phone (A30s) PCC | desktop replay PCC | aligned | SNR / shifted | R |
 |---|---|---|---|---|---|
-| PTB-XL 38 | **0.921** | 0.925 | 0.987 | 8.3 / 13.9 | 0.91 |
-| PTB-XL 57 | **0.908** | 0.919 | 0.990 | 7.8 / 13.4 | 0.87 |
-| PTB-XL 9  | **0.910** | 0.869 | 0.990 | 8.1 / 15.3 | 0.96 |
+| PTB-XL 38 | **0.921** | 0.955 | 0.987 | 8.3 / 13.9 | 0.91 |
+| PTB-XL 57 | **0.908** | 0.927 | 0.990 | 7.8 / 13.4 | 0.87 |
+| PTB-XL 9  | **0.910** | 0.915 | 0.990 | 8.1 / 15.3 | 0.96 |
 | PTB-XL 40 (6 photos) | 0.832 *(10-04, before the fixes)* | 0.955 | 0.992 | 10.6 / 16.2 | 0.93 |
 
-Phone: `results/device/sheet_scores.csv` (fc66d65). Desktop replay of the
+Phone: `results/device/sheet_scores.csv` (fc66d65) — run BEFORE the §11 fix; the desktop column is after it (a972d41), so re-run on the phone to compare. Desktop replay of the
 phone's exact path (3,200 px decode, automatic corners, grid fit, b3 FP16):
 `results/ml/phone_path_b3_512x1024_fp16_grid.csv` (3e555bb). Classical
 tracer on the same path: PCC 0.46–0.87, R 0.15–0.83.
@@ -190,13 +190,54 @@ The automatic corner finder puts the **top** corners 5–7 mm off on all
 three new photos (refinement fails, "coarse only"); cause not yet
 diagnosed; the grid fit makes it irrelevant to the result.
 
+## 11. 2026-10-05 — Timing: where the error comes from, and the first fix
+
+**Question:** the tracer reads every record's shape at aligned PCC 0.99, but
+plain SNR sits 4–9 dB under shifted SNR. Which part of the time map is off?
+
+- **Registration as truth — inconclusive** (`python/run_timing.py`,
+  `results/kitphoto/timing_b3.csv`; c502e1c). Mapping every printed
+  sample's true time through the registration onto the page gives the time
+  map's own error per lead; it does **not** predict each lead's measured
+  shift (r = 0.08 over 106 leads). At a few milliseconds the registration
+  homography is not a precise enough truth (the phone lens's slight
+  distortion, which a homography cannot model). Kept as a negative result.
+- **The traces as the instrument** (`python/run_halfshift.py`,
+  `results/kitphoto/halfshift_markers*.csv`; c502e1c). Each half cell's
+  measured shift is fitted as errors of the row's four time markers (pulse
+  edge, 2.5 / 5.0 / 7.5 s ticks); fit RMS 0.5–5 ms against raw shifts of
+  4–10 ms, so the markers explain it. On the **printed PNGs** every marker
+  read a uniform **+4 ms**; on photos the pulse ~+10, 2.5 s ~−2, 5.0 s
+  +6.5..+12.5 on every photo and row, 7.5 s ~+4.
+- **Cause of the uniform part:** cv2's opening with an even (2×2) kernel
+  shifts the mask one pixel right. Since locate moved to 2×2 (§8), every
+  pulse edge and tick was one pixel late, while b3 — which reads the image,
+  not a mask — was not; so the map and b3's trace disagreed by a pixel.
+- **Fix** (4c47bd6): `segment.mask_offset_px` subtracted from pulse edges,
+  fallback t0, tick positions and the classical tracer's columns; Python
+  and Kotlin; golden vectors regenerated; a test that the same drawing read
+  through 2×2 and 3×3 openings gives identical markers (fails under the old
+  rule). Measured before adopting: printed PNGs plain SNR 9.5–12 →
+  17.5–23.7 dB (= shifted SNR).
+- **Result** (a972d41), b3, 9 photos / 108 leads: grid path PCC 0.943 →
+  **0.952**, leads ≥ 0.9 76 → **92**, SNR 9.7 → **10.3 dB**; corners path
+  0.887 → 0.926, SNR 6.7 → 8.6. Classical unchanged (its markers and trace
+  had been shifted together). Per record (grid): PTB-XL 38 **0.955**, 57
+  **0.927**, 9 **0.915**, 40 0.933–0.975.
+- **Still open — the photo-specific part:** refitted markers on photos:
+  pulse **+6.3 ms**, 2.5 s tick **−6.4**, 5.0 s **+4.4**, 7.5 s +0.1
+  (printed PNGs: all ~0). Not geometry (grid-fit page), not the tracer
+  (classical shows it too), not the drawing (absent on the PNGs). Next
+  hypotheses: the bar centre vs the trace on a photographed (blurred,
+  sharpened) bar; the pulse edge's width rule (`0.25 mm` line assumed).
+
 ---
 
 ## Open items (ordered)
 
-1. **Timing**: V1–V3 6–14 ms early (3 records), first-column shifts,
-   fragile pulse-based time zero. Target: close the 4–9 dB plain-vs-shifted
-   SNR gap.
+1. **Timing, photo-specific part** (§11): pulse ~+6 ms, 2.5 s tick ~−6,
+   5.0 s ~+4 on photos only; and fragile pulse detection on darker rows.
+   Plain-vs-shifted SNR gap now ~5.7 dB on the grid path (10.3 vs 16.0).
 2. Memory measurement on the A30s; cut+score (~7 s) is slow Kotlin.
 3. More photos per record in worse conditions (side light, angle).
 4. Code freeze ~2026-10-17, regenerate everything from one commit, merge
