@@ -162,6 +162,52 @@
         ]
       ],
       "note": "square-on, even light, sheet on a stack of paper. Corners from registration to the printed PNG (corner_truth, ECC 0.921), checked on close-ups. page.find_sheet_corners put TL/TR 4.9/6.8 mm out, on the paper stack's edge (coarse only). Phone runs: 20261005_104102 (3/9 ticks, 6.52 px/mm -- locate's 3x3 opening shredded the thin trace)."
+    },
+    "ptbxl38_20261005_01": {
+      "file": "ptbxl38_20261005_01.jpg",
+      "target": "ptbxl38_kit_500hz_300dpi",
+      "corners_px": [
+        [
+          885.0,
+          698.9
+        ],
+        [
+          5236.8,
+          682.5
+        ],
+        [
+          5526.1,
+          3782.0
+        ],
+        [
+          673.4,
+          3860.8
+        ]
+      ],
+      "note": "square-on, even light, whole sheet in frame. Corners from registration to the printed PNG (corner_truth, ECC 0.947; a different record's sheet scores 0.695). Automatic finder: coarse only, top corners 5-7 mm out. This print adds a pulse at the END of each row too. File renamed from ptbxl_38.jpg."
+    },
+    "ptbxl57_20261005_163206": {
+      "file": "ptbxl57_20261005_163206.jpg",
+      "target": "ptbxl57_kit_500hz_300dpi",
+      "corners_px": [
+        [
+          478.8,
+          299.6
+        ],
+        [
+          5164.9,
+          258.9
+        ],
+        [
+          5387.2,
+          3597.0
+        ],
+        [
+          271.7,
+          3609.5
+        ]
+      ],
+      "note": "square-on, even light, top edge close to the frame. Corners from registration to the printed PNG (corner_truth, ECC 0.940; a different record's sheet scores 0.645). Automatic finder: coarse only, top corners 5-7 mm out."
     }
   }
 }
