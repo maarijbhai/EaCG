@@ -9,6 +9,14 @@ measurement.
 
 ---
 
+## Since 2026-10-02: see `docs/progress_log.md`
+
+The goal became the whole 3x4 sheet on the phone. Everything since --
+grid-fit geometry, the locate fix, four records, the phone matching the
+desktop (PCC 0.91-0.92 on PTB-XL 9/38/57) -- is logged there with its
+commits and results files. The sections below are the plan as written
+before that and are kept for the record.
+
 ## Progress, 2026-10-01 (read this first)
 
 **Two days into the two-week plan (deadline ~2026-10-14), and ahead of it on

@@ -133,7 +133,18 @@ keeps grid-rule fragments, which sit in the pulse search slab on darker
 rows, so rows 3-4 often lose their pulse (PTB-XL 9: 2 of 4); t0 then moves
 2 px for a 0.07% scale change. `gridfit` breaks find_peaks ties stably (SciPy's
 are unportable). Records tab (`RecordStore`/`RecordsScreen`) keeps every
-digitisation. Neither the grid fit nor the locate fix has run on the device yet.
+digitisation.
+
+**Later on 2026-10-05: four records, and the phone matches.** PTB-XL 38 and
+57 photographed and registered. The phone (A30s, grid fit on, automatic
+corners): median lead PCC **0.921 (38), 0.908 (57), 0.910 (9)**, aligned
+0.987-0.990, SNR ~8 dB / shifted ~14 dB; desktop replays 0.925 / 0.919 /
+0.869 (`results/device/sheet_scores.csv`, `results/ml/phone_path_*_grid.csv`).
+The tracer generalises (aligned 0.99 on all four); what is left is timing:
+V1-V3 read 6-14 ms early on three records, the first column shifts, and
+time zero (pulses) is fragile. **The readable history of all of this, with
+the rejected experiments, is `docs/progress_log.md`** -- keep it updated
+with every change.
 
 **Where to pick up next session (2026-10-03):**
 1. **b3 is FROZEN** (`out/ml_runs/b3/best.weights.h5`, epoch 4) as the model
@@ -253,6 +264,13 @@ ECG-App/
 │   │                       -> truth scoring; OPEN_KERNEL, anchor resolution
 │   ├── PageCorners.kt      port of page.refine_corners
 │   ├── StripLocator.kt     port of segment.locate_rhythm_strip/isolate_trace
+│   ├── SheetPipeline.kt    the whole sheet on the phone: corners -> rectify ->
+│   │                       grid fit -> locate -> ticks -> segment -> b3 or
+│   │                       classical per row -> 12 leads (port of ecgproto.sheet)
+│   ├── GridFit.kt          grid-fit geometry (port of ecgproto.gridfit)
+│   ├── SheetLayout.kt / SheetCanonical.kt / SheetCorners.kt  pure ports
+│   ├── SheetPanels.kt      Scan tab: whole-sheet UI; RecordsScreen.kt +
+│   │                       RecordStore.kt the Records tab (private storage)
 │   ├── Exporter.kt         FR10 CSV to Downloads/EaCG/
 │   ├── KitTargets.kt       the printed sheets (assets/kit/targets.txt)
 │   ├── Fidelity.kt         PCC/RMSE/gain, fillNan, bestAlignment (FFT)
@@ -272,10 +290,16 @@ ECG-App/
 │   │                 threshold, binarise_trace(method, open_kernel)
 │   ├── segment.py    locate_rhythm_strip, level_strip, isolate_trace; FR4:
 │   │                 locate_sheet, tick_scale, segment_leads, trace_row
-│   ├── page.py       refine_corners;  pulse.py  1 mV pulse height (not wired
+│   ├── sheet.py      digitise_sheet: THE reference the phone mirrors
+│   ├── gridfit.py    grid-fit geometry;  timemap.py per-row time maps +
+│   │                 the shift diagnosis;  corner_truth.py registration (eval only)
+│   ├── page.py       refine_corners, find_sheet_corners;  pulse.py  1 mV pulse height (not wired
 │   │                 into the gate yet);  quality.py FR8;  deskew.py FR2
 │   └── evaluate.py, synth.py, layout.py, ptbxl.py, grid_reference.py (stale)
-├── python/  score_12lead.py (whole-sheet scorer: FR4 + every lead),
+├── python/  score_device_sheets.py (phone 12-lead CSVs vs truth), run_geometry.py
+│            (geometry vs registration), run_ticks.py (the nine ticks),
+│            make_sheet_port_fixtures.py / make_grid_port_fixtures.py (golden vectors),
+│            score_12lead.py (whole-sheet scorer: FR4 + every lead),
 │            score_kit_photo.py (desktop scorer + simulate self-test),
 │            make_kit_target.py (print targets), make_kit_assets.py (app
 │            truth), ingest_device_exports.py, rerun_results.py +
@@ -292,7 +316,8 @@ ECG-App/
 │             classical), eval_sheets.py (all 12 leads vs classical),
 │             eval_val_clean.py (scan-image check), plot_traces.py,
 │             export_tflite.py, setup_wsl.sh, wsl_run.sh
-├── docs/     ml_plan.md (the ML plan), photo_protocol.md (§8: print and
+├── docs/     progress_log.md (THE engineering log since 2026-10-02),
+│             ml_plan.md (the ML plan), photo_protocol.md (§8: print and
 │             photograph the kit sheets), STATUS.md (2026-09-23 snapshot, stale)
 ├── out/      gitignored, regenerable: kit_targets/ (printable PDFs), kitphoto/
 └── data/     gitignored: ptb-xl/1.0.3/, kit_photos/, device_exports/, a30_pics/,
@@ -863,7 +888,7 @@ The unit tests — the port-fidelity suite included — need no device:
 java -Dorg.gradle.appname=gradlew -jar gradle/wrapper/gradle-wrapper.jar testDebugUnitTest
 ```
 
-75 tests as of 2026-09-30. After changing `segment.py`, `page.py` or the
+95 JVM tests as of 2026-10-05. After changing `segment.py`, `page.py` or the
 digitise functions the photo path uses, regenerate the golden vectors with
 `python make_photo_port_fixtures.py` (from `python/`) and port the change to
 Kotlin in the same commit; each new rule gets a fixture case checked to
@@ -874,7 +899,8 @@ FAIL under the old rule.
 From `python/`. There is no pytest dependency and no reason to add one.
 
 ```
-python -m unittest discover -s tests     # 49 tests
+python -m unittest discover -s tests     # 72 tests
+python tests/mutate_timemap.py           # 21 of 21 mutations caught
 python tests/mutate_quality.py           # 14 of 15 mutations caught
 ```
 
