@@ -1,7 +1,7 @@
 {
   "generated_by": "python/run_geometry.py",
-  "utc": "2026-10-04T17:44:28+00:00",
-  "git_commit": "3aa64d2e4ea83843b2928c4418d7cd6b8c9fcea0",
+  "utc": "2026-10-05T09:43:29+00:00",
+  "git_commit": "c8195c197811e5cbbe63faf9087d9c1fac03aaa1",
   "git_dirty": false,
   "params": {
     "decode_px": 3200,
