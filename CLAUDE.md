@@ -119,8 +119,21 @@ Measured against registration (`python/run_geometry.py`,
 auto corners, b3 FP16, 72 leads): median lead PCC 0.865 -> **0.966**, p10
 0.005 -> 0.841, >= 0.90 30 -> 53; median SNR 5.8 -> **11.4 dB**, shifted
 12.7 -> 16.9 dB. `score_lead` now reports `snr_db_asis` and
-`shifted_snr_db_asis` (median-removed, +-50 ms). **Next: port gridfit to
-Kotlin** (golden vectors), then a phone run. Still one record (PTB-XL 40).
+`shifted_snr_db_asis` (median-removed, +-50 ms).
+
+**2026-10-05: on the phone, and a second record.** `GridFit.kt` ports the
+grid fit (golden vectors from ptbxl9_20261005_01; on by default, "Grid fit"
+chip). `locate_sheet` now binarises with a 2x2 opening (Python
+`LOCATE_OPEN_KERNEL`, Kotlin `OPEN_LOCATE`): the 3x3 opening shredded PTB-XL
+9's thin trace and the phone lost every lead (3/9 ticks, 6.52 px/mm;
+`results/device/sheet_scores.csv`). Desktop phone path now, b3, 7 photos:
+PTB-XL 40 grid median lead PCC 0.955 (SNR 10.6 dB), PTB-XL 9 grid 0.869
+(SNR 6.2 / shifted 15.5 dB). **Weakest link: time zero.** The 2x2 mask
+keeps grid-rule fragments, which sit in the pulse search slab on darker
+rows, so rows 3-4 often lose their pulse (PTB-XL 9: 2 of 4); t0 then moves
+2 px for a 0.07% scale change. `gridfit` breaks find_peaks ties stably (SciPy's
+are unportable). Records tab (`RecordStore`/`RecordsScreen`) keeps every
+digitisation. Neither the grid fit nor the locate fix has run on the device yet.
 
 **Where to pick up next session (2026-10-03):**
 1. **b3 is FROZEN** (`out/ml_runs/b3/best.weights.h5`, epoch 4) as the model
