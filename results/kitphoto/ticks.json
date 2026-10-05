@@ -1,7 +1,7 @@
 {
   "generated_by": "python/run_ticks.py",
-  "utc": "2026-10-04T18:43:52+00:00",
-  "git_commit": "4b0a36c25417060bb1b8d38e88ada8628e9244b2",
+  "utc": "2026-10-05T09:56:33+00:00",
+  "git_commit": "f62017e2ec69b83468c09dea217be240b535dc04",
   "git_dirty": false,
   "params": {
     "decode_px": 3200,
