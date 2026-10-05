@@ -14,7 +14,9 @@ row for the 4 marker errors; a least-squares fit says which marker is off.
 Unlike run_timing.py this needs no registration -- only the traces and the
 PTB-XL truth, which are exact.
 
-    bash ml/wsl_run.sh python python/run_halfshift.py
+    bash ml/wsl_run.sh python python/run_halfshift.py           # the photographs
+    bash ml/wsl_run.sh python python/run_halfshift.py --clean   # the printed PNGs,
+                                         # no camera: what the drawing itself does
 
 Writes results/kitphoto/halfshift.csv (per half cell) and
 halfshift_markers.csv (fitted marker errors per photo and row), + .json.
@@ -93,13 +95,26 @@ def write(rows, name, params):
 def main() -> int:
     tracer = b3_tracer()
     halves, markers = [], []
-    for stem, e in sorted(skp.load_registry()["photos"].items()):
-        t = skp.Target(e["target"])
+    clean = "--clean" in sys.argv
+    if clean:
+        names = sorted({e["target"] for e in skp.load_registry()["photos"].values()})
+        jobs = [(f"clean:{n}", n, None) for n in names]
+    else:
+        jobs = [(stem, e["target"], e) for stem, e in sorted(skp.load_registry()["photos"].items())]
+    for stem, target, e in jobs:
+        t = skp.Target(target)
         truth = S12.SheetTruth(t)
-        photo = rp.read_oriented(skp.PHOTOS / e.get("file", f"{stem}.jpg"))
-        sc = 3200 / max(photo.shape[:2])
-        photo = cv2.resize(photo, None, fx=sc, fy=sc, interpolation=cv2.INTER_AREA)
-        res = sheet.digitise_sheet(photo, tracer, None, "grid")
+        if clean:
+            # The printed image itself is the page: its own corners, no warp.
+            h, w = t.sheet.shape[:2]
+            res = sheet.digitise_sheet(t.sheet, tracer,
+                                       np.array([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]], float),
+                                       "corners")
+        else:
+            photo = rp.read_oriented(skp.PHOTOS / e.get("file", f"{stem}.jpg"))
+            sc = 3200 / max(photo.shape[:2])
+            photo = cv2.resize(photo, None, fx=sc, fy=sc, interpolation=cv2.INTER_AREA)
+            res = sheet.digitise_sheet(photo, tracer, None, "grid")
         for r in range(3):
             A, y = [], []
             for k, name in enumerate(segment.LAYOUT_3X4[r]):
@@ -126,8 +141,10 @@ def main() -> int:
             print(stem, r, {k: v for k, v in row.items() if k.startswith(("e", "fit", "shift"))}, flush=True)
     params = {"decode_px": 3200, "corners": "auto", "geometry": "grid", "tracer": "b3 FP16",
               "max_shift_s": 0.1, "half_cell_s": segment.CELL_S / 2}
-    print(write(halves, "halfshift", params))
-    print(write(markers, "halfshift_markers", params))
+    suffix = "_clean" if clean else ""
+    params["source"] = "printed PNGs" if clean else "photographs"
+    print(write(halves, "halfshift" + suffix, params))
+    print(write(markers, "halfshift_markers" + suffix, params))
     return 0
 
 
