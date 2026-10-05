@@ -1,7 +1,7 @@
 {
   "generated_by": "python/run_halfshift.py",
-  "utc": "2026-10-05T14:59:52+00:00",
-  "git_commit": "0f939192d1b7419d4920acd3cfe07ed6abdb0efc",
+  "utc": "2026-10-05T15:14:58+00:00",
+  "git_commit": "4c47bd61bca847d6c87d84955097f2dcb1551852",
   "git_dirty": false,
   "params": {
     "decode_px": 3200,
