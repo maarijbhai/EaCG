@@ -13,7 +13,14 @@ models, and the open question is whether that pipeline survives
 compression onto consumer mobile hardware, and at what cost in latency,
 memory and reconstruction fidelity.
 
-## Current state — read this first (updated 2026-10-03)
+## Current state — read this first (updated 2026-10-06)
+
+**Read these too.** `docs/progress_log.md` is the dated engineering log since
+2026-10-02 (every change, its measured reason, commit and results file, and
+the REJECTED experiments) -- update it with every change (the user's
+standing request). `docs/executive_summary.md` is the plain-language summary
+(with analogies) the user is writing the report from. Pipeline diagram
+(published): https://claude.ai/artifact/FxMTo4UfoKaPh1YnuMmqNk
 
 **Requirement numbering — read this before citing an FR.** Two schemes are
 in play and they collide. The thesis report uses a flat **FR1–FR11**
@@ -25,164 +32,157 @@ nested FR-1.1…FR-8.7 in which FR-8.x is *deployment characterisation* and
 the quality gate is FR-3.4. So "FR8" means the quality gate in the report
 and something entirely different in the tex table. Say which you mean.
 
-**THE GOAL CHANGED on 2026-10-02: the whole sheet.** The app is to digitise
-an entire standard 3x4 + lead II rhythm printout -- all 12 leads -- with the
-learned tracer, on the phone. Supervisor agreed; deadline end of October
-(movable); the user chose "both 12 leads AND the ML tracer on the phone,
-cut write-up time if needed"; standard 3x4 layout only (lead identity by
-position; other layouts are a stated limitation).
+### Goal and calendar
 
-**Where the project is.** The classical rhythm-strip pipeline runs on the
-Galaxy A30s on real photographs of a printed PTB-XL record (corners ->
-rectify -> locate strip, cut pulse -> level -> binarise -> isolate -> calibrate
--> trace -> FR8 gate -> score -> CSV). On the DESKTOP, the whole sheet now
-works end to end: classical FR4 segmentation, separator-tick calibration, and
-the learned tracer b3 on every lead. **Nothing ML, and nothing 12-lead, runs
-on the phone yet.** Plan: `docs/ml_plan.md` (its Progress section predates
-the 12-lead pivot; this section is current).
+Since 2026-10-02 the goal is the **whole standard 3x4 + lead II rhythm
+printout -- all 12 leads -- with the learned tracer, on the phone** (Galaxy
+A30s, SM-A307FN). Supervisor agreed. Standard 3x4 only (lead identity by
+position). **Supervisor meeting Wednesday 2026-10-07. Code freeze ~10-17,
+write-up after; deadline end of October (movable).** The user writes the
+report from `docs/executive_summary.md`; `docs/thesis/methods_draft.md` is
+their own draft (untracked -- do not commit or edit it without asking).
 
-**The full-sheet pipeline (desktop), each step with its measured reason:**
-- `segment.locate_sheet`: four rows from the ink profile with LAYOUT
-  spacing (>= 11% of page height; the rhythm locator's 7% picked a phantom
-  row on unevenly lit photos), and recording time zero from the calibration
-  pulse's TOP edge in all four rows (median; within 3 px of truth on all
-  seven sheets, where the rhythm locator was 1-1.5 s late on soft photos).
-- `segment.tick_scale`: the time scale from the nine lead-separator ticks at
-  2.5/5.0/7.5 s (8-9 of 9 found on every sheet; +0.04% on the clean print).
-  The duration anchor needs the rhythm trace's last column and was -10.3% on
-  0928_01 (0/12 cells placed) and +2-3% on two others; on a full sheet a
-  scale error grows with each later cell.
-- `segment.segment_leads`: 13 cells from rows + time base (`LAYOUT_3X4`).
-- Classical tracer per row: `segment.trace_row` -- binarise (2x2 opening; 3x3
-  erased the photo trace), isolate, separator ticks blanked +-1 mm, and the
-  trace FOLLOWED per cell (`trace_positions_tracked`) because printed lead
-  labels under each cell's start pulled the all-ink centroid into false dips.
-- Learned tracer: once per ROW (a 3x4 row is one continuous 10 s trace of
-  four leads), 64 mm window (`--canon-h 512`; precordial leads swing +-35 mm
-  at p99 and a 48 mm window clipped 18% of rows), tiled inference
-  (`train_tracer.predict_tiled`, 1,024-column tiles: a 512 x 2048 frame does
-  not fit WSL's GPU), output cut into cells.
-- Scorer: `python/score_12lead.py` (classical) and `ml/eval_sheets.py`
-  (models, same scorer); cells use a +-100 ms lag-bounded alignment (an
-  unbounded one slid 2.5 s cells by a heartbeat) and an aligned figure needs
-  >= 85% of the cell's 2.5 s.
+### Where it stands (numbers)
 
-**Result (`results/ml/sheets_a3_b3.csv`, `results/kitphoto/leads12.csv`):**
-lead PCC / R-peak ratio, median of the 12 leads, tick calibration:
+Median of each record's 12 leads, b3, grid fit, automatic corners:
 
-| sheet | classical | model A (a3) | **model B (b3)** |
-|---|---|---|---|
-| clean print | 0.992 / 0.89 | 0.987 / 0.82 | **0.998 / 0.97** |
-| 0928_01 | 0.862 / 0.58 | 0.976 / 0.77 | **0.990 / 0.93** |
-| 0929_01 (soft) | 0.237 / 0.01 | 0.966 / 0.73 | **0.983 / 0.91** |
-| 0929_02 (soft) | 0.450 / 0.15 | 0.924 / 0.74 | **0.993 / 0.91** |
-| 0929_03 (soft) | 0.504 / 0.11 | 0.960 / 0.76 | **0.991 / 0.91** |
-| 0929_04 (soft) | 0.483 / 0.13 | 0.953 / 0.76 | **0.994 / 0.92** |
-| 0929_05 | 0.952 / 0.75 | 0.979 / 0.79 | **0.994 / 0.93** |
+| record | phone (A30s)* | desktop replay, latest | aligned | SNR / shifted |
+|---|---|---|---|---|
+| PTB-XL 9  | 0.910 | 0.915 | 0.99 | ~8 / ~15 dB |
+| PTB-XL 38 | 0.921 | 0.955 | 0.99 | ~8-11 / ~13-14 |
+| PTB-XL 57 | 0.908 | 0.927 | 0.99 | ~8 / ~13 |
+| PTB-XL 40 (6 photos) | -- | 0.933-0.975 | 0.99 | ~9-13 / ~15-18 |
 
-b3 over all 78 photo leads: all scorable, median 0.989, p10 0.942, worst
-0.879. **Caveats:** one record (PTB-XL 40); its photos informed the
-augmentation (camera stage after b0, `22c82ac`); and none of this has run
-on the phone. Model lineage: b0 (rhythm only, simulated-looking aug) -> b1
-(+camera aug) -> b2 (all four rows, 64 mm, from b1) -> b3 (+scan path, from
-b2: b2's presence head switched off on bright pristine images -- coverage
-0.838 on clean fold-9 rows, `results/ml/val_clean_b2_b3.csv`; b3 1.000).
-Model A (a1->a2->a3, ink mask + centroid) is the ablation, not the product:
-it cannot pass R >= 0.90 (perfect-mask ceiling 0.81).
+\*Phone runs (`results/device/sheet_scores.csv`) were made BEFORE the
+one-pixel fix (4c47bd6); the desktop column is after it
+(`results/ml/phone_path_b3_512x1024_fp16_grid.csv`, a972d41). All 9 photos /
+108 leads, grid path: PCC **0.952**, >= 0.9 **92/108**, SNR **10.3 / shifted
+16.0 dB**. Classical (the control): PCC 0.46-0.87, R 0.15-0.83. The phone
+matches the desktop to ~0.01 PCC on the same method. **What limits it is
+timing, not reading:** aligned PCC 0.99 everywhere; plain SNR ~5.7 dB under
+shifted. Time per sheet on the A30s ~30 s (grid fit 1.8-2.8 s, model 19-20 s,
+cut+score ~7 s -- slow Kotlin). Memory NOT measured yet.
 
-**Earlier rhythm-strip-only results** (b1, a1 on the six PTB-XL 40 photos,
-`results/ml/photo_compare_{b1,a1}.csv`) and the classical phone runs
-(`results/device/photo_scores.csv`, best: run 7, aligned PCC 0.83, R peaks
-~0.70, 2.0 s on the A30s) remain valid and committed.
+### The pipeline as it is
 
-**Priority decision (user, 2026-10-04): accuracy over speed.** The phone
-benchmark (`results/device/tracer_bench_*.csv`): b3 is exact on the A30s
-(matches the desktop to 0.0004 px mean on a real tile) but slow -- INT8 with
-float decode ~955 ms per tile, ~11.5 s model time per full sheet, 170 MB;
-FP16 ~18.7 s, 357 MB; 2 and 4 threads identical (threading apparently
-ineffective -- unexplained). The user judged speed unimportant for the app
-and accuracy paramount, so ml_plan decision rules 2 (latency) and 3
-(memory) are now REPORTED, not gates (amended in ml_plan section 4 with the
-reason; raise with the supervisor). Do not slim the model for speed; do not
-trade accuracy for latency.
+Python reference = `ecgproto.sheet.digitise_sheet`; phone = `SheetPipeline.kt`,
+golden-vector tested against it.
 
-**Grid-fit geometry (2026-10-04, desktop only, not yet on the phone).**
-`ecgproto/gridfit.py`: after corner rectification, a homography fitted to
-every 5 mm rule sample (redness response, band medians, rules indexed and
-chained, Huber fit), one warp from the photo; `digitise_sheet(geometry=
-"grid")`; the grid's px/mm is passed to `locate_sheet` as a search hint
-(the duration anchor misplaced the pulse/tick searches on 0928_01).
-Measured against registration (`python/run_geometry.py`,
-`results/kitphoto/geometry.csv`): page distortion 0.27-1.75 mm RMS -> 0.035-
-0.094 mm; corners stop mattering (auto+grid = truth+grid). End to end
-(`results/ml/phone_path_b3_512x1024_fp16{,_grid}.csv`, 3,200 px decode,
-auto corners, b3 FP16, 72 leads): median lead PCC 0.865 -> **0.966**, p10
-0.005 -> 0.841, >= 0.90 30 -> 53; median SNR 5.8 -> **11.4 dB**, shifted
-12.7 -> 16.9 dB. `score_lead` now reports `snr_db_asis` and
-`shifted_snr_db_asis` (median-removed, +-50 ms).
+1. Decode to 3,200 px long side (`ImageSource.kt`). Desktop replays MUST
+   resize the same way -- a full-resolution replay once hid a failure.
+2. Corners: `page.find_sheet_corners` / `SheetCorners.kt` (paper mask ->
+   grid texture -> RANSAC lines -> refine). Top corners come out 5-7 mm off
+   on the new photos ("coarse only"); irrelevant after the grid fit.
+3. Rectify from the corners, then the **grid fit** (`gridfit.py` /
+   `GridFit.kt`): homography to every 5 mm rule (redness, band medians,
+   stable-tie peaks, indexing + chaining, Huber), the photo warped once.
+   Distortion 0.27-1.75 mm -> 0.035-0.094 mm (`results/kitphoto/geometry.csv`).
+   On by default ("Grid fit" chip); a refused fit falls back to corners and
+   says why.
+4. Locate (`segment.locate_sheet`): **2x2 opening** (`LOCATE_OPEN_KERNEL`; a
+   3x3 one shredded PTB-XL 9's thin trace and the phone lost every lead),
+   rows by layout spacing, time zero = median pulse falling edge; the grid's
+   px/mm is the SEARCH scale (`scale_hint`).
+5. Ticks (`segment.tick_scale`): nine separator bars (3 rows x 2.5/5.0/7.5 s)
+   are the per-row time knots; a missing tick borrows its column-mates. The
+   usual miss is row 1 at 7.5 s (top right): faint print, not code.
+6. **Mask offset**: cv2's opening with an EVEN kernel shifts the mask +1 px;
+   `segment.mask_offset_px` / `SheetLayout.maskOffsetPx` is subtracted from
+   pulse edges, ticks and classical trace columns (b3 reads the image, so it
+   was never shifted). Clean-print plain SNR ~11 -> ~22 dB.
+7. Trace per row: **b3** (canonical 8 px/mm, 64 mm window, tiles 512x1024,
+   LiteRT FP16 `assets/ml/b3_512x1024_fp16.tflite`) or classical (control).
+8. Cut into 13 leads on the knots (`cell_signal`), mV about each cell's
+   median; the Records tab (`RecordStore`/`RecordsScreen`) saves every run.
 
-**2026-10-05: on the phone, and a second record.** `GridFit.kt` ports the
-grid fit (golden vectors from ptbxl9_20261005_01; on by default, "Grid fit"
-chip). `locate_sheet` now binarises with a 2x2 opening (Python
-`LOCATE_OPEN_KERNEL`, Kotlin `OPEN_LOCATE`): the 3x3 opening shredded PTB-XL
-9's thin trace and the phone lost every lead (3/9 ticks, 6.52 px/mm;
-`results/device/sheet_scores.csv`). Desktop phone path now, b3, 7 photos:
-PTB-XL 40 grid median lead PCC 0.955 (SNR 10.6 dB), PTB-XL 9 grid 0.869
-(SNR 6.2 / shifted 15.5 dB). **Weakest link: time zero.** The 2x2 mask
-keeps grid-rule fragments, which sit in the pulse search slab on darker
-rows, so rows 3-4 often lose their pulse (PTB-XL 9: 2 of 4); t0 then moves
-2 px for a 0.07% scale change. `gridfit` breaks find_peaks ties stably (SciPy's
-are unportable). Records tab (`RecordStore`/`RecordsScreen`) keeps every
-digitisation.
+### The model
 
-**Later on 2026-10-05: four records, and the phone matches.** PTB-XL 38 and
-57 photographed and registered. The phone (A30s, grid fit on, automatic
-corners): median lead PCC **0.921 (38), 0.908 (57), 0.910 (9)**, aligned
-0.987-0.990, SNR ~8 dB / shifted ~14 dB; desktop replays 0.925 / 0.919 /
-0.869 (`results/device/sheet_scores.csv`, `results/ml/phone_path_*_grid.csv`).
-The tracer generalises (aligned 0.99 on all four); what is left is timing:
-V1-V3 read 6-14 ms early on three records, the first column shifts, and
-time zero (pulses) is fragile. **The readable history of all of this, with
-the rejected experiments, is `docs/progress_log.md`** -- keep it updated
-with every change.
+**b3 is FROZEN** (`out/ml_runs/b3/best.weights.h5`, epoch 4; 389,580 params;
+trained on 2,000 fold 1-8 records = 8,000 row bands, validated on 300 fold-9
+records = 1,200 bands; seven grid styles; camera + scan augmentation).
+Lineage b0 -> b1 (camera aug) -> b2 (all rows, 64 mm) -> b3 (scan path).
+Model A (a1-a3, mask + centroid) is the ablation (ceiling R 0.81). Val row
+error 0.33-0.44 px, R 0.97. Export: FP16 exact (0.82 MB); INT8 + float decode
+("int8f") +0.3 px. Phone benchmark: FP16 1.56 s/tile, int8f 0.95 s/tile,
+exact against the desktop.
 
-**Where to pick up next session (2026-10-03):**
-1. **b3 is FROZEN** (`out/ml_runs/b3/best.weights.h5`, epoch 4) as the model
-   for the clean test and the phone. Change nothing about it, the
-   augmentation, segmentation or decoding before the new photos are scored.
-2. **The user is photographing PTB-XL 9, 38, 57** (PDFs in
-   `out/kit_targets/<name>/<name>.pdf`). When photos arrive in
-   `data/kit_photos/` as `ptbxl<id>_<date>_<nn>.jpg`: register each in
-   `python/kit_photos.json` (`score_kit_photo.py --add ...`, corners checked by
-   eye), then score ONCE: `python python/score_12lead.py` (classical) and
-   `bash ml/wsl_run.sh python ml/eval_sheets.py --runs a3,b3 --only ptbxl38`
-   (per record). Commit whatever it shows.
-3. **INT8 LiteRT export of b3** (`ml/export_tflite.py`, started 2026-10-03):
-   FP32 / FP16 / INT8 at the tile shape, each checked against Keras on clean
-   and augmented fold-9 rows (decision rule: INT8 within 0.02 PCC and 0.03 R
-   of FP32, else FP16). Then a first latency/memory reading on the A30s.
-4. Then the phone port (critical path): `locate_sheet` + `tick_scale` +
-   `segment_leads` in Kotlin, `strips.to_canonical` with golden vectors,
-   LiteRT b3 per row with tiling, per-lead CSV export. Memory instrumentation.
-5. Robustness (queued): hard cast shadows, glare and creases in the
-   augmentation (photometric, labels exact) + a short fine-tune from b3; a
-   real "stress" photo set of the new sheets (hand shadow, lamp glare,
-   folded sheet). Literature reports learned digitisers beating thresholding
-   on such artefacts -- check citations; our own evidence so far covers
-   uneven lighting and soft shadows only.
-6. **How ML work runs.** Training and model inference run in WSL2 Ubuntu
-   (`ml/setup_wsl.sh` builds the venv; `ml/wsl_run.sh <cmd>` runs inside it
-   from the repo root; data in `~/data/ml_strips` (rhythm) and
-   `~/data/ml_rows` (four rows)). From Git Bash prefix `MSYS_NO_PATHCONV=1`.
-   **Long training runs: the user runs them by hand in a WSL terminal**
-   (Claude Code's background reaper killed two runs; a process detached in
-   WSL dies when `wsl.exe` returns), and do not run GPU jobs while one
-   trains (~1.8 GB usable). Train on crops at batch 2, mixed precision;
-   infer with `predict_tiled`.
-7. Open, not done: memory instrumentation on the A30s; a gate check from the
-   tick-vs-duration-anchor disagreement (a printed, external anchor);
-   `score_kit_photo.py` 8.5 s rule; level the 3x4 rows (only the rhythm strip
-   is levelled); merge the branch to `main` (never merged).
+### Decisions in force
+
+- **Accuracy over speed** (user, 10-04): latency/memory are reported, not
+  gates; do not trade accuracy for speed. Raise with the supervisor.
+- ML Kit Document Scanner dropped (pending supervisor agreement).
+- The classical path is the control; never delete or "improve away" it.
+- One change at a time; measure end to end on ALL photos (desktop replay of
+  the phone's path, b3) before adopting; port to Kotlin in the same commit
+  with regenerated golden vectors and a test that fails under the old rule.
+
+### Rejected experiments (details: progress_log §5, §9, §11)
+
+Row end pinned to 10 s (14 leads worse, 24/78 unavailable); uniform grid time
+scale; time zero from the ticks (mixed); "first pulse-length run" pulse
+detection (picks grid fragments); registration as a ms-level timing truth
+(r = 0.08 with measured shifts -- lens distortion).
+
+### Open problems (ordered)
+
+1. **Photo-only time-marker errors** (`python/run_halfshift.py`, a972d41):
+   pulse edge ~+6 ms late, 2.5 s tick ~-6, 5.0 s ~+4, 7.5 s ~0 on photos;
+   ~0 on the printed PNGs. Not geometry, not the tracer, not the drawing.
+2. **Pulses missed on darker rows**: the 2x2 mask keeps grid-rule fragments
+   in the pulse search slab (PTB-XL 9: 2 of 4 found), so time zero is fragile.
+3. ~30 s per sheet; memory unmeasured; the phone runs predate the offset fix.
+4. Evidence: 4 records; 9, 38 and 57 have one good-light photo each.
+
+### NEXT -- the plan agreed with the user for Mon-Tue (before the Wed meeting)
+
+1. **User**: reinstall the APK and re-run PTB-XL 9, 38, 57 on the phone;
+   CSVs -> `data/device_exports/`; then `python python/score_device_sheets.py`
+   and commit. Also 4-6 harder photos (side light, hand shadow, ~20 deg
+   tilt, curled sheet).
+2. **Whole-sheet quality warnings** on the phone (anchored on printed
+   features only): grid fit refused, < 6/9 ticks, no pulse found, tick scale
+   vs grid scale disagreeing. Python + Kotlin + tests.
+3. **cut+score from ~7 s to < 1 s** (plain Kotlin speed, no accuracy change).
+4. **Memory instrumentation** on the A30s (peak per stage, into the CSV).
+5. **One-page supervisor summary** (an artifact) from committed numbers once
+   the phone reruns are in.
+6. Robust pulse detection (open problems 1-2); present as in progress.
+
+Questions for the supervisor: accuracy over speed; ML Kit dropped; are 4
+records enough; what counts as "good enough" (e.g. phone median PCC > 0.9);
+the timeline.
+
+### How to do things (exact)
+
+- **New photo**: the user drops `ptbxl<id>_<date>_<nn>.jpg` in
+  `data/kit_photos/` (rename it if it doesn't follow that, and say so).
+  Register with REGISTRATION corners: automatic corners at 3,200 px scaled
+  back to full size, then `corner_truth.find_true_corners(full_photo,
+  Target(name).sheet, auto, Target.px_per_mm)` (also try a wrong record:
+  ECC ~0.65-0.70 against ~0.94 confirms identity), then
+  `python score_kit_photo.py --add FILE --target ptbxl<id>_kit_500hz_300dpi
+  --corners "x,y x,y x,y x,y" --note "..."`. Commit `python/kit_photos.json`
+  before scoring.
+- **Desktop replay of the phone** (needs TF, so WSL): from Git Bash
+  `export MSYS_NO_PATHCONV=1; wsl -d Ubuntu -- bash /mnt/c/dev/ECG-App/ml/wsl_run.sh python ml/eval_phone_path.py --geometry grid`
+  (and `--geometry corners`). NOT `bash ml/wsl_run.sh ...` from Git Bash --
+  that runs outside WSL and the venv is missing.
+- **Phone exports**: `python python/score_device_sheets.py` ->
+  `results/device/sheet_scores.csv` (every `eacg_sheet_*.csv`).
+- **Diagnostics**: `python run_geometry.py` (geometry vs registration),
+  `python run_ticks.py` (each of the nine ticks), in WSL:
+  `python/run_halfshift.py [--clean]` (marker errors from half-cell shifts),
+  `python/run_timing.py --b3`, `ml/run_timemap.py` (time-map comparisons).
+- **Golden vectors**: `python make_sheet_port_fixtures.py` and
+  `python make_grid_port_fixtures.py` (from `python/`), then the JVM tests.
+- **Results discipline**: commit code first, then regenerate (sidecar
+  `git_dirty: false`); every result CSV has a JSON sidecar.
+- **Tool quirks**: the Bash tool's heredocs collapse backslash escapes and
+  choke on very long bodies -- write files with the Write/Edit tools.
+  Foreground `sleep` is blocked. Long training runs: the user runs them by
+  hand in a WSL terminal; no GPU jobs while one trains (~1.8 GB usable).
+
+### Earlier: the rhythm-strip photo path (still valid; measured reasons)
 
 **The photo path, and the measured reasons for each of its steps** (each
 has a commit message with the numbers):
@@ -314,7 +314,9 @@ ECG-App/
 │             targets, --ceiling/--selftest), train_tracer.py (model A/B,
 │             training, predict_tiled), eval_photos.py (rhythm strip vs
 │             classical), eval_sheets.py (all 12 leads vs classical),
-│             eval_val_clean.py (scan-image check), plot_traces.py,
+│             eval_val_clean.py (scan-image check), eval_phone_path.py (THE
+│             desktop replay of the phone's path), run_timemap.py (time maps),
+│             make_device_fixture.py, plot_traces.py, plot_sheet.py,
 │             export_tflite.py, setup_wsl.sh, wsl_run.sh
 ├── docs/     progress_log.md (THE engineering log since 2026-10-02),
 │             ml_plan.md (the ML plan), photo_protocol.md (§8: print and
@@ -851,9 +853,9 @@ scope boundaries.
   processed image (no corners or transform), so its accuracy cannot be
   measured against the truth; it runs as its own Play-services screen, so it
   cannot be timed as a pipeline stage; and it cannot run on the desktop
-  scorer. FR1 is hand-placed corners now; next is a classical automatic
-  corner finder, then a learned corner regressor only if that fails
-  (`docs/ml_plan.md` §7).
+  scorer. FR1 is now automatic corners (`page.find_sheet_corners`) plus the
+  grid fit (`gridfit`), which makes corner error irrelevant; hand corners
+  remain possible in the app's CornerEditor.
 - **Emulator for correctness only.** It runs on host x86 CPU with active
   cooling, so latency, memory and thermal numbers from it are invalid for
   a thesis about mobile constraints. All benchmarking must use a physical
