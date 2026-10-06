@@ -121,7 +121,7 @@ fun SheetSection(modifier: Modifier = Modifier) {
                 val r = SheetPipeline.run(context, bmp, corners, tracer, truth,
                     cornersAuto = state.cornersAuto, cornersRefined = state.cornersRefined,
                     geometry = if (state.gridFit) SheetPipeline.Geometry.GRID else SheetPipeline.Geometry.CORNERS)
-                val total = r.timingsMs.values.sum()
+                val total = r.pipelineMs
                 state = state.copy(busy = false, result = r, truth12 = truth,
                     status = "Done in ${total} ms. Saving to Records...")
                 // Every digitisation is kept (RecordStore); a failed save is

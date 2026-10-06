@@ -190,7 +190,7 @@ object RecordStore {
             else 0.5 * (scored[scored.size / 2 - 1] + scored[scored.size / 2])
         val meta = Meta(id, now, r.tracer.name, target, r.calibration, r.pxPerMm, r.ticksFound,
             r.t0Source, r.cornersAuto, r.corners, r.rectW, r.rectH, photo.width, photo.height,
-            med, scored.size, r.timingsMs.values.sum(), r.geometry)
+            med, scored.size, r.pipelineMs, r.geometry)
         val root = root(context).apply { mkdirs() }
         val tmp = File(root, "$id.tmp").apply { deleteRecursively(); mkdirs() }
         try {

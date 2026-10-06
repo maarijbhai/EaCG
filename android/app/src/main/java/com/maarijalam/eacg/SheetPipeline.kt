@@ -79,7 +79,17 @@ object SheetPipeline {
         val gridFit: GridFit.Fit? = null,
         /** Why the grid fit was not used, when it was asked for and refused. */
         val gridNote: String? = null
-    )
+    ) {
+        /**
+         * What a deployed scan pays: every stage except the harness ones,
+         * whose keys end in `*` (scoring against a stored truth; CLAUDE.md
+         * limitation 9).
+         */
+        val pipelineMs: Long get() = timingsMs.filterKeys { !it.endsWith("*") }.values.sum()
+    }
+
+    /** Timing key of the truth scoring: harness, not pipeline. */
+    const val SCORE_KEY = "score*"
 
     enum class Geometry { CORNERS, GRID }
 
@@ -211,8 +221,13 @@ object SheetPipeline {
         return SheetCanonical.rowTraceToSource(r, p, frame.map)
     }
 
-    /** Pearson r and RMSE against the truth window, ignoring NaN samples. */
-    private fun score(sig: DoubleArray, truth: DoubleArray): Pair<Double, Double>? {
+    /**
+     * Pearson r and RMSE (each signal about its own median) against the truth
+     * window, ignoring NaN samples. The medians are taken once: taken inside
+     * the map, as before 2026-10-06, they re-sorted the window per sample --
+     * O(n^2 log n), 7.3 s of the A30s's "cut+score" on a sheet.
+     */
+    internal fun score(sig: DoubleArray, truth: DoubleArray): Pair<Double, Double>? {
         val idx = sig.indices.filter { sig[it].isFinite() && it < truth.size }
         if (idx.size < 50) return null
         val a = DoubleArray(idx.size) { truth[idx[it]] }
@@ -224,9 +239,11 @@ object SheetPipeline {
             sbb += (b[i] - mb) * (b[i] - mb)
         }
         val pcc = sab / kotlin.math.sqrt(saa * sbb)
-        val ta = a.map { it - SheetLayout.median(a) }
-        val tb = b.map { it - SheetLayout.median(b) }
-        val rmse = kotlin.math.sqrt(ta.indices.sumOf { (ta[it] - tb[it]).let { d -> d * d } } / ta.size)
+        val medA = SheetLayout.median(a)
+        val medB = SheetLayout.median(b)
+        var sse = 0.0
+        for (i in a.indices) { val d = (a[i] - medA) - (b[i] - medB); sse += d * d }
+        val rmse = kotlin.math.sqrt(sse / a.size)
         return pcc to rmse
     }
 
@@ -306,9 +323,12 @@ object SheetPipeline {
                     SheetLayout.onSheetColumns(xs, ys)
                 }
                 lap("trace")
-                for (cell in layout.cells) {
+                val sigs = layout.cells.map { cell ->
                     val (pos, x0) = traces[cell.row]
-                    val sig = SheetLayout.cellSignal(pos, x0, cell, px, layout)
+                    SheetLayout.cellSignal(pos, x0, cell, px, layout)
+                }
+                lap("cut")
+                for ((cell, sig) in layout.cells.zip(sigs)) {
                     val tr = truth12?.get(cell.name)?.let {
                         val a = (cell.tStartS * SheetLayout.FS).roundToInt()
                         it.copyOfRange(a, minOf(it.size, a + sig.size))
@@ -316,7 +336,7 @@ object SheetPipeline {
                     val sc = tr?.let { score(sig, it) }
                     leads += LeadResult(cell.name, cell.rhythm, cell.tStartS, sig, sc?.first, sc?.second)
                 }
-                lap("cut+score")
+                if (truth12 != null) lap(SCORE_KEY)
                 rowTraces = traces.map { (pos, x0) -> RowTrace(x0, pos) }
             } finally {
                 ownModel?.close()

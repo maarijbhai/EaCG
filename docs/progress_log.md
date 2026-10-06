@@ -231,6 +231,24 @@ plain SNR sits 4–9 dB under shifted SNR. Which part of the time map is off?
   hypotheses: the bar centre vs the trace on a photographed (blurred,
   sharpened) bar; the pulse edge's width rule (`0.25 mm` line assumed).
 
+## 12. 2026-10-06 — The 7 s "cut+score" was one line of the scorer
+
+**Found:** the phone's `cut+score` stage (7,328 ms on PTB-XL 38,
+`eacg_sheet_ptbxl38_..._164847_915.csv`) was not the cutting. In
+`SheetPipeline.score` the RMSE took each signal's median **inside a
+per-sample map**, so every sample re-sorted the whole window: O(n² log n),
+5,000 sorts of 5,000 values for the rhythm strip.
+
+**Fix** (Kotlin only; the Python scorer was never affected): medians taken
+once. Cutting (`cut`) and truth scoring (`score*`) are now timed separately;
+`score*` is harness (limitation 9) and is excluded from the "Done in" total
+and the Records tab's total (`Result.pipelineMs`); the CSV still lists it.
+No change to any lead's signal or score. `SheetScoreTest`: matches a naive
+reference to 1e-12, and 13 rhythm-length scores take 25 ms where the old
+rule took **42.6 s** on the desktop JVM (checked: the test fails under it).
+98 JVM tests. Expected on the A30s: ~30 s → ~23 s per sheet; to confirm with
+the phone re-runs.
+
 ---
 
 ## Open items (ordered)
@@ -238,7 +256,8 @@ plain SNR sits 4–9 dB under shifted SNR. Which part of the time map is off?
 1. **Timing, photo-specific part** (§11): pulse ~+6 ms, 2.5 s tick ~−6,
    5.0 s ~+4 on photos only; and fragile pulse detection on darker rows.
    Plain-vs-shifted SNR gap now ~5.7 dB on the grid path (10.3 vs 16.0).
-2. Memory measurement on the A30s; cut+score (~7 s) is slow Kotlin.
+2. Memory measurement on the A30s. (cut+score ~7 s: fixed, §12; confirm on
+   the phone.)
 3. More photos per record in worse conditions (side light, angle).
 4. Code freeze ~2026-10-17, regenerate everything from one commit, merge
    `prototype-and-dataset-repair` → `main`.

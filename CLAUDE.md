@@ -61,7 +61,8 @@ one-pixel fix (4c47bd6); the desktop column is after it
 matches the desktop to ~0.01 PCC on the same method. **What limits it is
 timing, not reading:** aligned PCC 0.99 everywhere; plain SNR ~5.7 dB under
 shifted. Time per sheet on the A30s ~30 s (grid fit 1.8-2.8 s, model 19-20 s,
-cut+score ~7 s -- slow Kotlin). Memory NOT measured yet.
+cut+score ~7 s -- a per-sample median in the scorer, fixed 10-06, progress_log
+§12; expect ~23 s, confirm on the phone). Memory NOT measured yet.
 
 ### The pipeline as it is
 
@@ -142,7 +143,8 @@ detection (picks grid fragments); registration as a ms-level timing truth
 2. **Whole-sheet quality warnings** on the phone (anchored on printed
    features only): grid fit refused, < 6/9 ticks, no pulse found, tick scale
    vs grid scale disagreeing. Python + Kotlin + tests.
-3. **cut+score from ~7 s to < 1 s** (plain Kotlin speed, no accuracy change).
+3. ~~cut+score from ~7 s to < 1 s~~ **done 10-06** (progress_log §12; the scorer's
+   per-sample median; `score*` is now timed as harness).
 4. **Memory instrumentation** on the A30s (peak per stage, into the CSV).
 5. **One-page supervisor summary** (an artifact) from committed numbers once
    the phone reruns are in.
@@ -890,7 +892,7 @@ The unit tests — the port-fidelity suite included — need no device:
 java -Dorg.gradle.appname=gradlew -jar gradle/wrapper/gradle-wrapper.jar testDebugUnitTest
 ```
 
-95 JVM tests as of 2026-10-05. After changing `segment.py`, `page.py` or the
+98 JVM tests as of 2026-10-06. After changing `segment.py`, `page.py` or the
 digitise functions the photo path uses, regenerate the golden vectors with
 `python make_photo_port_fixtures.py` (from `python/`) and port the change to
 Kotlin in the same commit; each new rule gets a fixture case checked to
