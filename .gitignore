@@ -32,6 +32,9 @@ venv/
 data/
 *.h5
 *.tflite
+# ...except the models the app ships (b3 FP16 + INT8f, ~0.8 MB each): without
+# them a clone builds an app whose learned tracer cannot load.
+!android/app/src/main/assets/ml/*.tflite
 *.pt
 *.onnx
 
