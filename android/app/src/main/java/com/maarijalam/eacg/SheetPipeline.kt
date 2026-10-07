@@ -87,8 +87,12 @@ object SheetPipeline {
         val memoryBaseline: StageMemory.Reading? = null,
         val memoryPeaks: Map<String, StageMemory.Peak> = emptyMap(),
         /** The process's total proportional set size at the end of the run, MB. */
-        val pssEndMb: Double? = null
+        val pssEndMb: Double? = null,
+        /** Quality warnings (FR8, [SheetQuality]); empty = nothing found wrong. */
+        val warnings: List<SheetQuality.Warning> = emptyList()
     ) {
+        /** "ok", "check" or "unreliable" ([SheetQuality.verdict]). */
+        val quality: String get() = SheetQuality.verdict(warnings)
         /**
          * What a deployed scan pays: every stage except the harness ones,
          * whose keys end in `*` (scoring against a stored truth; CLAUDE.md
@@ -346,6 +350,7 @@ object SheetPipeline {
                 val ownModel = if (tracer == Tracer.MODEL && model == null) LiteRtModel(context) else null
                 val leads = ArrayList<LeadResult>()
                 var rowTraces: List<RowTrace> = emptyList()
+                var warnings: List<SheetQuality.Warning> = emptyList()
                 try {
                     val traces = (0 until 4).map { r ->
                         val (xs, ys) = when (tracer) {
@@ -360,6 +365,17 @@ object SheetPipeline {
                         SheetLayout.cellSignal(pos, x0, cell, px, layout)
                     }
                     lap("cut")
+                // FR8: the time and geometry references this sheet was cut
+                // with, and a physiological backstop per lead.
+                warnings = SheetQuality.assess(
+                    gridRequested = geometry == Geometry.GRID, gridUsed = fit != null,
+                    gridPxPerMm = fit?.pxPerMm ?: Double.NaN,
+                    calibration = if (useTicks) "ticks" else "duration", pxPerMm = px,
+                    ticksFound = ticks.nFound, tickPositions = ticks.positions,
+                    t0Source = if (pulseT0.isFinite()) "pulses" else "rhythm_locator",
+                    leads = layout.cells.zip(sigs).associate { (c, s) ->
+                        (if (c.rhythm) "II_rhythm" else c.name) to s })
+                lap("quality")
                     for ((cell, sig) in layout.cells.zip(sigs)) {
                         val tr = truth12?.get(cell.name)?.let {
                             val a = (cell.tStartS * SheetLayout.FS).roundToInt()
@@ -380,7 +396,7 @@ object SheetPipeline {
                     if (pulseT0.isFinite()) "pulses" else "rhythm_locator", leads, t,
                     ImageWarp.previewBitmap(rect), jpeg, rowTraces,
                     if (fit != null) "grid" else "corners", fit, gridNote,
-                    mem.baseline, mem.peaks(), runCatching { pssMb() }.getOrNull())
+                    mem.baseline, mem.peaks(), runCatching { pssMb() }.getOrNull(), warnings)
             } finally {
                 rect.release()
             }
@@ -428,6 +444,11 @@ object SheetPipeline {
         // native/java MB, absolute; see StageMemory for what each one counts.
         r.memoryBaseline?.let { meta("memory_peak_mb", StageMemory.format(it, r.memoryPeaks)) }
         r.pssEndMb?.let { meta("pss_end_mb", f("%.1f", it)) }
+        // FR8 (SheetQuality): CODE/severity/leads per warning, ';'-separated.
+        meta("quality", r.quality)
+        meta("warnings", r.warnings.joinToString("; ") {
+            "${it.code}/${it.severity.name.lowercase()}" + (if (it.leads.isEmpty()) "" else "/" + it.leads.joinToString(","))
+        })
         for (l in r.leads) l.pcc?.let { meta("pcc_asis_${l.name}${if (l.rhythm) "_rhythm" else ""}", f("%.4f", it)) }
         val order = listOf("I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6")
         append("time_s," + order.joinToString(",") + ",II_rhythm\n")

@@ -271,6 +271,45 @@ median PCC 0.911 (old photo, pre-fix app 0.908), SNR 7.9 / 13.7 dB, rhythm
 like for like (photo and app both changed); `cut` + `score*` 62 + 96 ms on
 the phone, confirming §12.
 
+## 14. 2026-10-07 — Whole-sheet quality warnings (FR8)
+
+`ecgproto/sheet_quality.py` + `SheetQuality.kt` (golden-vector port,
+`make_sheet_quality_fixtures.py`, 21 cases). Checks the time and geometry
+references the sheet was cut with -- anchored on printed features (grid,
+ticks, pulses) or physiology, never on the pipeline agreeing with itself:
+
+| code | severity | rule | measured on the 9 photos (3,200 px, grid) |
+|---|---|---|---|
+| GRID_REFUSED | warn | grid fit asked for, refused | never |
+| NO_TICK_SCALE / FEW_TICKS | severe / warn | < 3 / < 6 of 9 ticks | 8-9 found everywhere; the 3x3 phone failure 3 |
+| SCALE_DISAGREE | severe | tick vs grid scale > 1% | <= 0.28%; the 3x3 failure ~ -33% |
+| TICK_OUTLIER | severe | a tick > 1 mm from the median of that tick over the rows | <= 0.24 mm; ptbxl40_20260929_02 5.49 mm |
+| NO_PULSE | warn | time zero from the fallback | 1-4 pulses found everywhere (PTB-XL 38 scores 0.955 from one) |
+| LEAD_COVERAGE | warn | < 80% of a lead traced | b3 >= 0.979 |
+| LEAD_AMPLITUDE | warn | p-p outside 0.05-6 mV (quality.REJECT_PP_MV) | 0.24-4.11 mV on every phone lead |
+
+Verdict: ok / check (any warn) / unreliable (any severe); the phone shows it
+as a green/amber/red banner and writes `quality` + `warnings` into the CSV;
+`score_device_sheets.py` and `ml/eval_phone_path.py` carry both.
+
+**Found while measuring: what broke ptbxl40_20260929_02 is one tick.** Row
+3's 7.5 s tick was found 52 px (5.5 mm, ~220 ms) early (x 1,873.5 against
+1,926 in rows 1-2); that knot squeezed V3, stretched V6, and the rhythm strip
+(knots = the rows' mean) inherited it -- the three leads that scored PCC
+~0.1-0.5. Not the tracer. TICK_OUTLIER now flags it. The obvious FIX --
+drop the outlier and borrow its mates' position -- is a separate change, to
+be measured end to end before adoption.
+
+A design error caught by the tests: comparing a tick with the MEAN of its
+mates let the one bad tick drag the two good ones 2.7 mm and flag them too;
+the median of the three cannot be moved by one. Kotlin mutation check:
+mean-for-median fails SheetQualityPortTest.
+
+Tests: `tests/test_sheet_quality.py` (11), `SheetQualityPortTest` (3).
+Python 85, JVM 105. Evidence: `results/kitphoto/warnings.csv`
+(`python/run_sheet_warnings.py`); lead-level with b3 in
+`results/ml/phone_path_*` once the replay is rerun.
+
 ---
 
 ## Open items (ordered)

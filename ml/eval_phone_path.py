@@ -33,7 +33,7 @@ sys.path.insert(0, str(REPO / "python"))
 import run_photo as rp  # noqa: E402
 import score_kit_photo as skp  # noqa: E402
 import score_12lead as S12  # noqa: E402
-from ecgproto import sheet  # noqa: E402
+from ecgproto import sheet, sheet_quality  # noqa: E402
 
 ASSETS = REPO / "android" / "app" / "src" / "main" / "assets" / "ml"
 RESULTS = REPO / "results" / "ml"
@@ -75,6 +75,8 @@ def main(argv=None) -> int:
                 rows.append({"photo": stem, "tracer": name, "error": str(exc)})
                 continue
             el = time.perf_counter() - t0
+            # FR8, as the phone computes it (SheetQuality.kt).
+            ws = sheet_quality.assess_result(res, grid_requested=args.geometry == "grid")
             head = {"photo": stem, "target": t.name, "ecg_id": t.ecg_id, "tracer": name,
                     "corners_source": args.corners, "corners_refined": res.corners_refined,
                     "geometry": res.geometry, "decode_px": args.decode_px,
@@ -82,7 +84,10 @@ def main(argv=None) -> int:
                     "rect": f"{res.rect_shape[1]}x{res.rect_shape[0]}",
                     "calibration": res.calibration, "ticks_found": res.ticks_found,
                     "px_per_mm": round(res.px_per_mm, 4), "t0_source": res.t0_source,
-                    "desktop_s": round(el, 1)}
+                    "desktop_s": round(el, 1), "quality": sheet_quality.verdict(ws),
+                    "warnings": "; ".join(
+                        f"{w.code}/{w.severity}" + (f"/{','.join(w.leads)}" if w.leads else "")
+                        for w in ws)}
             for (lead, rhythm), sig in res.leads.items():
                 tr_ = truth.leads[(lead, rhythm)]
                 dur = 10.0 if rhythm else 2.5
@@ -91,6 +96,7 @@ def main(argv=None) -> int:
             done = [r for r in rows if r.get("photo") == stem and r.get("tracer") == name
                     and not r.get("rhythm") and r.get("pcc_asis") not in (None, "")]
             print(f"{stem} {name:28s} {res.calibration} {res.ticks_found}/9 ticks  "
+                  f"[{sheet_quality.verdict(ws)}]  "
                   f"lead PCC as-is median {np.median([r['pcc_asis'] for r in done]):.3f}  "
                   f"SNR {np.median([r['snr_db_asis'] for r in done]):.1f} / shifted "
                   f"{np.median([r['shifted_snr_db_asis'] for r in done]):.1f} dB",

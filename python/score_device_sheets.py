@@ -73,7 +73,9 @@ def main() -> int:
                 "calibration": meta.get("calibration"), "timings_ms": meta.get("timings_ms"),
                 # native/java MB per stage (StageMemory.kt); absent before 2026-10-07
                 "memory_peak_mb": meta.get("memory_peak_mb"),
-                "pss_end_mb": meta.get("pss_end_mb")}
+                "pss_end_mb": meta.get("pss_end_mb"),
+                # FR8 (SheetQuality.kt); absent before 2026-10-07
+                "quality": meta.get("quality"), "warnings": meta.get("warnings")}
         for r, names in enumerate(tuple(segment.LAYOUT_3X4) + (("II",),)):
             for k, name in enumerate(names):
                 rhythm = r == 3

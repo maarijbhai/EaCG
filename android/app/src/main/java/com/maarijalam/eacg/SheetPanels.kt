@@ -211,6 +211,7 @@ fun SheetSection(modifier: Modifier = Modifier) {
 private fun SheetResultPanel(r: SheetPipeline.Result, truth12: Map<String, DoubleArray>?) {
     fun f(fmt: String, v: Double) = String.format(Locale.US, fmt, v)
     HorizontalDivider()
+    QualityBanner(r)
     Text("${if (r.tracer == SheetPipeline.Tracer.MODEL) "Learned tracer (b3)" else "Classical tracer"}; " +
         "corners ${if (r.cornersAuto) "automatic" else "by hand"}; " +
         "${r.calibration} ${f("%.3f", r.pxPerMm)} px/mm (${r.ticksFound}/9 ticks); t0 from ${r.t0Source}",
@@ -291,4 +292,27 @@ private fun path(v: DoubleArray, t0: Double, secToX: Float, mid: Float, mvToY: F
         pen = true
     }
     return p
+}
+
+/**
+ * FR8: the sheet's verdict and each warning ([SheetQuality]). Green, amber or
+ * red; every warning names what is wrong and, where it applies, the leads.
+ */
+@Composable
+private fun QualityBanner(r: SheetPipeline.Result) {
+    val (title, colour) = when (r.quality) {
+        "ok" -> "No problems found" to Color(0xFF2E7D32)
+        "check" -> "Check the result against the page" to Color(0xFFB26A00)
+        else -> "Unreliable: a time or geometry reference is wrong" to Color(0xFFC62828)
+    }
+    Card(colors = CardDefaults.cardColors(containerColor = colour.copy(alpha = 0.12f)),
+        modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, color = colour)
+            for (w in r.warnings) {
+                Text((if (w.severity == SheetQuality.Severity.SEVERE) "▲ " else "• ") + w.message,
+                    style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
 }
