@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.EaCG" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.EaCG" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- The ground colour behind the first frame, so launch does not
+             flash white or the old default purple before Compose draws. -->
+        <item name="android:windowBackground">@color/eacg_ground</item>
+        <item name="android:colorAccent">@color/eacg_primary</item>
+    </style>
 </resources>

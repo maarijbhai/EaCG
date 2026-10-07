@@ -337,6 +337,20 @@ golden cases `reject.*` in sheet_port_fixtures (only additions; no existing
 value moved), TICK_REPLACED cases in sheet_quality_fixtures. Python 89,
 JVM 106.
 
+## 16. 2026-10-07 — UI redesign (docs/ui_plan.md), step 1: theme
+
+UI only; no pipeline code touched. `ui/theme/Color.kt`: the plan's §2.1
+tokens (maroon `#7A1F2B` accent, ground `#F7F3F1`, teal `#0F766E` for
+digitised data, amber/red verdict colours, pink ECG paper); four renamed to
+avoid clashing with Material composables (`CardSurface`, `CardBorder`,
+`RowDivider`, `ButtonOutline`). `Type.kt`: IBM Plex Sans 400/500/600/700 and
+Mono 400/500 as static TTFs in `res/font` (IBM/plex v6.4.0, OFL 1.1, licence in
+`assets/licenses/`), mapped to the mock-up's sizes; `DataText` (Mono 13) for
+numbers. `Theme.kt`: one light scheme, `dynamicColor` and dark theme removed.
+Window background set to the ground colour. Existing screens now render in
+the new colours and type; nothing else changed. Build and 106 JVM tests
+green; NOT verified on the A30s.
+
 ---
 
 ## Open items (ordered)

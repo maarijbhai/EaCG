@@ -1,58 +1,47 @@
 package com.maarijalam.eacg.ui.theme
 
-import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+/**
+ * The maroon light scheme of docs/ui_plan.md §2. No dynamic colour (Android
+ * 12+ wallpaper colours would replace the maroon) and no dark theme in this
+ * phase. Material roles that the screens do not set explicitly are mapped
+ * onto the same tokens, so stock components (switches, progress bars, text
+ * fields) already look right.
+ */
+private val EaCGColors = lightColorScheme(
+    primary = Primary,
     onPrimary = Color.White,
+    primaryContainer = Tint,
+    onPrimaryContainer = PrimaryDark,
+    secondary = Primary,
     onSecondary = Color.White,
+    secondaryContainer = Tint,             // NavigationBar's selected indicator
+    onSecondaryContainer = PrimaryDark,
+    tertiary = Data,
     onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    background = Ground,
+    onBackground = Ink,
+    surface = CardSurface,
+    onSurface = Ink,
+    surfaceVariant = Ground,
+    onSurfaceVariant = Muted,
+    surfaceContainer = CardSurface,            // NavigationBar
+    surfaceContainerLow = CardSurface,         // cards
+    surfaceContainerHigh = CardSurface,
+    surfaceContainerHighest = ProgressTrack,
+    outline = ButtonOutline,
+    outlineVariant = CardBorder,
+    error = BadText,
+    onError = Color.White,
+    errorContainer = BadBg,
+    onErrorContainer = BadText,
 )
 
 @Composable
-fun EaCGTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+fun EaCGTheme(content: @Composable () -> Unit) {
+    MaterialTheme(colorScheme = EaCGColors, typography = Typography, content = content)
 }
