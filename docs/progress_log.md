@@ -308,7 +308,11 @@ mean-for-median fails SheetQualityPortTest.
 Tests: `tests/test_sheet_quality.py` (11), `SheetQualityPortTest` (3).
 Python 85, JVM 105. Evidence: `results/kitphoto/warnings.csv`
 (`python/run_sheet_warnings.py`); lead-level with b3 in
-`results/ml/phone_path_*` once the replay is rerun.
+`results/ml/phone_path_b3_512x1024_fp16_grid.csv` (rerun at 098f91d: all 234
+lead scores identical to before, max |diff| 0.0). With b3: 8 photos ok, 0
+lead-level warnings (no false flags), _29_02 unreliable. The classical
+control: 6 of 9 "check" (LEAD_COVERAGE -- it really does lose trace), 2 ok,
+_29_02 unreliable.
 
 ---
 
