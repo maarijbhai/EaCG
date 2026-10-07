@@ -113,7 +113,11 @@ data class PipelineState(
 )
 
 @Composable
-fun DigitiseScreen(modifier: Modifier = Modifier) {
+fun DigitiseScreen(
+    modifier: Modifier = Modifier,
+    /** False in the Lab: the whole sheet is the Scan flow (docs/ui_plan.md §5.4). */
+    includeWholeSheet: Boolean = true
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var state by remember { mutableStateOf(PipelineState()) }
@@ -424,7 +428,7 @@ fun DigitiseScreen(modifier: Modifier = Modifier) {
 
         // The goal: a whole 3x4 + rhythm printout, photograph to 12 leads,
         // corners found automatically, learned tracer (SheetPipeline).
-        SheetSection()
+        if (includeWholeSheet) SheetSection()
 
         // The learned tracer's latency, memory and fidelity on this phone,
         // before the 12-lead Kotlin port is written against it.

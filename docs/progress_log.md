@@ -351,6 +351,24 @@ Window background set to the ground colour. Existing screens now render in
 the new colours and type; nothing else changed. Build and 106 JVM tests
 green; NOT verified on the A30s.
 
+## 17. 2026-10-07 — UI step 2: navigation shell, Settings, Lab
+
+UI only. `MainActivity.AppShell`: bottom bar Scan / Records in the mock-up's
+style (maroon icon + label in a tint pill), Settings and Lab as full screens
+over the tabs with Back handling. The Scan tab stays composed at zero size
+whenever it is not shown (a digitisation in flight survives); the Lab, once
+opened, is kept the same way (a running benchmark survives). `AppSettings`:
+prototype mode, SharedPreferences, ON by default, provided as
+`LocalAppSettings`; it only hides UI. `SettingsScreen`: the switch, the Lab
+entry (prototype mode only), About (version, model file, font licence).
+`LabScreen` = `DigitiseScreen(includeWholeSheet = false)`, unchanged in
+function (fixtures, deskew + benchmark, rhythm-strip path, tracer
+benchmark). Interim Scan tab: the new header + Settings gear over the
+existing `SheetSection`, until steps 3-6 replace it. New `ui/Icons.kt` (the
+mock-up's own SVG paths as ImageVectors) and `ui/Components.kt` (TopBar,
+EaCard, 52 dp full-radius buttons, section label, disclaimer). Build and 106
+JVM tests green; NOT verified on the A30s.
+
 ---
 
 ## Open items (ordered)

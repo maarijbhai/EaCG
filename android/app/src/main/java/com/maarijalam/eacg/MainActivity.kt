@@ -2,55 +2,160 @@ package com.maarijalam.eacg
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.maarijalam.eacg.ui.Disclaimer
+import com.maarijalam.eacg.ui.EaIcons
+import com.maarijalam.eacg.ui.theme.CardBorder
+import com.maarijalam.eacg.ui.theme.CardSurface
 import com.maarijalam.eacg.ui.theme.EaCGTheme
+import com.maarijalam.eacg.ui.theme.Ground
+import com.maarijalam.eacg.ui.theme.Muted
+import com.maarijalam.eacg.ui.theme.Primary
+import com.maarijalam.eacg.ui.theme.Text2
+import com.maarijalam.eacg.ui.theme.Tint
+
+/** A full screen shown over the tabs (docs/ui_plan.md §3: Settings, Lab). */
+private enum class Overlay { NONE, SETTINGS, LAB }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val settings = AppSettings.get(this)
         setContent {
             EaCGTheme {
-                var tab by rememberSaveable { mutableIntStateOf(0) }
-                Scaffold(modifier = Modifier.fillMaxSize(), bottomBar = {
-                    NavigationBar {
-                        NavigationBarItem(selected = tab == 0, onClick = { tab = 0 },
-                            icon = { Icon(painterResource(android.R.drawable.ic_menu_camera), null) },
-                            label = { Text("Scan") })
-                        NavigationBarItem(selected = tab == 1, onClick = { tab = 1 },
-                            icon = { Icon(painterResource(android.R.drawable.ic_menu_recent_history), null) },
-                            label = { Text("Records") })
-                    }
-                }) { innerPadding ->
-                    Box(Modifier.padding(innerPadding).fillMaxSize()) {
-                        // The Scan screen stays composed while Records is shown
-                        // (at zero size), so a digitisation in flight -- ~20 s
-                        // with the learned tracer -- is not cancelled, and the
-                        // picked photo and corners survive a look at Records.
-                        Box(if (tab == 0) Modifier.fillMaxSize() else Modifier.size(0.dp)) {
-                            DigitiseScreen(modifier = Modifier.fillMaxSize())
-                        }
-                        if (tab == 1) RecordsScreen(Modifier.fillMaxSize())
-                    }
+                CompositionLocalProvider(LocalAppSettings provides settings) {
+                    AppShell()
                 }
             }
         }
+    }
+}
+
+/**
+ * Bottom bar with Scan and Records, and Settings / Lab as full screens on
+ * top. The Scan tab stays composed (at zero size) while anything else shows,
+ * so a digitisation in flight -- ~20 s with the learned tracer -- is not
+ * cancelled and the picked photo and corners survive. The Lab, once opened,
+ * is kept the same way, so a running benchmark survives a trip back.
+ */
+@Composable
+private fun AppShell() {
+    val settings = LocalAppSettings.current
+    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
+    var labOpened by rememberSaveable { mutableStateOf(false) }
+    // Prototype mode off hides the Lab; leave it if it was showing.
+    if (!settings.prototypeMode && overlay == Overlay.LAB) overlay = Overlay.SETTINGS
+
+    BackHandler(enabled = overlay != Overlay.NONE) {
+        overlay = if (overlay == Overlay.LAB) Overlay.SETTINGS else Overlay.NONE
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = Ground,
+        bottomBar = { if (overlay == Overlay.NONE) MainNavBar(tab) { tab = it } }
+    ) { innerPadding ->
+        Box(Modifier.padding(innerPadding).fillMaxSize()) {
+            val scanShown = overlay == Overlay.NONE && tab == 0
+            Box(if (scanShown) Modifier.fillMaxSize() else Modifier.size(0.dp)) {
+                ScanTab(onOpenSettings = { overlay = Overlay.SETTINGS })
+            }
+            if (overlay == Overlay.NONE && tab == 1) RecordsScreen(Modifier.fillMaxSize())
+            if (overlay == Overlay.SETTINGS) {
+                SettingsScreen(onBack = { overlay = Overlay.NONE },
+                    onOpenLab = { labOpened = true; overlay = Overlay.LAB },
+                    modifier = Modifier.fillMaxSize().background(Ground))
+            }
+            if (labOpened && settings.prototypeMode) {
+                Box(if (overlay == Overlay.LAB) Modifier.fillMaxSize().background(Ground) else Modifier.size(0.dp)) {
+                    LabScreen(onBack = { overlay = Overlay.SETTINGS })
+                }
+            }
+        }
+    }
+}
+
+/** The mock-up's bottom navigation: maroon icon and label in a tint pill when selected. */
+@Composable
+private fun MainNavBar(tab: Int, onSelect: (Int) -> Unit) {
+    Column {
+        HorizontalDivider(color = CardBorder)
+        NavigationBar(containerColor = CardSurface, tonalElevation = 0.dp) {
+            val colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Primary, selectedTextColor = Primary, indicatorColor = Tint,
+                unselectedIconColor = Muted, unselectedTextColor = Muted)
+            NavigationBarItem(selected = tab == 0, onClick = { onSelect(0) }, colors = colors,
+                icon = { Icon(EaIcons.Camera, contentDescription = null, modifier = Modifier.size(22.dp)) },
+                label = { NavLabel("Scan", tab == 0) })
+            NavigationBarItem(selected = tab == 1, onClick = { onSelect(1) }, colors = colors,
+                icon = { Icon(EaIcons.List, contentDescription = null, modifier = Modifier.size(22.dp)) },
+                label = { NavLabel("Records", tab == 1) })
+        }
+    }
+}
+
+@Composable
+private fun NavLabel(text: String, selected: Boolean) {
+    Text(text, style = MaterialTheme.typography.labelSmall.copy(
+        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium))
+}
+
+/**
+ * The Scan tab. INTERIM (UI step 2 of docs/ui_plan.md §6): the header and
+ * Settings gear of the new Home over the existing whole-sheet section, so the
+ * app stays usable until Home (step 3), Corners (4), Digitising (5) and
+ * Result (6) replace it.
+ */
+@Composable
+private fun ScanTab(onOpenSettings: () -> Unit) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("EaCG", style = MaterialTheme.typography.headlineSmall)
+                Text("Paper ECG to signal, on this phone", style = MaterialTheme.typography.bodyMedium,
+                    color = Muted)
+            }
+            IconButton(onClick = onOpenSettings, modifier = Modifier.size(48.dp)) {
+                Icon(EaIcons.Settings, contentDescription = "Settings", tint = Text2)
+            }
+        }
+        Box(Modifier.padding(horizontal = 16.dp)) { SheetSection() }
+        Disclaimer(Modifier.padding(16.dp))
     }
 }
