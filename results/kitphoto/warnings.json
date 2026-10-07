@@ -1,0 +1,20 @@
+{
+  "generated_by": "python/run_sheet_warnings.py",
+  "utc": "2026-10-07T15:09:09+00:00",
+  "git_commit": "098f91dfa15d837ccac2dc7d67de90bfa374a143",
+  "git_dirty": false,
+  "params": {
+    "decode_px": 3200,
+    "corners": "auto",
+    "geometry": "grid",
+    "scale_disagree_fraction": 0.01,
+    "tick_mate_mm": 1.0,
+    "min_ticks": 6,
+    "min_lead_coverage": 0.8
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "opencv": "5.0.0"
+  }
+}

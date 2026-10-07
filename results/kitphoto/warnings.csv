@@ -1,0 +1,10 @@
+photo,target,geometry,grid_px_per_mm,calibration,tick_px_per_mm,scale_diff_pct,ticks_found,worst_tick_dev_mm,pulses_found,t0_source,quality_refs,warnings_refs
+ptbxl38_20261005_01,ptbxl38_kit_500hz_300dpi,grid,9.2577,ticks,9.2542,-0.038,9,0.162,1,pulses,ok,
+ptbxl40_20260928_01,ptbxl40_kit_500hz_300dpi,grid,10.6153,ticks,10.6326,0.163,8,0.094,2,pulses,ok,
+ptbxl40_20260929_01,ptbxl40_kit_500hz_300dpi,grid,8.2695,ticks,8.2923,0.276,8,0.121,4,pulses,ok,
+ptbxl40_20260929_02,ptbxl40_kit_500hz_300dpi,grid,9.5657,ticks,9.5664,0.007,9,5.488,2,pulses,unreliable,"TICK_OUTLIER/severe/V3,V6,II_rhythm"
+ptbxl40_20260929_03,ptbxl40_kit_500hz_300dpi,grid,9.4378,ticks,9.4494,0.124,9,0.212,3,pulses,ok,
+ptbxl40_20260929_04,ptbxl40_kit_500hz_300dpi,grid,9.42,ticks,9.4314,0.121,8,0.212,3,pulses,ok,
+ptbxl40_20260929_05,ptbxl40_kit_500hz_300dpi,grid,10.3115,ticks,10.2983,-0.128,8,0.097,3,pulses,ok,
+ptbxl57_20261005_163206,ptbxl57_kit_500hz_300dpi,grid,9.7629,ticks,9.7738,0.112,8,0.051,2,pulses,ok,
+ptbxl9_20261005_01,ptbxl9_kit_500hz_300dpi,grid,9.7923,ticks,9.7858,-0.066,8,0.102,2,pulses,ok,
