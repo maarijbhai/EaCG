@@ -221,6 +221,13 @@ private fun SheetResultPanel(r: SheetPipeline.Result, truth12: Map<String, Doubl
         style = MaterialTheme.typography.labelSmall)
     Text(r.timingsMs.entries.joinToString("  ") { "${it.key} ${it.value} ms" },
         style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
+    r.memoryBaseline?.let { base ->
+        val peak = r.memoryPeaks.values.maxOfOrNull { it.nativeBytes } ?: base.nativeBytes
+        Text("Memory: native peak ${f("%.0f", StageMemory.mb(peak))} MB " +
+            "(+${f("%.0f", StageMemory.mb(peak - base.nativeBytes))} over start)" +
+            (r.pssEndMb?.let { "; process ${f("%.0f", it)} MB" } ?: ""),
+            style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
+    }
     // The sheet as printed: three rows of four leads and the rhythm strip.
     for (row in 0 until 4) {
         val leads = r.leads.filter { if (row < 3) !it.rhythm && SheetLayout.LAYOUT_3X4[row].contains(it.name) else it.rhythm }

@@ -2,7 +2,11 @@ package com.maarijalam.eacg
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.os.Debug
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.opencv.core.Mat
 import org.opencv.core.MatOfByte
@@ -78,7 +82,12 @@ object SheetPipeline {
         /** The grid fit, when used. */
         val gridFit: GridFit.Fit? = null,
         /** Why the grid fit was not used, when it was asked for and refused. */
-        val gridNote: String? = null
+        val gridNote: String? = null,
+        /** Memory before the first stage, and the peak of each stage (StageMemory). */
+        val memoryBaseline: StageMemory.Reading? = null,
+        val memoryPeaks: Map<String, StageMemory.Peak> = emptyMap(),
+        /** The process's total proportional set size at the end of the run, MB. */
+        val pssEndMb: Double? = null
     ) {
         /**
          * What a deployed scan pays: every stage except the harness ones,
@@ -90,6 +99,20 @@ object SheetPipeline {
 
     /** Timing key of the truth scoring: harness, not pipeline. */
     const val SCORE_KEY = "score*"
+
+    /** Memory sampling interval, ms: well under every stage but cut+score. */
+    const val MEMORY_SAMPLE_MS = 20L
+
+    private fun readMemory(): StageMemory.Reading {
+        val rt = Runtime.getRuntime()
+        return StageMemory.Reading(Debug.getNativeHeapAllocatedSize(), rt.totalMemory() - rt.freeMemory())
+    }
+
+    private fun pssMb(): Double {
+        val info = Debug.MemoryInfo()
+        Debug.getMemoryInfo(info)
+        return info.totalPss / 1024.0
+    }
 
     enum class Geometry { CORNERS, GRID }
 
@@ -260,96 +283,109 @@ object SheetPipeline {
         /** GRID: regularise the page on its printed 5 mm grid (ecgproto geometry="grid"). */
         geometry: Geometry = Geometry.GRID
     ): Result = withContext(Dispatchers.Default) {
+        // Peak memory per stage (NFR2): sampled in the background, filed at
+        // each lap. Reads only counters, so it costs the stages nothing.
+        val mem = StageMemory(::readMemory)
+        val sampler = launch(Dispatchers.IO) {
+            while (isActive) { mem.sample(); delay(MEMORY_SAMPLE_MS) }
+        }
         val t = linkedMapOf<String, Long>()
         var mark = System.nanoTime()
-        fun lap(k: String) { val n = System.nanoTime(); t[k] = (n - mark) / 1_000_000; mark = n }
-
-        var refined: Boolean? = cornersRefined
-        val c = corners ?: SheetCorners.find(photo).let { refined = it.refined; it.corners }
-        lap("corners")
-        val src = ImageWarp.toMat(photo)
-        var rect: Mat
-        var fit: GridFit.Fit? = null
-        var gridNote: String? = null
-        try {
-            rect = rectify(src, c)
-            lap("rectify")
-            if (geometry == Geometry.GRID) {
-                // sheet.digitise_sheet: the fit's guess is the corner page's
-                // duration anchor, and the photo is warped once onto the
-                // regular page (no second resampling of the corner page).
-                try {
-                    val f = GridFit.fit(GridFit.redness(rect), locate(rect, null).anchor)
-                    val page = GridFit.regularise(src, c, rect.cols(), rect.rows(), f)
-                    rect.release()
-                    rect = page
-                    fit = f
-                } catch (e: Exception) {
-                    gridNote = "grid fit refused (${e.message}); the corner page was used"
-                }
-                lap("grid")
-            }
-        } finally {
-            src.release()
+        fun lap(k: String) {
+            val n = System.nanoTime(); t[k] = (n - mark) / 1_000_000; mark = n
+            mem.close(k)
         }
         try {
-            val located = locate(rect, fit?.pxPerMm)
-            val m2 = located.m2
-            val rows = located.rows
-            val pulseT0 = located.pulseT0
-            val t0 = located.t0
-            val anchor = located.anchor
-            lap("locate")
-            // The tick search is placed with the grid's scale when there is
-            // one (SheetLocation.search_px_per_mm); the duration anchor stays
-            // the calibration's fallback.
-            val ticks = SheetLayout.tickScale(
-                if (OPEN_LOCATE == OPEN_TRACE) m2 else mask(rect, OPEN_TRACE), rows, t0,
-                fit?.pxPerMm ?: anchor, SheetLayout.maskOffsetPx(OPEN_TRACE))
-            val useTicks = ticks.pxPerMm.isFinite()
-            val px = if (useTicks) ticks.pxPerMm else anchor
-            val layout = SheetLayout.segmentLeads(rect.rows(), rows, t0, px, if (useTicks) ticks else null)
-            lap("calibrate+segment")
-
-            val ownModel = if (tracer == Tracer.MODEL && model == null) LiteRtModel(context) else null
-            val leads = ArrayList<LeadResult>()
-            var rowTraces: List<RowTrace> = emptyList()
+            var refined: Boolean? = cornersRefined
+            val c = corners ?: SheetCorners.find(photo).let { refined = it.refined; it.corners }
+            lap("corners")
+            val src = ImageWarp.toMat(photo)
+            var rect: Mat
+            var fit: GridFit.Fit? = null
+            var gridNote: String? = null
             try {
-                val traces = (0 until 4).map { r ->
-                    val (xs, ys) = when (tracer) {
-                        Tracer.MODEL -> modelRow(rect, layout, r, (model ?: ownModel)!!)
-                        Tracer.CLASSICAL -> classicalRow(rect, layout, r)
+                rect = rectify(src, c)
+                lap("rectify")
+                if (geometry == Geometry.GRID) {
+                    // sheet.digitise_sheet: the fit's guess is the corner page's
+                    // duration anchor, and the photo is warped once onto the
+                    // regular page (no second resampling of the corner page).
+                    try {
+                        val f = GridFit.fit(GridFit.redness(rect), locate(rect, null).anchor)
+                        val page = GridFit.regularise(src, c, rect.cols(), rect.rows(), f)
+                        rect.release()
+                        rect = page
+                        fit = f
+                    } catch (e: Exception) {
+                        gridNote = "grid fit refused (${e.message}); the corner page was used"
                     }
-                    SheetLayout.onSheetColumns(xs, ys)
+                    lap("grid")
                 }
-                lap("trace")
-                val sigs = layout.cells.map { cell ->
-                    val (pos, x0) = traces[cell.row]
-                    SheetLayout.cellSignal(pos, x0, cell, px, layout)
-                }
-                lap("cut")
-                for ((cell, sig) in layout.cells.zip(sigs)) {
-                    val tr = truth12?.get(cell.name)?.let {
-                        val a = (cell.tStartS * SheetLayout.FS).roundToInt()
-                        it.copyOfRange(a, minOf(it.size, a + sig.size))
-                    }
-                    val sc = tr?.let { score(sig, it) }
-                    leads += LeadResult(cell.name, cell.rhythm, cell.tStartS, sig, sc?.first, sc?.second)
-                }
-                if (truth12 != null) lap(SCORE_KEY)
-                rowTraces = traces.map { (pos, x0) -> RowTrace(x0, pos) }
             } finally {
-                ownModel?.close()
+                src.release()
             }
-            // Not timed as a pipeline stage: it is for the Records tab only.
-            val jpeg = runCatching { encodeJpeg(rect) }.getOrNull()
-            Result(tracer, c, cornersAuto, refined, rect.cols(), rect.rows(), px,
-                if (useTicks) "ticks" else "duration", ticks.nFound,
-                if (pulseT0.isFinite()) "pulses" else "rhythm_locator", leads, t,
-                ImageWarp.previewBitmap(rect), jpeg, rowTraces,
-                if (fit != null) "grid" else "corners", fit, gridNote)
+            try {
+                val located = locate(rect, fit?.pxPerMm)
+                val m2 = located.m2
+                val rows = located.rows
+                val pulseT0 = located.pulseT0
+                val t0 = located.t0
+                val anchor = located.anchor
+                lap("locate")
+                // The tick search is placed with the grid's scale when there is
+                // one (SheetLocation.search_px_per_mm); the duration anchor stays
+                // the calibration's fallback.
+                val ticks = SheetLayout.tickScale(
+                    if (OPEN_LOCATE == OPEN_TRACE) m2 else mask(rect, OPEN_TRACE), rows, t0,
+                    fit?.pxPerMm ?: anchor, SheetLayout.maskOffsetPx(OPEN_TRACE))
+                val useTicks = ticks.pxPerMm.isFinite()
+                val px = if (useTicks) ticks.pxPerMm else anchor
+                val layout = SheetLayout.segmentLeads(rect.rows(), rows, t0, px, if (useTicks) ticks else null)
+                lap("calibrate+segment")
+
+                val ownModel = if (tracer == Tracer.MODEL && model == null) LiteRtModel(context) else null
+                val leads = ArrayList<LeadResult>()
+                var rowTraces: List<RowTrace> = emptyList()
+                try {
+                    val traces = (0 until 4).map { r ->
+                        val (xs, ys) = when (tracer) {
+                            Tracer.MODEL -> modelRow(rect, layout, r, (model ?: ownModel)!!)
+                            Tracer.CLASSICAL -> classicalRow(rect, layout, r)
+                        }
+                        SheetLayout.onSheetColumns(xs, ys)
+                    }
+                    lap("trace")
+                    val sigs = layout.cells.map { cell ->
+                        val (pos, x0) = traces[cell.row]
+                        SheetLayout.cellSignal(pos, x0, cell, px, layout)
+                    }
+                    lap("cut")
+                    for ((cell, sig) in layout.cells.zip(sigs)) {
+                        val tr = truth12?.get(cell.name)?.let {
+                            val a = (cell.tStartS * SheetLayout.FS).roundToInt()
+                            it.copyOfRange(a, minOf(it.size, a + sig.size))
+                        }
+                        val sc = tr?.let { score(sig, it) }
+                        leads += LeadResult(cell.name, cell.rhythm, cell.tStartS, sig, sc?.first, sc?.second)
+                    }
+                    if (truth12 != null) lap(SCORE_KEY)
+                    rowTraces = traces.map { (pos, x0) -> RowTrace(x0, pos) }
+                } finally {
+                    ownModel?.close()
+                }
+                // Not timed as a pipeline stage: it is for the Records tab only.
+                val jpeg = runCatching { encodeJpeg(rect) }.getOrNull()
+                Result(tracer, c, cornersAuto, refined, rect.cols(), rect.rows(), px,
+                    if (useTicks) "ticks" else "duration", ticks.nFound,
+                    if (pulseT0.isFinite()) "pulses" else "rhythm_locator", leads, t,
+                    ImageWarp.previewBitmap(rect), jpeg, rowTraces,
+                    if (fit != null) "grid" else "corners", fit, gridNote,
+                    mem.baseline, mem.peaks(), runCatching { pssMb() }.getOrNull())
+            } finally {
+                rect.release()
+            }
         } finally {
-            rect.release()
+            sampler.cancel()
         }
     }
 
@@ -389,6 +425,9 @@ object SheetPipeline {
         } ?: ("corners" + (r.gridNote?.let { " -- $it" } ?: "")))
         meta("calibration", "${r.calibration} ${f("%.4f", r.pxPerMm)} px/mm, ${r.ticksFound}/9 ticks, t0 from ${r.t0Source}")
         meta("timings_ms", r.timingsMs.entries.joinToString(" ") { "${it.key}=${it.value}" })
+        // native/java MB, absolute; see StageMemory for what each one counts.
+        r.memoryBaseline?.let { meta("memory_peak_mb", StageMemory.format(it, r.memoryPeaks)) }
+        r.pssEndMb?.let { meta("pss_end_mb", f("%.1f", it)) }
         for (l in r.leads) l.pcc?.let { meta("pcc_asis_${l.name}${if (l.rhythm) "_rhythm" else ""}", f("%.4f", it)) }
         val order = listOf("I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6")
         append("time_s," + order.joinToString(",") + ",II_rhythm\n")

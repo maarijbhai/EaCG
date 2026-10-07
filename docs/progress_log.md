@@ -249,6 +249,28 @@ rule took **42.6 s** on the desktop JVM (checked: the test fails under it).
 98 JVM tests. Expected on the A30s: ~30 s → ~23 s per sheet; to confirm with
 the phone re-runs.
 
+## 13. 2026-10-07 — Memory per stage on the phone (NFR2)
+
+`StageMemory.kt`: a background sampler (every 20 ms) reads the native heap
+(`Debug.getNativeHeapAllocatedSize`: OpenCV Mats, the LiteRT arena, Bitmap
+pixels) and the Java heap in use; each timing lap files the peak since the
+previous lap under that stage. The sheet CSV gains `memory_peak_mb`
+(`baseline=native/java` then `stage=native/java`, absolute MB) and
+`pss_end_mb` (process PSS once at the end); the result screen shows the
+native peak; `score_device_sheets.py` carries both into
+`results/device/sheet_scores.csv`. Limits: a sampled peak can miss an
+allocation shorter than 20 ms (each lap also samples); Java figures include
+uncollected garbage. `StageMemoryTest` (4 tests) pins the bookkeeping,
+including that a transient in one stage is not charged to the next.
+102 JVM tests. **Not yet measured on the A30s** -- next phone runs.
+
+Also from 10-07: a new PTB-XL 57 photo on the phone (sheet filling the
+frame, corners at/over the frame edge; grid-fit inliers 0.965 vs 0.996):
+median PCC 0.911 (old photo, pre-fix app 0.908), SNR 7.9 / 13.7 dB, rhythm
+0.911 (was 0.777); III, aVL, V5 lower, II, V2, V3 higher. Not comparable
+like for like (photo and app both changed); `cut` + `score*` 62 + 96 ms on
+the phone, confirming §12.
+
 ---
 
 ## Open items (ordered)
@@ -256,8 +278,8 @@ the phone re-runs.
 1. **Timing, photo-specific part** (§11): pulse ~+6 ms, 2.5 s tick ~−6,
    5.0 s ~+4 on photos only; and fragile pulse detection on darker rows.
    Plain-vs-shifted SNR gap now ~5.7 dB on the grid path (10.3 vs 16.0).
-2. Memory measurement on the A30s. (cut+score ~7 s: fixed, §12; confirm on
-   the phone.)
+2. Memory: instrumented (§13), measure on the A30s. (cut+score: fixed and
+   confirmed on the phone, §12-13.)
 3. More photos per record in worse conditions (side light, angle).
 4. Code freeze ~2026-10-17, regenerate everything from one commit, merge
    `prototype-and-dataset-repair` → `main`.
