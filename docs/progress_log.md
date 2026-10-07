@@ -392,6 +392,22 @@ row centres, ticks kept / replaced, cell boxes). Tests: a pre-redesign
 record still loads; the new fields and the warnings round-trip. 108 JVM
 tests green; NOT verified on the A30s.
 
+## 19. 2026-10-07 — UI step 4: Check corners
+
+`CornersScreen` (mock-up artboard 2): the photograph with the detected quad
+on the dark ground (`CornerEditor`, restyled: white handles with a 3 dp
+corner-red ring, red quad with a 10% fill, the dragged handle and loupe
+crosshair in teal; grab radius unchanged at 36 dp, geometry unchanged);
+a white sheet with the status ("found automatically" + refined / coarse,
+or "could not find the sheet"), the four labelled close-ups
+(`CornerCloseUps`, the existing loupe drawing), and in prototype mode
+Research options (Learned / Classical segmented control, Grid fit switch)
+and Benchmark against (None + every target in assets/kit/targets.txt,
+remembered); Retake (back to Home) and Digitise. Help explains where a
+corner belongs. The Lab's rhythm-strip panel shares the editor and gets
+the same colours (restyle only). Build and 108 JVM tests green; NOT
+verified on the A30s.
+
 ---
 
 ## Open items (ordered)

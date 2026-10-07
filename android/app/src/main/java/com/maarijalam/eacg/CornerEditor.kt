@@ -3,6 +3,8 @@ package com.maarijalam.eacg
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
@@ -115,19 +117,24 @@ fun CornerEditor(
             val pts = (0 until 4).map {
                 Offset((corners[2 * it] * s).toFloat(), (corners[2 * it + 1] * s).toFloat())
             }
-            for (i in 0 until 4) drawLine(HANDLE, pts[i], pts[(i + 1) % 4], 2.5f)
+            val quad = androidx.compose.ui.graphics.Path().apply {
+                moveTo(pts[0].x, pts[0].y); for (i in 1 until 4) lineTo(pts[i].x, pts[i].y); close()
+            }
+            drawPath(quad, QUAD.copy(alpha = 0.10f))
+            for (i in 0 until 4) drawLine(QUAD, pts[i], pts[(i + 1) % 4], 2.dp.toPx())
             refined?.let { c ->
                 val q = (0 until 4).map {
                     Offset((c[2 * it] * s).toFloat(), (c[2 * it + 1] * s).toFloat())
                 }
                 for (i in 0 until 4) drawLine(REFINED, q[i], q[(i + 1) % 4], 2.5f)
             }
-            val r = GRAB_RADIUS.toPx() * 0.55f
+            // The mock-up's handle: white disc, 3 dp ring (grabbed from GRAB_RADIUS).
+            val r = 11.dp.toPx()
             pts.forEachIndexed { i, p ->
                 val colour = if (i == active) ACTIVE else HANDLE
-                drawCircle(colour.copy(alpha = 0.25f), r, p)
-                drawCircle(colour, r, p, style = Stroke(3f))
-                drawCircle(colour, 3f, p)
+                drawCircle(Color.White, r, p)
+                drawCircle(colour, r, p, style = Stroke(3.dp.toPx()))
+                drawCircle(colour, 2.dp.toPx(), p)
             }
             if (active >= 0) {
                 val loupe = LOUPE_SIZE.toPx()
@@ -146,7 +153,7 @@ fun CornerEditor(
 }
 
 /** Magnified view of the photograph around corner [idx], drawn at [at]. */
-private fun DrawScope.drawLoupe(
+internal fun DrawScope.drawLoupe(
     full: ImageBitmap, corners: DoubleArray, idx: Int, at: Offset, side: Float,
     halfSrc: Int = LOUPE_HALF_SRC_PX
 ) {
@@ -200,6 +207,35 @@ fun CornerCheckRow(photo: Bitmap, corners: DoubleArray, modifier: Modifier = Mod
         for (idx in intArrayOf(0, 1, 3, 2)) {
             Canvas(Modifier.weight(1f).aspectRatio(1f)) {
                 drawLoupe(full, corners, idx, Offset.Zero, size.width, CHECK_HALF_SRC_PX)
+            }
+        }
+    }
+}
+
+/**
+ * The redesign's corner close-ups (docs/ui_plan.md §3.2): the same check as
+ * [CornerCheckRow] -- [CHECK_HALF_SRC_PX] photograph pixels either side of
+ * each corner, with its two edges and a crosshair -- in four rounded,
+ * labelled tiles, Top left ... Bottom right.
+ */
+@Composable
+fun CornerCloseUps(photo: Bitmap, corners: DoubleArray, modifier: Modifier = Modifier) {
+    val full: ImageBitmap = remember(photo) { photo.asImageBitmap() }
+    val labels = mapOf(0 to "Top left", 1 to "Top right", 3 to "Bottom left", 2 to "Bottom right")
+    androidx.compose.foundation.layout.Row(modifier.fillMaxWidth(),
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+        for (idx in intArrayOf(0, 1, 3, 2)) {
+            androidx.compose.foundation.layout.Column(Modifier.weight(1f),
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
+                val shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                Canvas(Modifier.fillMaxWidth().aspectRatio(1f).clip(shape)
+                    .border(1.dp, com.maarijalam.eacg.ui.theme.InputOutline, shape)) {
+                    drawLoupe(full, corners, idx, Offset.Zero, size.width, CHECK_HALF_SRC_PX)
+                }
+                androidx.compose.material3.Text(labels.getValue(idx),
+                    style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                    color = com.maarijalam.eacg.ui.theme.Muted)
             }
         }
     }
@@ -295,6 +331,10 @@ private const val LOUPE_HALF_SRC_PX = 100
 /** Photograph pixels either side of a corner in its check tile: ~4.5 mm. */
 private const val CHECK_HALF_SRC_PX = 50
 
-private val HANDLE = Color(0xFF1E88E5)
-private val ACTIVE = Color(0xFFFFB300)
+// The redesign's corner colours (docs/ui_plan.md §2.1): handles and quad in
+// cornerOverlay red; the handle being dragged and the loupe crosshair in the
+// data teal so they stand out from the quad.
+private val HANDLE = com.maarijalam.eacg.ui.theme.CornerOverlay
+private val QUAD = com.maarijalam.eacg.ui.theme.CornerLine
+private val ACTIVE = com.maarijalam.eacg.ui.theme.Data
 private val REFINED = Color(0xFF43A047)
