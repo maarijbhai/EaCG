@@ -1,7 +1,7 @@
 {
   "generated_by": "python/score_12lead.py",
-  "utc": "2026-10-07T15:10:11+00:00",
-  "git_commit": "093985227ddfacd69a35fd480d0488c799415fff",
+  "utc": "2026-10-07T16:14:46+00:00",
+  "git_commit": "f8e78e96a0f66d88e1ff2e01dd086555afda4f44",
   "git_dirty": false,
   "params": {
     "model": "b3_512x1024_fp16",
