@@ -68,6 +68,44 @@ class ScanController(
     var exported by mutableStateOf<String?>(null); private set
     private var job: Job? = null
 
+    // ---- progress of the run in flight (SheetPipeline.Progress), for the Digitising screen
+    /** Stage key (timingsMs) -> ms, as each finishes. */
+    var stageMs by mutableStateOf<Map<String, Long>>(emptyMap()); private set
+    /** Stage key -> detail ("4 rows · 3 pulses", "9 of 9 ticks"). */
+    var stageDetail by mutableStateOf<Map<String, String>>(emptyMap()); private set
+    var pagePreview by mutableStateOf<Bitmap?>(null); private set
+    var pageSize by mutableStateOf(0 to 0); private set
+    var tracedRows by mutableStateOf<Map<Int, SheetPipeline.RowTrace>>(emptyMap()); private set
+    var rowCentres by mutableStateOf<IntArray?>(null); private set
+    var tilesDone by mutableStateOf(0); private set
+    var tilesTotal by mutableStateOf(0); private set
+    /** Saving the record: null not started, -1 in progress, else ms (not a pipeline stage). */
+    var saveMs by mutableStateOf<Long?>(null); private set
+    /** The grid fit was asked for in this run (else its stage is skipped). */
+    var runGridFit by mutableStateOf(true); private set
+    var runTracer by mutableStateOf(SheetPipeline.Tracer.MODEL); private set
+
+    private fun resetProgress() {
+        stageMs = emptyMap(); stageDetail = emptyMap(); pagePreview = null; pageSize = 0 to 0
+        tracedRows = emptyMap(); rowCentres = null; tilesDone = 0; tilesTotal = 0; saveMs = null
+    }
+
+    /** Called on the pipeline's thread: hand the event to the UI thread. */
+    private fun onProgress(e: SheetPipeline.Progress) {
+        scope.launch(Dispatchers.Main) {
+            when (e) {
+                is SheetPipeline.Progress.Stage -> {
+                    stageMs = stageMs + (e.key to e.ms)
+                    e.detail?.let { stageDetail = stageDetail + (e.key to it) }
+                }
+                is SheetPipeline.Progress.Page -> { pagePreview = e.preview; pageSize = e.width to e.height }
+                is SheetPipeline.Progress.Rows -> rowCentres = e.rowY
+                is SheetPipeline.Progress.Tile -> { tilesDone = e.done; tilesTotal = e.total }
+                is SheetPipeline.Progress.Row -> tracedRows = tracedRows + (e.row to e.trace)
+            }
+        }
+    }
+
     init {
         scope.launch {
             targets = runCatching { KitTargets.load(context) }.getOrDefault(emptyList())
@@ -137,21 +175,32 @@ class ScanController(
         job = scope.launch {
             busy = true
             result = null; saved = null; exported = null; saveError = null
+            resetProgress()
+            runGridFit = effectiveGridFit
+            runTracer = tr
             status = "Digitising 12 leads (${tr.name.lowercase(Locale.US)})..."
             route = ScanRoute.PROCESSING
             try {
                 val truth = tg?.truth12Asset?.let { SheetPipeline.loadTruth12(context, it) }
                 val r = SheetPipeline.run(context, bmp, c, tr, truth,
                     cornersAuto = cornersAuto, cornersRefined = cornersRefined,
-                    geometry = if (effectiveGridFit) SheetPipeline.Geometry.GRID else SheetPipeline.Geometry.CORNERS)
+                    geometry = if (effectiveGridFit) SheetPipeline.Geometry.GRID else SheetPipeline.Geometry.CORNERS,
+                    onProgress = ::onProgress)
                 truth12 = truth
                 resultTarget = tg
                 // Every digitisation is kept (RecordStore); a failed save is
                 // reported but never discards the result on screen.
+                saveMs = -1L
+                val saveStart = System.nanoTime()
                 val meta = runCatching {
                     val csv = SheetPipeline.csv(r, photoLabel(bmp), tg?.name, Exporter.stamp())
                     RecordStore.save(context, r, bmp, tg?.name, csv, photoSource)
                 }
+                // runCatching would swallow a cancellation: a run cancelled at
+                // the very end must still not show (RecordStore.save is atomic,
+                // so no partial record exists either way).
+                (meta.exceptionOrNull() as? CancellationException)?.let { throw it }
+                saveMs = (System.nanoTime() - saveStart) / 1_000_000
                 saved = meta.getOrNull()
                 saveError = meta.exceptionOrNull()?.message
                 result = r

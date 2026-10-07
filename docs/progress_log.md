@@ -408,6 +408,20 @@ corner belongs. The Lab's rhythm-strip panel shares the editor and gets
 the same colours (restyle only). Build and 108 JVM tests green; NOT
 verified on the A30s.
 
+## 20. 2026-10-07 — UI step 5: progress callback + Digitising screen
+
+`SheetPipeline.run(onProgress = null)`: Stage (key, ms, detail), Page
+(preview), Rows (centres), Tile (n of total), Row (trace). Null = the run
+exactly as before (every addition guarded). With a listener, time spent in
+callbacks (incl. the page preview) is measured and subtracted from the stage
+it fell in; cancellation is checked between stages and tiles. Save time is
+measured by the controller, outside the pipeline. A cancelled run saves no
+record (save comes after the run; a cancellation is re-thrown past
+runCatching). `ProcessingScreen`: page with rows in teal as read, band on the
+active row, tiles / rows progress, stage list with times. `TileCountTest`
+pins tileCount to predictTiled's calls. 109 JVM tests; NOT verified on the
+A30s.
+
 ---
 
 ## Open items (ordered)

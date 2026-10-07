@@ -156,6 +156,20 @@ object SheetCanonical {
         return row to pres
     }
 
+    /**
+     * How many model calls [predictTiled] makes on [frame] (for progress only;
+     * the same branch and start positions as predictTiled).
+     */
+    fun tileCount(frame: Frame, tileW: Int = TILE_W, margin: Int = TILE_MARGIN): Int {
+        val w = frame.width
+        if (w <= tileW || frame.height * w <= FULL_FRAME_MAX_PX) return 1
+        val step = tileW - 2 * margin
+        var n = 0
+        var s = 0
+        while (s < w - tileW) { n++; s += step }
+        return n + 1
+    }
+
     /** `canonical.row_trace_to_source`: (page x, page row), NaN where absent. */
     fun rowTraceToSource(row: FloatArray, presence: FloatArray, map: CanonMap,
                          upsample: Int = OUT_UPSAMPLE): Pair<DoubleArray, DoubleArray> {

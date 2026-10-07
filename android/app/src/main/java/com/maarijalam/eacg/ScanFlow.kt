@@ -52,6 +52,7 @@ fun ScanFlow(
             onOpenSettings = onOpenSettings, onSeeAll = onSeeAllRecords, onOpenRecord = onOpenRecord,
             modifier = modifier)
         ScanRoute.CORNERS -> CornersScreen(scan, modifier)
+        ScanRoute.PROCESSING -> ProcessingScreen(scan, modifier)
         else -> InterimScanPanel(scan, modifier)
     }
 }

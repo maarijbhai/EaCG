@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.os.Debug
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -115,6 +116,25 @@ object SheetPipeline {
 
     /** A lead's cell on the page (layout.cells), for the overlay. */
     class CellBox(val name: String, val rhythm: Boolean, val x0: Int, val x1: Int, val y0: Int, val y1: Int)
+
+    /**
+     * What [run] reports as it goes, for the Digitising screen (docs/ui_plan.md
+     * section 3.3). Display only: the time spent delivering these is measured
+     * and left out of every stage's time, and with no listener nothing is
+     * reported.
+     */
+    sealed class Progress {
+        /** Stage [key] (the timingsMs key) finished in [ms]; [detail] for the user. */
+        class Stage(val key: String, val ms: Long, val detail: String?) : Progress()
+        /** The page the rows are read from, as a preview, and its full size. */
+        class Page(val preview: Bitmap, val width: Int, val height: Int) : Progress()
+        /** The four row centres found, page rows. */
+        class Rows(val rowY: IntArray) : Progress()
+        /** [done] of [total] model tiles read (learned tracer). */
+        class Tile(val done: Int, val total: Int) : Progress()
+        /** Row [row] traced: the row's page trace. */
+        class Row(val row: Int, val trace: RowTrace) : Progress()
+    }
 
     /** Timing key of the truth scoring: harness, not pipeline. */
     const val SCORE_KEY = "score*"
@@ -255,11 +275,15 @@ object SheetPipeline {
     }
 
     private fun modelRow(rect: Mat, layout: SheetLayout.LeadLayout, row: Int,
-                         model: LiteRtModel): Pair<DoubleArray, DoubleArray> {
+                         model: LiteRtModel,
+                         /** The model as called per tile: [model], or it wrapped to report progress. */
+                         tileModel: SheetCanonical.TileModel = model,
+                         onFrame: ((SheetCanonical.Frame) -> Unit)? = null): Pair<DoubleArray, DoubleArray> {
         val pxMm = layout.pxPerS / SheetLayout.MM_PER_S
         val frame = SheetCanonical.toCanonical(rect, pxMm, layout.t0X - LEAD_IN_MM * pxMm,
             layout.rowY[row].toDouble(), model.height)
-        val (r, p) = SheetCanonical.predictTiled(frame, model, model.tileW)
+        onFrame?.invoke(frame)
+        val (r, p) = SheetCanonical.predictTiled(frame, tileModel, model.tileW)
         return SheetCanonical.rowTraceToSource(r, p, frame.map)
     }
 
@@ -300,7 +324,14 @@ object SheetPipeline {
         cornersAuto: Boolean = corners == null,
         cornersRefined: Boolean? = null,
         /** GRID: regularise the page on its printed 5 mm grid (ecgproto geometry="grid"). */
-        geometry: Geometry = Geometry.GRID
+        geometry: Geometry = Geometry.GRID,
+        /**
+         * Progress for the UI, called on the pipeline's thread. Null (the
+         * default): nothing is reported and the run is exactly as before. With
+         * a listener, the run also checks for cancellation between stages and
+         * tiles.
+         */
+        onProgress: ((Progress) -> Unit)? = null
     ): Result = withContext(Dispatchers.Default) {
         // Peak memory per stage (NFR2): sampled in the background, filed at
         // each lap. Reads only counters, so it costs the stages nothing.
@@ -310,9 +341,23 @@ object SheetPipeline {
         }
         val t = linkedMapOf<String, Long>()
         var mark = System.nanoTime()
-        fun lap(k: String) {
-            val n = System.nanoTime(); t[k] = (n - mark) / 1_000_000; mark = n
+        // Time spent in onProgress since the last lap: subtracted from the
+        // stage it fell in (always 0 without a listener).
+        var excludedNs = 0L
+        fun notify(e: Progress) {
+            val listener = onProgress ?: return
+            val a = System.nanoTime()
+            listener(e)
+            excludedNs += System.nanoTime() - a
+        }
+        fun lap(k: String, detail: String? = null) {
+            val n = System.nanoTime(); t[k] = (n - mark - excludedNs) / 1_000_000; mark = n
+            excludedNs = 0L
             mem.close(k)
+            if (onProgress != null) {
+                ensureActive()
+                notify(Progress.Stage(k, t.getValue(k), detail))
+            }
         }
         try {
             var refined: Boolean? = cornersRefined
@@ -344,13 +389,20 @@ object SheetPipeline {
                 src.release()
             }
             try {
+                if (onProgress != null) {
+                    val a = System.nanoTime()
+                    val pv = ImageWarp.previewBitmap(rect)
+                    excludedNs += System.nanoTime() - a
+                    notify(Progress.Page(pv, rect.cols(), rect.rows()))
+                }
                 val located = locate(rect, fit?.pxPerMm)
                 val m2 = located.m2
                 val rows = located.rows
                 val pulseT0 = located.pulseT0
                 val t0 = located.t0
                 val anchor = located.anchor
-                lap("locate")
+                lap("locate", "${rows.size} rows · ${located.edges.count { it.isFinite() }} pulses")
+                if (onProgress != null) notify(Progress.Rows(rows.copyOf()))
                 // The tick search is placed with the grid's scale when there is
                 // one (SheetLocation.search_px_per_mm); the duration anchor stays
                 // the calibration's fallback.
@@ -360,19 +412,38 @@ object SheetPipeline {
                 val useTicks = ticks.pxPerMm.isFinite()
                 val px = if (useTicks) ticks.pxPerMm else anchor
                 val layout = SheetLayout.segmentLeads(rect.rows(), rows, t0, px, if (useTicks) ticks else null)
-                lap("calibrate+segment")
+                lap("calibrate+segment", "${ticks.nFound} of 9 ticks")
 
                 val ownModel = if (tracer == Tracer.MODEL && model == null) LiteRtModel(context) else null
                 val leads = ArrayList<LeadResult>()
                 var rowTraces: List<RowTrace> = emptyList()
                 var warnings: List<SheetQuality.Warning> = emptyList()
                 try {
+                    // With a listener: count tiles as the model reads them.
+                    val m = if (tracer == Tracer.MODEL) (model ?: ownModel)!! else null
+                    var tilesDone = 0
+                    var tilesTotal = 0
+                    val counting = if (m != null && onProgress != null) SheetCanonical.TileModel { rgb, h, w ->
+                        val out = m.run(rgb, h, w)
+                        tilesDone++
+                        ensureActive()
+                        notify(Progress.Tile(tilesDone, tilesTotal))
+                        out
+                    } else null
                     val traces = (0 until 4).map { r ->
                         val (xs, ys) = when (tracer) {
-                            Tracer.MODEL -> modelRow(rect, layout, r, (model ?: ownModel)!!)
+                            Tracer.MODEL -> if (counting == null) modelRow(rect, layout, r, m!!)
+                                else modelRow(rect, layout, r, m!!, counting) { f ->
+                                    if (tilesTotal == 0) tilesTotal = 4 * SheetCanonical.tileCount(f, m.tileW)
+                                }
                             Tracer.CLASSICAL -> classicalRow(rect, layout, r)
                         }
-                        SheetLayout.onSheetColumns(xs, ys)
+                        val row = SheetLayout.onSheetColumns(xs, ys)
+                        if (onProgress != null) {
+                            ensureActive()
+                            notify(Progress.Row(r, RowTrace(row.second, row.first)))
+                        }
+                        row
                     }
                     lap("trace")
                     val sigs = layout.cells.map { cell ->
