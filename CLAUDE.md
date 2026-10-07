@@ -142,8 +142,9 @@ detection (picks grid fragments); registration as a ms-level timing truth
    and commit. Also 4-6 harder photos (side light, hand shadow, ~20 deg
    tilt, curled sheet).
 2. ~~Whole-sheet quality warnings~~ **built 10-07** (`sheet_quality.py` /
-   `SheetQuality.kt`, progress_log §14). Found: ptbxl40_20260929_02 is broken
-   by ONE misplaced tick (5.5 mm); the outlier-tick FIX is the next experiment.
+   `SheetQuality.kt`, progress_log §14). ptbxl40_20260929_02 was broken by ONE
+   misplaced tick; **fixed 10-07** (outlier tick replaced by its column-mates,
+   §15): V3 0.10 -> 0.98, V6 0.10 -> 0.94; all 108 leads 0.952 -> 0.955, 94/108.
 3. ~~cut+score from ~7 s to < 1 s~~ **done 10-06** (progress_log §12; the scorer's
    per-sample median; `score*` is now timed as harness).
 4. ~~Memory instrumentation~~ **built 10-07** (`StageMemory.kt`, progress_log §13);
@@ -894,7 +895,7 @@ The unit tests — the port-fidelity suite included — need no device:
 java -Dorg.gradle.appname=gradlew -jar gradle/wrapper/gradle-wrapper.jar testDebugUnitTest
 ```
 
-105 JVM tests as of 2026-10-07. After changing `segment.py`, `page.py` or the
+106 JVM tests as of 2026-10-07. After changing `segment.py`, `page.py` or the
 digitise functions the photo path uses, regenerate the golden vectors with
 `python make_photo_port_fixtures.py` (from `python/`) and port the change to
 Kotlin in the same commit; each new rule gets a fixture case checked to
@@ -905,7 +906,7 @@ FAIL under the old rule.
 From `python/`. There is no pytest dependency and no reason to add one.
 
 ```
-python -m unittest discover -s tests     # 85 tests
+python -m unittest discover -s tests     # 89 tests
 python tests/mutate_timemap.py           # 21 of 21 mutations caught
 python tests/mutate_quality.py           # 14 of 15 mutations caught
 ```

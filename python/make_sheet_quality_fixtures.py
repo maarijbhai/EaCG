@@ -44,7 +44,7 @@ def leads():
 def base(**over):
     d = dict(grid_requested=True, grid_used=True, grid_px_per_mm=PX,
              calibration="ticks", px_per_mm=PX, ticks_found=9,
-             tick_positions=ticks(), t0_source="pulses", leads=leads())
+             tick_positions=ticks(), t0_source="pulses", leads=leads(), tick_rejected=[])
     d.update(over)
     return d
 
@@ -72,6 +72,12 @@ def cases():
         t = [(r, k, x + (gap * PX if (r, k) == (1, 1) else 0.0))
              for r, k, x in ticks() if not (k == 1 and r == 2)]
         out.append((f"two_ticks_{gap}", base(tick_positions=t, ticks_found=8)))
+    t = [x for x in ticks() if (x[0], x[1]) != (2, 3)]
+    out.append(("ptbxl40_20260929_02_replaced",
+                base(tick_positions=t, ticks_found=8, tick_rejected=[(2, 3, 1873.5)])))
+    out.append(("replaced_without_mates",
+                base(tick_positions=[x for x in ticks() if x[1] != 2], ticks_found=6,
+                     tick_rejected=[(1, 2, 1200.0)])))
     out.append(("lone_tick", base(tick_positions=[(0, 1, 900.0)], ticks_found=6)))
     out.append(("no_pulse", base(t0_source="rhythm_locator")))
     lv = leads()
@@ -108,6 +114,7 @@ def main() -> int:
                      f"{kw['calibration']} {kw['ticks_found']} {kw['t0_source']}")
         lines.append(f"{p}.scales {fmt(kw['grid_px_per_mm'])} {fmt(kw['px_per_mm'])}")
         lines.append(f"{p}.ticks " + " ".join(f"{r} {k} {fmt(x)}" for r, k, x in kw["tick_positions"]))
+        lines.append(f"{p}.rejected " + " ".join(f"{r} {k} {fmt(x)}" for r, k, x in kw["tick_rejected"]))
         for n in NAMES:
             lines.append(f"{p}.lead.{n} " + " ".join(fmt(v) for v in kw["leads"][n]))
         lines.append(f"{p}.n {len(ws)}")

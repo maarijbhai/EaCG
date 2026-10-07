@@ -50,6 +50,8 @@ object SheetLayout {
     const val TICK_FIRST_WINDOW = 0.25
     const val TICK_WINDOW = 0.04
     const val TICK_MIN_FOUND = 3
+    /** segment.TICK_OUTLIER_MM: see [rejectTickOutliers]. */
+    const val TICK_OUTLIER_MM = 1.0
 
     const val TRACK_MAX_JUMP_MM = 1.5
 
@@ -129,9 +131,30 @@ object SheetLayout {
         val pxPerMm: Double,
         val nFound: Int,
         val spreadPct: Double,
-        /** (row, k, x) per tick found, x rounded to 0.1 as the Python does. */
-        val positions: List<Triple<Int, Int, Double>>
+        /** (row, k, x) per tick kept, x rounded to 0.1 as the Python does. */
+        val positions: List<Triple<Int, Int, Double>>,
+        /** (row, k, x) per tick rejected as an outlier ([rejectTickOutliers]). */
+        val rejected: List<Triple<Int, Int, Double>> = emptyList()
     )
+
+    /**
+     * `segment.reject_tick_outliers`: (kept, rejected) indices into [positions].
+     * For each boundary k found in all three rows, a tick further than
+     * [TICK_OUTLIER_MM] from the median of the three is rejected (one bad tick
+     * cannot move a median of three); with fewer, all are kept. Measured: the
+     * three agree within 0.21 mm on all nine photos; ptbxl40_20260929_02's
+     * row-3 7.5 s tick was 5.49 mm early and mistimed V3, V6 and the rhythm.
+     */
+    fun rejectTickOutliers(positions: List<Triple<Int, Int, Double>>, pxPerMm: Double): Pair<List<Int>, List<Int>> {
+        val kept = ArrayList<Int>()
+        val rejected = ArrayList<Int>()
+        for ((i, p) in positions.withIndex()) {
+            val same = positions.filter { it.second == p.second }.map { it.third }
+            if (same.size == 3 && abs(p.third - median(same.toDoubleArray())) > TICK_OUTLIER_MM * pxPerMm) rejected += i
+            else kept += i
+        }
+        return kept to rejected
+    }
 
     /** `segment.sheet_rows` from a binarised page. */
     fun sheetRows(mask: TraceExtractor.Mask): IntArray {
@@ -290,10 +313,14 @@ object SheetLayout {
                 pos += Triple(r, k, Math.rint(xc * 10.0) / 10.0)
             }
         }
-        if (est.size < TICK_MIN_FOUND) return TickScale(Double.NaN, est.size, Double.NaN, pos)
-        val e = est.toDoubleArray()
+        val (keep, drop) = rejectTickOutliers(pos, approx)
+        val rej = drop.map { pos[it] }
+        val estK = keep.map { est[it] }
+        val posK = keep.map { pos[it] }
+        if (estK.size < TICK_MIN_FOUND) return TickScale(Double.NaN, estK.size, Double.NaN, posK, rej)
+        val e = estK.toDoubleArray()
         val med = median(e)
-        return TickScale(med, e.size, 100.0 * (e.max() - e.min()) / med, pos)
+        return TickScale(med, e.size, 100.0 * (e.max() - e.min()) / med, posK, rej)
     }
 
     /** `segment.segment_leads` with the tick knots. */

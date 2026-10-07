@@ -105,6 +105,15 @@ class SheetQualityTest(unittest.TestCase):
         self.assertNotIn("TICK_OUTLIER",
                          codes(Q.assess(**kw(tick_positions=ticks, ticks_found=6))))
 
+    def test_tick_replaced_is_a_warning_naming_the_leads(self):
+        ticks = [t for t in good_ticks() if (t[0], t[1]) != (2, 3)]
+        ws = Q.assess(**kw(tick_positions=ticks, ticks_found=8,
+                           tick_rejected=[(2, 3, 1873.5)]))
+        self.assertEqual([(w.code, w.leads) for w in ws],
+                         [("TICK_REPLACED", ("V3", "V6", "II_rhythm"))])
+        self.assertIn("-5.5 mm", ws[0].message)
+        self.assertEqual(Q.verdict(ws), "check")
+
     def test_no_pulse(self):
         self.assertEqual(codes(Q.assess(**kw(t0_source="rhythm_locator"))), ["NO_PULSE"])
 

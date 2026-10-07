@@ -46,12 +46,16 @@ class SheetQualityPortTest {
             val ticks = (0 until tk.size / 3).map {
                 Triple(tk[3 * it].toInt(), tk[3 * it + 1].toInt(), d(tk[3 * it + 2]))
             }
+            val rj = rows.getValue("$p.rejected").filter { it.isNotEmpty() }
+            val rejected = (0 until rj.size / 3).map {
+                Triple(rj[3 * it].toInt(), rj[3 * it + 1].toInt(), d(rj[3 * it + 2]))
+            }
             val leads = LinkedHashMap<String, DoubleArray>()
             for (l in names) leads[l] = rows.getValue("$p.lead.$l").map(::d).toDoubleArray()
             val ws = SheetQuality.assess(
                 gridRequested = fl[0] == "1", gridUsed = fl[1] == "1", gridPxPerMm = d(sc[0]),
                 calibration = fl[2], pxPerMm = d(sc[1]), ticksFound = fl[3].toInt(),
-                tickPositions = ticks, t0Source = fl[4], leads = leads)
+                tickPositions = ticks, t0Source = fl[4], leads = leads, tickRejected = rejected)
             val want = (0 until rows.getValue("$p.n")[0].toInt()).map {
                 rows.getValue("$p.w.$it").joinToString(" ")
             }

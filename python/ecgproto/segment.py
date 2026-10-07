@@ -945,14 +945,41 @@ TICK_BASE_BAND_MM = 1.0         # the bar must cross within 1 mm of the row cent
 TICK_FIRST_WINDOW = 0.25        # pass 1: +-25% around the 2.5 s prediction
 TICK_WINDOW = 0.04              # pass 2: +-4% around each refined prediction
 TICK_MIN_FOUND = 3
+#: A tick further than this from the median of the same tick over the three
+#: rows is rejected, and `segment_leads` then borrows its column-mates'
+#: position. The three ticks of one boundary are printed in one column, so
+#: after rectification they agree: within 0.21 mm on all nine photographs
+#: (results/kitphoto/warnings.csv). On ptbxl40_20260929_02 row 3's 7.5 s tick
+#: was found 5.49 mm early, which mistimed V3, V6 and the rhythm strip. Only
+#: with all three rows found: with two, nothing says which one is wrong
+#: (sheet_quality flags that case instead).
+TICK_OUTLIER_MM = 1.0
 
 
 @dataclass(frozen=True)
 class TickScale:
     px_per_mm: float                # median over the ticks found; NaN if too few
-    n_found: int
+    n_found: int                    # ticks kept (rejected ones not counted)
     spread_pct: float               # max-min of the per-tick estimates, % of median
-    positions: tuple                # (row, k, x) for each tick found
+    positions: tuple                # (row, k, x) for each tick kept
+    rejected: tuple = ()            # (row, k, x) for each tick rejected as an outlier
+
+
+def reject_tick_outliers(positions, px_per_mm: float) -> tuple[list, list]:
+    """(kept indices, rejected indices) into `positions`, (row, k, x) each.
+
+    For each boundary k found in all three rows, a tick further than
+    TICK_OUTLIER_MM from the median of the three is rejected; one bad tick
+    cannot move a median of three. Fewer than three: all kept.
+    """
+    kept, rejected = [], []
+    for i, (r, k, x) in enumerate(positions):
+        same = [xx for (rr, kk, xx) in positions if kk == k]
+        if len(same) == 3 and abs(x - float(np.median(same))) > TICK_OUTLIER_MM * px_per_mm:
+            rejected.append(i)
+        else:
+            kept.append(i)
+    return kept, rejected
 
 
 def _baseline_runs(mask: np.ndarray, base_y: int, band: int) -> np.ndarray:
@@ -1032,8 +1059,12 @@ def tick_scale(image: np.ndarray, sheet: SheetLocation,
             xc -= mask_offset_px(open_kernel)       # the mask's own one-pixel shift
             est.append((xc - t0) / (k * cell_px))
             pos.append((r, k, round(xc, 1)))
+    keep, drop = reject_tick_outliers(pos, approx)
+    rej = tuple(pos[i] for i in drop)
+    est = [est[i] for i in keep]
+    pos = [pos[i] for i in keep]
     if len(est) < TICK_MIN_FOUND:
-        return TickScale(float("nan"), len(est), float("nan"), tuple(pos))
+        return TickScale(float("nan"), len(est), float("nan"), tuple(pos), rej)
     e = np.asarray(est)
     med = float(np.median(e))
-    return TickScale(med, len(e), float(100 * np.ptp(e) / med), tuple(pos))
+    return TickScale(med, len(e), float(100 * np.ptp(e) / med), tuple(pos), rej)

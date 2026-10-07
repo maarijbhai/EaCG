@@ -125,6 +125,20 @@ class SheetPortFixturesTest {
             assertEquals(a.first, b.first); assertEquals(a.second, b.second)
             assertEquals(a.third, b.third, 1e-9)
         }
+        assertEquals(row("ticks.rejected").count { it.isNotEmpty() } / 3, t.rejected.size)
+    }
+
+    /** segment.reject_tick_outliers: the same ticks rejected, case by case. */
+    @Test
+    fun tickOutliersRejectedAsTheReference() {
+        for (i in 0 until row("reject.n")[0].toInt()) {
+            val p = row("reject.$i.pos")
+            val pos = (p.indices step 3).map { Triple(p[it].toInt(), p[it + 1].toInt(), p[it + 2].toDouble()) }
+            val (keep, drop) = SheetLayout.rejectTickOutliers(pos, double("reject.$i.px"))
+            val want = row("reject.$i.drop").filter { it.isNotEmpty() }.map { it.toInt() }
+            assertEquals("case $i", want, drop)
+            assertEquals("case $i kept", pos.indices.filter { it !in want }, keep)
+        }
     }
 
     @Test

@@ -18,8 +18,12 @@ object SheetQuality {
 
     /** |tick scale / grid scale - 1| above this: the two printed rulers disagree. */
     const val SCALE_DISAGREE_FRACTION = 0.01
-    /** A tick further than this from the median of the same tick over the rows. */
-    const val TICK_MATE_MM = 1.0
+    /**
+     * A tick further than this from the median of the same tick over the rows:
+     * the threshold [SheetLayout.tickScale] rejects outliers with (reported
+     * here as TICK_REPLACED); with only two rows, both are TICK_OUTLIER.
+     */
+    const val TICK_MATE_MM = SheetLayout.TICK_OUTLIER_MM
     /** Fewer ticks than this (of 9) found. */
     const val MIN_TICKS = 6
     /** A lead with less than this fraction of its samples traced. */
@@ -61,7 +65,8 @@ object SheetQuality {
     fun assess(gridRequested: Boolean, gridUsed: Boolean, gridPxPerMm: Double,
                calibration: String, pxPerMm: Double, ticksFound: Int,
                tickPositions: List<Triple<Int, Int, Double>>, t0Source: String,
-               leads: Map<String, DoubleArray>): List<Warning> {
+               leads: Map<String, DoubleArray>,
+               tickRejected: List<Triple<Int, Int, Double>> = emptyList()): List<Warning> {
         val out = ArrayList<Warning>()
         if (gridRequested && !gridUsed) out += Warning("GRID_REFUSED", Severity.WARN,
             "The printed grid could not be fitted; the page geometry comes from the four corners only.")
@@ -87,6 +92,19 @@ object SheetQuality {
                 if (abs(offMm) > TICK_MATE_MM) out += Warning("TICK_OUTLIER", Severity.SEVERE,
                     "Row ${r + 1}'s ${f1(2.5 * k)} s tick is ${if (offMm >= 0) "+" else ""}${f1(offMm)} mm " +
                         "from the same tick in the other rows.", tickLeads(r, k))
+            }
+        }
+        if (calibration == "ticks" && pxPerMm.isFinite() && pxPerMm > 0) {
+            val kept = tickPositions.associate { (r, k, x) -> (r to k) to x }
+            for ((r, k, x) in tickRejected.sortedWith(compareBy({ it.first }, { it.second }, { it.third }))) {
+                val mates = (0 until 3).mapNotNull { kept[it to k] }
+                val off = if (mates.isEmpty()) "" else {
+                    val mm = (x - mates.average()) / pxPerMm
+                    " by ${if (mm >= 0) "+" else ""}${f1(mm)} mm"
+                }
+                out += Warning("TICK_REPLACED", Severity.WARN,
+                    "Row ${r + 1}'s ${f1(2.5 * k)} s tick was out of line$off; " +
+                        "the same tick in the other rows was used instead.", tickLeads(r, k))
             }
         }
         if (t0Source != "pulses") out += Warning("NO_PULSE", Severity.WARN,

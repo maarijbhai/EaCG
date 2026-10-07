@@ -314,6 +314,29 @@ lead-level warnings (no false flags), _29_02 unreliable. The classical
 control: 6 of 9 "check" (LEAD_COVERAGE -- it really does lose trace), 2 ok,
 _29_02 unreliable.
 
+## 15. 2026-10-07 — A misplaced tick is replaced by its column-mates
+
+**Change:** `segment.reject_tick_outliers` / `SheetLayout.rejectTickOutliers`,
+applied in `tick_scale`: when all three rows found boundary k, a tick more
+than `TICK_OUTLIER_MM` = 1 mm from the median of the three is rejected (not
+counted, not in the scale median) and `segment_leads` borrows its
+column-mates' position, the existing rule for a missing tick. With two rows
+nothing says which is wrong: kept, and sheet_quality's TICK_OUTLIER (severe)
+still fires. A rejection is reported as TICK_REPLACED (warn, naming the
+leads). Threshold: good boundaries agree within 0.21 mm (§14).
+
+**Measured before adopting** (b3 desktop replay, 9 photos, grid): only
+ptbxl40_20260929_02 moved -- V3 0.099 -> **0.977**, V6 0.103 -> **0.941**,
+rhythm 0.505 -> **0.813**, its other leads within +-0.003; the other eight
+photos bit-identical. All 108 leads: median PCC 0.952 -> **0.955**, >= 0.9
+92 -> **94**, SNR 10.33 -> 10.44 dB (shifted 16.00). Classical unchanged.
+
+Tests: `TickOutlierIsReplaced` (a synthetic sheet with one bar 5.5 mm out;
+fails under the old rule, 9 != 8), the rule's thresholds both sides;
+golden cases `reject.*` in sheet_port_fixtures (only additions; no existing
+value moved), TICK_REPLACED cases in sheet_quality_fixtures. Python 89,
+JVM 106.
+
 ---
 
 ## Open items (ordered)

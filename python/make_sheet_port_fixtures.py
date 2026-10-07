@@ -162,6 +162,23 @@ def main() -> int:
     lines.append(f"ticks.px {fmt(ticks.px_per_mm)}")
     lines.append(f"ticks.n {ticks.n_found}")
     lines.append("ticks.pos " + " ".join(f"{r} {k} {fmt(x)}" for r, k, x in ticks.positions))
+    lines.append("ticks.rejected " + " ".join(f"{r} {k} {fmt(x)}" for r, k, x in ticks.rejected))
+    # segment.reject_tick_outliers on hand-made cases: the measured
+    # ptbxl40_20260929_02 boundary, both sides of the threshold, two ticks.
+    rcases = [
+        (9.5664, [(0, 3, 1926.0), (1, 3, 1926.0), (2, 3, 1873.5), (0, 1, 733.0), (1, 1, 733.5),
+                  (2, 1, 731.5)]),
+        (10.0, [(0, 2, 1000.0), (1, 2, 1000.0), (2, 2, 1009.9)]),
+        (10.0, [(0, 2, 1000.0), (1, 2, 1000.0), (2, 2, 1010.1)]),
+        (10.0, [(0, 2, 1000.0), (1, 2, 1000.0), (2, 2, 989.9)]),
+        (10.0, [(0, 1, 700.0), (1, 1, 800.0)]),
+    ]
+    lines.append(f"reject.n {len(rcases)}")
+    for i, (pxm, pos) in enumerate(rcases):
+        keep, drop = segment.reject_tick_outliers(pos, pxm)
+        lines.append(f"reject.{i}.px {fmt(pxm)}")
+        lines.append(f"reject.{i}.pos " + " ".join(f"{r} {k} {fmt(x)}" for r, k, x in pos))
+        lines.append(f"reject.{i}.drop " + " ".join(str(j) for j in drop))
     layout = segment.segment_leads(rect, sl.as_strip_location(), ticks.px_per_mm, ticks)
     lines.append(f"layout.height {rect.shape[0]}")
     lines.append("layout.bands " + " ".join(f"{a} {b}" for a, b in layout.row_bands))

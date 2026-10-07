@@ -160,6 +160,62 @@ class MaskOffsetIsUndone(unittest.TestCase):
         self.assertEqual(ticks[2], ticks[3])
 
 
+class TickOutlierIsReplaced(unittest.TestCase):
+    """ptbxl40_20260929_02: row 3's 7.5 s tick was found 5.49 mm early, and
+    that one knot mistimed V3, V6 and the rhythm strip. A tick more than
+    TICK_OUTLIER_MM from the median of the same tick over the three rows is
+    rejected, and the row borrows its column-mates' position. Under the old
+    rule the row-3 knot sits 5.5 mm early (checked)."""
+
+    def _sheet(self, shift_mm: float):
+        px = PX_PER_MM
+        img = np.full((900, 2400, 3), 245, np.uint8)
+        rows = (200, 420, 640, 820)
+        t0 = 120.0
+        for r, y in enumerate(rows[:3]):
+            img[y - 1:y + 2, 60:2300] = 20
+            for k in (1, 2, 3):
+                xc = int(t0 + k * segment.CELL_S * 25 * px)
+                if r == 2 and k == 3:
+                    xc -= int(round(shift_mm * px))          # the misplaced bar
+                img[y - int(3 * px):y + int(3 * px), xc - 3:xc + 3] = 20
+        loc = segment.StripLocation(x0=60, y0=780, x1=2300, y1=860, row_peaks=rows,
+                                    pulse_x1=None, t0_x=t0)
+        sl = segment.SheetLocation(rows=rows, t0_x=t0, t0_per_row=(t0,) * 4, x_end=2300,
+                                   rhythm=loc, t0_source="pulses", scale_hint=px)
+        return img, sl, loc
+
+    def test_a_tick_5mm_out_is_rejected_and_borrowed(self):
+        img, sl, loc = self._sheet(5.5)
+        tk = segment.tick_scale(img, sl)
+        self.assertEqual(tk.n_found, 8)
+        self.assertEqual([(r, k) for r, k, _ in tk.rejected], [(2, 3)])
+        lay = segment.segment_leads(img, loc, tk.px_per_mm, tk)
+        xs = {r: lay.row_knots[r][0] for r in range(4)}
+        # Row 3's 7.5 s knot (index 3) now sits with rows 1-2's, as does the rhythm strip's.
+        self.assertAlmostEqual(xs[2][3], xs[0][3], delta=1.0)
+        self.assertAlmostEqual(xs[3][3], xs[0][3], delta=1.0)
+
+    def test_a_tick_within_tolerance_is_kept(self):
+        img, sl, _ = self._sheet(0.5)
+        tk = segment.tick_scale(img, sl)
+        self.assertEqual(tk.n_found, 9)
+        self.assertEqual(tk.rejected, ())
+
+    def test_reject_rule(self):
+        px = 10.0
+        pos = [(0, 3, 1926.0), (1, 3, 1926.5), (2, 3, 1873.5), (0, 1, 733.0), (1, 1, 734.0)]
+        keep, drop = segment.reject_tick_outliers(pos, px)
+        self.assertEqual(drop, [2])
+        # Both sides of 1 mm; median of three cannot be moved by the one tested.
+        for off, rejected in ((9.9, False), (10.1, True), (-10.1, True)):
+            p = [(0, 2, 1000.0), (1, 2, 1000.0), (2, 2, 1000.0 + off)]
+            self.assertEqual(segment.reject_tick_outliers(p, px)[1] == [2], rejected, off)
+        # Two ticks: nothing says which is wrong; both kept.
+        keep, drop = segment.reject_tick_outliers([(0, 1, 700.0), (1, 1, 800.0)], px)
+        self.assertEqual((keep, drop), ([0, 1], []))
+
+
 KIT = Path(__file__).resolve().parents[2] / "out" / "kit_targets"
 
 

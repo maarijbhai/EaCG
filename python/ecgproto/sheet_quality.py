@@ -42,12 +42,16 @@ from dataclasses import dataclass
 import numpy as np
 
 from .quality import REJECT_PP_MV
-from .segment import LAYOUT_3X4
+from .segment import LAYOUT_3X4, TICK_OUTLIER_MM
 
 #: |tick scale / grid scale - 1| above this: the two printed rulers disagree.
 SCALE_DISAGREE_FRACTION = 0.01
 #: A tick further than this from the median of the same tick over the rows.
-TICK_MATE_MM = 1.0
+#: The same threshold `segment.tick_scale` rejects outliers with: with all
+#: three rows found, an outlier is rejected there and reported here as
+#: TICK_REPLACED; with two, nothing says which is wrong, and both are
+#: TICK_OUTLIER.
+TICK_MATE_MM = TICK_OUTLIER_MM
 #: Fewer ticks than this (of 9) found: the time map rests on few markers.
 MIN_TICKS = 6
 #: A lead with less than this fraction of its samples traced.
@@ -89,10 +93,13 @@ def _tick_leads(row: int, k: int) -> tuple[str, ...]:
 
 def assess(*, grid_requested: bool, grid_used: bool, grid_px_per_mm: float,
            calibration: str, px_per_mm: float, ticks_found: int,
-           tick_positions, t0_source: str, leads: dict) -> list[Warning]:
+           tick_positions, t0_source: str, leads: dict,
+           tick_rejected=()) -> list[Warning]:
     """Warnings for one digitised sheet.
 
-    `tick_positions`: (row, k, x) per tick found (TickScale.positions);
+    `tick_positions`: (row, k, x) per tick kept (TickScale.positions);
+    `tick_rejected`: (row, k, x) per tick rejected as an outlier
+    (TickScale.rejected);
     `leads`: name -> mV samples, the rhythm strip as "II_rhythm".
     """
     out: list[Warning] = []
@@ -129,6 +136,15 @@ def assess(*, grid_requested: bool, grid_used: bool, grid_px_per_mm: float,
                                    f"Row {r + 1}'s {2.5 * k:.1f} s tick is {off_mm:+.1f} mm "
                                    "from the same tick in the other rows.",
                                    _tick_leads(r, k)))
+    if calibration == "ticks" and np.isfinite(px_per_mm) and px_per_mm > 0:
+        kept = {(int(r), int(k)): float(x) for r, k, x in tick_positions}
+        for r, k, x in sorted((int(r), int(k), float(x)) for r, k, x in tick_rejected):
+            mates = [kept[(rr, k)] for rr in range(3) if (rr, k) in kept]
+            off = f" by {(x - float(np.mean(mates))) / px_per_mm:+.1f} mm" if mates else ""
+            out.append(Warning("TICK_REPLACED", WARN,
+                               f"Row {r + 1}'s {2.5 * k:.1f} s tick was out of line{off}; "
+                               "the same tick in the other rows was used instead.",
+                               _tick_leads(r, k)))
     if t0_source != "pulses":
         out.append(Warning("NO_PULSE", WARN,
                            "No calibration pulse found; time zero is estimated "
@@ -155,4 +171,5 @@ def assess_result(res, grid_requested: bool) -> list[Warning]:
                   calibration=res.calibration, px_per_mm=res.px_per_mm,
                   ticks_found=res.ticks_found,
                   tick_positions=res.ticks.positions if res.ticks is not None else (),
-                  t0_source=res.t0_source, leads=leads)
+                  t0_source=res.t0_source, leads=leads,
+                  tick_rejected=res.ticks.rejected if res.ticks is not None else ())

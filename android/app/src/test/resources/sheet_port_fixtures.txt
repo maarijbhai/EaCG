@@ -1908,6 +1908,23 @@ locate.anchor 10.785337
 ticks.px 10.368673999999999
 ticks.n 8
 ticks.pos 0 1 791.5 0 2 1439.5 0 3 2084.0 1 1 792.5 1 2 1439.0 1 3 2083.0 2 1 790.5 2 2 1438.5
+ticks.rejected 
+reject.n 5
+reject.0.px 9.5664
+reject.0.pos 0 3 1926.0 1 3 1926.0 2 3 1873.5 0 1 733.0 1 1 733.5 2 1 731.5
+reject.0.drop 2
+reject.1.px 10.0
+reject.1.pos 0 2 1000.0 1 2 1000.0 2 2 1009.9
+reject.1.drop 
+reject.2.px 10.0
+reject.2.pos 0 2 1000.0 1 2 1000.0 2 2 1010.1
+reject.2.drop 2
+reject.3.px 10.0
+reject.3.pos 0 2 1000.0 1 2 1000.0 2 2 989.9
+reject.3.drop 2
+reject.4.px 10.0
+reject.4.pos 0 1 700.0 1 1 800.0
+reject.4.drop 
 layout.height 1904
 layout.bands 486 846 846 1204 1204 1544 1544 1866
 layout.knots.0 142.66575 0.0 791.5 2.5 1439.5 5.0 2084.0 7.5 2732.042125 10.0
