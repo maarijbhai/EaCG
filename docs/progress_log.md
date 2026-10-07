@@ -369,6 +369,29 @@ mock-up's own SVG paths as ImageVectors) and `ui/Components.kt` (TopBar,
 EaCard, 52 dp full-radius buttons, section label, disclaimer). Build and 106
 JVM tests green; NOT verified on the A30s.
 
+## 18. 2026-10-07 — UI step 3: Home, and the Scan flow's controller
+
+`ScanController`: the former SheetSection's state and logic in one holder
+at the app shell (outlives tab switches) -- load at 3,200 px
+(`UriSource(maxDimension = 3200)`), corners, digitise, save, export; the
+pipeline calls, CSV text, export file name (`eacg_sheet_<target|photo>_
+<tracer>_<stamp>.csv`, `ScanController.exportName`) and record saved are
+unchanged. With prototype mode off a scan uses the defaults (learned, grid
+fit, no benchmark). The benchmark target is remembered across launches.
+`HomeScreen`: illustration card, Take photo / Choose from gallery (both the
+picker until step 9), three tip tiles, Recent (newest 3 records with a
+pink-grid thumbnail of their own rhythm strip and the verdict as icon +
+text), disclaimer. Until steps 4-6, picking a photo opens an interim panel
+with the old controls and result.
+
+Record format: **fields added, none renamed** (quality, warnings,
+corners_refined, grid_rms_mm, grid_rules, grid_note, timings, memory,
+pss_end_mb, photo_source, t0_x, row_y, ticks, ticks_rejected, cells), all
+optional; `SheetPipeline.Result` gained the matching UI-only copies (t0,
+row centres, ticks kept / replaced, cell boxes). Tests: a pre-redesign
+record still loads; the new fields and the warnings round-trip. 108 JVM
+tests green; NOT verified on the A30s.
+
 ---
 
 ## Open items (ordered)

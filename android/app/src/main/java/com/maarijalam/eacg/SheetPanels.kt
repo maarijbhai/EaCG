@@ -208,7 +208,7 @@ fun SheetSection(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun SheetResultPanel(r: SheetPipeline.Result, truth12: Map<String, DoubleArray>?) {
+internal fun SheetResultPanel(r: SheetPipeline.Result, truth12: Map<String, DoubleArray>?) {
     fun f(fmt: String, v: Double) = String.format(Locale.US, fmt, v)
     HorizontalDivider()
     QualityBanner(r)

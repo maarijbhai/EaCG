@@ -30,6 +30,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -78,6 +81,11 @@ private fun AppShell() {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
     var labOpened by rememberSaveable { mutableStateOf(false) }
+    var recordToOpen by remember { mutableStateOf<RecordStore.Meta?>(null) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // One controller for the Scan flow, held here so it outlives tab switches.
+    val scan = remember { ScanController(context.applicationContext, scope, settings) }
     // Prototype mode off hides the Lab; leave it if it was showing.
     if (!settings.prototypeMode && overlay == Overlay.LAB) overlay = Overlay.SETTINGS
 
@@ -93,9 +101,12 @@ private fun AppShell() {
         Box(Modifier.padding(innerPadding).fillMaxSize()) {
             val scanShown = overlay == Overlay.NONE && tab == 0
             Box(if (scanShown) Modifier.fillMaxSize() else Modifier.size(0.dp)) {
-                ScanTab(onOpenSettings = { overlay = Overlay.SETTINGS })
+                ScanFlow(scan, onOpenSettings = { overlay = Overlay.SETTINGS },
+                    onSeeAllRecords = { tab = 1 },
+                    onOpenRecord = { recordToOpen = it; tab = 1 })
             }
-            if (overlay == Overlay.NONE && tab == 1) RecordsScreen(Modifier.fillMaxSize())
+            if (overlay == Overlay.NONE && tab == 1) RecordsScreen(Modifier.fillMaxSize(),
+                openRequest = recordToOpen, onOpenHandled = { recordToOpen = null })
             if (overlay == Overlay.SETTINGS) {
                 SettingsScreen(onBack = { overlay = Overlay.NONE },
                     onOpenLab = { labOpened = true; overlay = Overlay.LAB },
@@ -133,29 +144,4 @@ private fun MainNavBar(tab: Int, onSelect: (Int) -> Unit) {
 private fun NavLabel(text: String, selected: Boolean) {
     Text(text, style = MaterialTheme.typography.labelSmall.copy(
         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium))
-}
-
-/**
- * The Scan tab. INTERIM (UI step 2 of docs/ui_plan.md §6): the header and
- * Settings gear of the new Home over the existing whole-sheet section, so the
- * app stays usable until Home (step 3), Corners (4), Digitising (5) and
- * Result (6) replace it.
- */
-@Composable
-private fun ScanTab(onOpenSettings: () -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("EaCG", style = MaterialTheme.typography.headlineSmall)
-                Text("Paper ECG to signal, on this phone", style = MaterialTheme.typography.bodyMedium,
-                    color = Muted)
-            }
-            IconButton(onClick = onOpenSettings, modifier = Modifier.size(48.dp)) {
-                Icon(EaIcons.Settings, contentDescription = "Settings", tint = Text2)
-            }
-        }
-        Box(Modifier.padding(horizontal = 16.dp)) { SheetSection() }
-        Disclaimer(Modifier.padding(16.dp))
-    }
 }

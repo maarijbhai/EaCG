@@ -21,6 +21,15 @@ class AppSettings private constructor(private val context: Context) {
     var prototypeMode by mutableStateOf(prefs().getBoolean(KEY_PROTOTYPE, true))
         private set
 
+    /** The PTB-XL sheet last chosen to benchmark against (its target name), or null. */
+    var benchmarkTarget by mutableStateOf(prefs().getString(KEY_TARGET, null))
+        private set
+
+    fun updateBenchmarkTarget(name: String?) {
+        benchmarkTarget = name
+        prefs().edit().putString(KEY_TARGET, name).apply()
+    }
+
     fun updatePrototypeMode(on: Boolean) {
         prototypeMode = on
         prefs().edit().putBoolean(KEY_PROTOTYPE, on).apply()
@@ -31,6 +40,7 @@ class AppSettings private constructor(private val context: Context) {
     companion object {
         private const val PREFS = "eacg_settings"
         private const val KEY_PROTOTYPE = "prototype_mode"
+        private const val KEY_TARGET = "benchmark_target"
 
         @Volatile private var instance: AppSettings? = null
 

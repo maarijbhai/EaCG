@@ -62,7 +62,34 @@ object RecordStore {
         val leadsScored: Int,
         val totalMs: Long,
         /** "grid" or "corners"; null on records saved before the grid fit. */
-        val geometry: String? = null
+        val geometry: String? = null,
+        // Added 2026-10-07 for the redesigned Result and Records screens
+        // (docs/ui_plan.md). All null on older records, which still open.
+        /** SheetQuality verdict: "ok", "check" or "unreliable". */
+        val quality: String? = null,
+        /** The warnings, one per line, [encodeWarnings]. */
+        val warnings: String? = null,
+        val cornersRefined: Boolean? = null,
+        val gridRmsMm: Double? = null,
+        /** Rules fitted, "VxH". */
+        val gridRules: String? = null,
+        /** Why the grid fit was refused, when it was. */
+        val gridNote: String? = null,
+        /** Per-stage times, "stage=ms stage=ms ...", as in the CSV. */
+        val timings: String? = null,
+        /** StageMemory.format(...), as the CSV's memory_peak_mb. */
+        val memory: String? = null,
+        val pssEndMb: Double? = null,
+        /** Where the photograph came from: "picked" (gallery) or "camera". */
+        val photoSource: String? = null,
+        /** UI data for the page overlay: time zero and the row centres, page px. */
+        val t0X: Double? = null,
+        val rowY: String? = null,
+        /** Separator ticks kept and replaced, "row k x;row k x;...", page px. */
+        val ticks: String? = null,
+        val ticksRejected: String? = null,
+        /** Each cell's extent, "name rhythm x0 x1 y0 y1;...", page px. */
+        val cells: String? = null
     )
 
     fun root(context: Context) = File(context.filesDir, "records")
@@ -83,6 +110,16 @@ object RecordStore {
         put("median_pcc", m.medianPcc?.let { String.format(Locale.US, "%.4f", it) })
         put("leads_scored", m.leadsScored); put("total_ms", m.totalMs)
         put("geometry", m.geometry)
+        put("quality", m.quality); put("warnings", m.warnings)
+        put("corners_refined", m.cornersRefined)
+        put("grid_rms_mm", m.gridRmsMm?.let { String.format(Locale.US, "%.4f", it) })
+        put("grid_rules", m.gridRules); put("grid_note", m.gridNote)
+        put("timings", m.timings); put("memory", m.memory)
+        put("pss_end_mb", m.pssEndMb?.let { String.format(Locale.US, "%.1f", it) })
+        put("photo_source", m.photoSource)
+        put("t0_x", m.t0X?.let { String.format(Locale.US, "%.2f", it) })
+        put("row_y", m.rowY); put("ticks", m.ticks); put("ticks_rejected", m.ticksRejected)
+        put("cells", m.cells)
         return StringWriter().also { p.store(it, "EaCG record") }.toString()
     }
 
@@ -99,9 +136,35 @@ object RecordStore {
             photoW = s("photo_w").toInt(), photoH = s("photo_h").toInt(),
             medianPcc = p.getProperty("median_pcc")?.toDouble(),
             leadsScored = s("leads_scored").toInt(), totalMs = s("total_ms").toLong(),
-            geometry = p.getProperty("geometry")
+            geometry = p.getProperty("geometry"),
+            quality = p.getProperty("quality"), warnings = p.getProperty("warnings"),
+            cornersRefined = p.getProperty("corners_refined")?.toBoolean(),
+            gridRmsMm = p.getProperty("grid_rms_mm")?.toDouble(),
+            gridRules = p.getProperty("grid_rules"), gridNote = p.getProperty("grid_note"),
+            timings = p.getProperty("timings"), memory = p.getProperty("memory"),
+            pssEndMb = p.getProperty("pss_end_mb")?.toDouble(),
+            photoSource = p.getProperty("photo_source"),
+            t0X = p.getProperty("t0_x")?.toDouble(), rowY = p.getProperty("row_y"),
+            ticks = p.getProperty("ticks"), ticksRejected = p.getProperty("ticks_rejected"),
+            cells = p.getProperty("cells")
         )
     }
+
+    /** A warning as stored: code, severity, leads (comma-joined), message. */
+    data class StoredWarning(val code: String, val severity: String, val leads: List<String>,
+                             val message: String)
+
+    /** One warning per line, fields tab-separated (Properties escapes both). */
+    fun encodeWarnings(ws: List<StoredWarning>): String =
+        ws.joinToString("\n") { listOf(it.code, it.severity, it.leads.joinToString(","),
+            it.message.replace('\t', ' ').replace('\n', ' ')).joinToString("\t") }
+
+    fun decodeWarnings(text: String?): List<StoredWarning> =
+        text.orEmpty().lineSequence().filter { it.isNotBlank() }.map { line ->
+            val f = line.split('\t')
+            StoredWarning(f[0], f.getOrElse(1) { "warn" },
+                f.getOrElse(2) { "" }.split(',').filter { it.isNotEmpty() }, f.getOrElse(3) { "" })
+        }.toList()
 
     /** One line per row: `x0 v v v ...`, NaN written as an empty field. */
     fun tracesToText(rows: List<SheetPipeline.RowTrace>): String = buildString {
@@ -181,16 +244,36 @@ object RecordStore {
     // ------------------------------------------------------------- android
 
     suspend fun save(context: Context, r: SheetPipeline.Result, photo: Bitmap,
-                     target: String?, csv: String): Meta = withContext(Dispatchers.IO) {
+                     target: String?, csv: String, photoSource: String? = null): Meta = withContext(Dispatchers.IO) {
         val now = System.currentTimeMillis()
         val id = newId(now, Exporter.stamp())
         val scored = r.leads.filter { !it.rhythm }.mapNotNull { it.pcc }.sorted()
         val med = if (scored.isEmpty()) null
             else if (scored.size % 2 == 1) scored[scored.size / 2]
             else 0.5 * (scored[scored.size / 2 - 1] + scored[scored.size / 2])
+        fun f(fmt: String, v: Double) = String.format(Locale.US, fmt, v)
         val meta = Meta(id, now, r.tracer.name, target, r.calibration, r.pxPerMm, r.ticksFound,
             r.t0Source, r.cornersAuto, r.corners, r.rectW, r.rectH, photo.width, photo.height,
-            med, scored.size, r.pipelineMs, r.geometry)
+            med, scored.size, r.pipelineMs, r.geometry,
+            quality = r.quality,
+            warnings = encodeWarnings(r.warnings.map {
+                StoredWarning(it.code, it.severity.name.lowercase(Locale.US), it.leads, it.message) }),
+            cornersRefined = r.cornersRefined,
+            gridRmsMm = r.gridFit?.rmsMm,
+            gridRules = r.gridFit?.let { "${it.nVertical}x${it.nHorizontal}" },
+            gridNote = r.gridNote,
+            timings = r.timingsMs.entries.joinToString(" ") { "${it.key}=${it.value}" },
+            memory = r.memoryBaseline?.let { StageMemory.format(it, r.memoryPeaks) },
+            pssEndMb = r.pssEndMb,
+            photoSource = photoSource,
+            t0X = r.t0X.takeIf { it.isFinite() },
+            rowY = r.rowY.takeIf { it.isNotEmpty() }?.joinToString(" "),
+            ticks = r.tickPositions.takeIf { it.isNotEmpty() }
+                ?.joinToString(";") { (row, k, x) -> "$row $k ${f("%.1f", x)}" },
+            ticksRejected = r.ticksRejected.takeIf { it.isNotEmpty() }
+                ?.joinToString(";") { (row, k, x) -> "$row $k ${f("%.1f", x)}" },
+            cells = r.cells.takeIf { it.isNotEmpty() }
+                ?.joinToString(";") { "${it.name} ${it.rhythm} ${it.x0} ${it.x1} ${it.y0} ${it.y1}" })
         val root = root(context).apply { mkdirs() }
         val tmp = File(root, "$id.tmp").apply { deleteRecursively(); mkdirs() }
         try {

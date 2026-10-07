@@ -64,12 +64,21 @@ import java.util.Locale
  * trace drawn over it, and the original photograph.
  */
 @Composable
-fun RecordsScreen(modifier: Modifier = Modifier) {
+fun RecordsScreen(
+    modifier: Modifier = Modifier,
+    /** A record to open on arrival (Home's Recent list), then [onOpenHandled]. */
+    openRequest: RecordStore.Meta? = null,
+    onOpenHandled: () -> Unit = {},
+) {
     val context = LocalContext.current
     var records by remember { mutableStateOf<List<RecordStore.Meta>?>(null) }
     var totalBytes by remember { mutableStateOf(0L) }
     var open by remember { mutableStateOf<RecordStore.Meta?>(null) }
     var reload by remember { mutableStateOf(0) }
+
+    LaunchedEffect(openRequest) {
+        if (openRequest != null) { open = openRequest; onOpenHandled() }
+    }
 
     LaunchedEffect(reload) {
         records = RecordStore.list(context)

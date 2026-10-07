@@ -53,6 +53,17 @@ object EaIcons {
     val Warning = stroke("warning", 2.2f, "M12 3l10 18H2z", "M12 10v5", circle(12f, 18f, 0.6f))
     val Download = stroke("download", 2f, "M12 3v12M7 10l5 5 5-5M5 21h14")
     val ChevronRight = stroke("chevron", 2f, "M9 6l6 6-6 6")
+    // Home's tip tiles.
+    val Page = stroke("page", 1.8f, "M5 3h14a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z",
+        "M8 8h8M8 12h8M8 16h5")
+    val Sun = stroke("sun", 1.8f, circle(12f, 12f, 4f),
+        "M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4")
+    val Frame = stroke("frame", 1.8f, "M3 8V4h4M17 4h4v4M21 16v4h-4M7 20H3v-4")
+    val Search = stroke("search", 2f, circle(11f, 11f, 7f), "M20 20l-4-4")
+    val Plus = stroke("plus", 2f, "M12 5v14M5 12h14")
+    val Minus = stroke("minus", 2f, "M5 12h14")
+    val Fit = stroke("fit", 2f, "M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5")
+    val ChevronLeft = stroke("chevronLeft", 2f, "M15 6l-6 6 6 6")
     val Flask = stroke("flask", 1.8f, "M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3",
         "M7 15h10")
 }

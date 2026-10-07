@@ -34,6 +34,58 @@ class RecordStoreTest {
         assertNull(RecordStore.metaFromText(RecordStore.metaToText(meta("c", 3L, null, null))).target)
     }
 
+    /** A record written before 2026-10-07 (no redesign fields) must still open. */
+    @Test
+    fun aRecordFromBeforeTheRedesignStillLoads() {
+        val old = """
+            #EaCG record
+            id=20261005_164847_915
+            created_ms=1759675727000
+            tracer=MODEL
+            target=ptbxl38_kit_500hz_300dpi
+            calibration=ticks
+            px_per_mm=9.277200
+            ticks_found=9
+            t0_source=pulses
+            corners_auto=true
+            corners=528.03 319.83 2894.64 320.06 3067.04 2098.45 371.02 2150.95
+            page_w=2563
+            page_h=1840
+            photo_w=3200
+            photo_h=2396
+            median_pcc=0.9210
+            leads_scored=12
+            total_ms=28931
+            geometry=grid
+        """.trimIndent()
+        val m = RecordStore.metaFromText(old)
+        assertEquals("ptbxl38_kit_500hz_300dpi", m.target)
+        assertEquals(0.9210, m.medianPcc!!, 1e-9)
+        assertNull(m.quality); assertNull(m.warnings); assertNull(m.ticks); assertNull(m.t0X)
+        assertTrue(RecordStore.decodeWarnings(m.warnings).isEmpty())
+    }
+
+    @Test
+    fun redesignFieldsRoundTrip() {
+        val w = listOf(
+            RecordStore.StoredWarning("TICK_REPLACED", "warn", listOf("V3", "V6", "II_rhythm"),
+                "Row 3's 7.5 s tick was out of line by -5.5 mm; the same tick in the other rows was used instead."),
+            RecordStore.StoredWarning("GRID_REFUSED", "warn", emptyList(), "No grid\tfit\nhere"))
+        val m = meta("d", 4L).copy(quality = "check", warnings = RecordStore.encodeWarnings(w),
+            cornersRefined = false, gridRmsMm = 0.1534, gridRules = "56x38", gridNote = null,
+            timings = "corners=0 rectify=246 grid=3559", memory = "baseline=40.0/12.0 grid=210.5/30.1",
+            pssEndMb = 412.3, photoSource = "camera", t0X = 132.25, rowY = "637 977 1331 1645",
+            ticks = "0 1 733.0;1 1 733.5", ticksRejected = "2 3 1873.5",
+            cells = "I false 132 733 470 807;II true 132 2524 1488 1800")
+        val back = RecordStore.metaFromText(RecordStore.metaToText(m))
+        assertEquals(m.copy(corners = back.corners, pxPerMm = back.pxPerMm), back)
+        val ws = RecordStore.decodeWarnings(back.warnings)
+        assertEquals(listOf("TICK_REPLACED", "GRID_REFUSED"), ws.map { it.code })
+        assertEquals(listOf("V3", "V6", "II_rhythm"), ws[0].leads)
+        assertEquals(emptyList<String>(), ws[1].leads)
+        assertEquals("No grid fit here", ws[1].message)   // tabs and newlines flattened
+    }
+
     @Test
     fun tracesRoundTripWithGaps() {
         val rows = listOf(SheetPipeline.RowTrace(120, doubleArrayOf(510.25, Double.NaN, 511.0)),

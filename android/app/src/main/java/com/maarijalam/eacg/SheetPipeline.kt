@@ -89,7 +89,19 @@ object SheetPipeline {
         /** The process's total proportional set size at the end of the run, MB. */
         val pssEndMb: Double? = null,
         /** Quality warnings (FR8, [SheetQuality]); empty = nothing found wrong. */
-        val warnings: List<SheetQuality.Warning> = emptyList()
+        val warnings: List<SheetQuality.Warning> = emptyList(),
+        // UI data for the page overlay (docs/ui_plan.md §3.5): COPIES of what
+        // the pipeline used, page pixels. Nothing is computed for them.
+        /** Recording time zero, page column. */
+        val t0X: Double = Double.NaN,
+        /** The four row centres, page rows. */
+        val rowY: List<Int> = emptyList(),
+        /** Separator ticks kept, (row, k, x). */
+        val tickPositions: List<Triple<Int, Int, Double>> = emptyList(),
+        /** Ticks rejected as outliers and replaced by their column-mates. */
+        val ticksRejected: List<Triple<Int, Int, Double>> = emptyList(),
+        /** Each lead's cell on the page. */
+        val cells: List<CellBox> = emptyList()
     ) {
         /** "ok", "check" or "unreliable" ([SheetQuality.verdict]). */
         val quality: String get() = SheetQuality.verdict(warnings)
@@ -100,6 +112,9 @@ object SheetPipeline {
          */
         val pipelineMs: Long get() = timingsMs.filterKeys { !it.endsWith("*") }.values.sum()
     }
+
+    /** A lead's cell on the page (layout.cells), for the overlay. */
+    class CellBox(val name: String, val rhythm: Boolean, val x0: Int, val x1: Int, val y0: Int, val y1: Int)
 
     /** Timing key of the truth scoring: harness, not pipeline. */
     const val SCORE_KEY = "score*"
@@ -397,7 +412,10 @@ object SheetPipeline {
                     if (pulseT0.isFinite()) "pulses" else "rhythm_locator", leads, t,
                     ImageWarp.previewBitmap(rect), jpeg, rowTraces,
                     if (fit != null) "grid" else "corners", fit, gridNote,
-                    mem.baseline, mem.peaks(), runCatching { pssMb() }.getOrNull(), warnings)
+                    mem.baseline, mem.peaks(), runCatching { pssMb() }.getOrNull(), warnings,
+                    t0X = t0, rowY = rows.toList(), tickPositions = ticks.positions,
+                    ticksRejected = ticks.rejected,
+                    cells = layout.cells.map { CellBox(it.name, it.rhythm, it.x0, it.x1, it.y0, it.y1) })
             } finally {
                 rect.release()
             }
