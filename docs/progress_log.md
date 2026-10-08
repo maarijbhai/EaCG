@@ -459,6 +459,18 @@ exact time map; labelled so). Records saved before the overlay fields show
 the page and the dotted trace only. Display only. 112 JVM tests; NOT
 verified on the A30s.
 
+## 23. 2026-10-08 — UI step 8: Records list
+
+`RecordsScreen` (mock-up artboard 7): title, search (name, target, date),
+underline filters All (n) · Check timing (n: check or unreliable) ·
+Classical, plus Benchmarked in prototype mode; grouped by day (Today,
+Yesterday, date); each row a pink-grid thumbnail of the record's own
+rhythm strip, name, time · tracer · geometry, the verdict as icon + text,
+and in prototype mode the median r in mono. Footer: what a record keeps,
+and the count and size on the phone. Tapping opens the shared Result
+screen (step 6); Delete is in its More menu. Storage untouched. 112 JVM
+tests; NOT verified on the A30s.
+
 ---
 
 ## Open items (ordered)

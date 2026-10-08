@@ -57,6 +57,24 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.maarijalam.eacg.ui.theme.RowDivider
+import com.maarijalam.eacg.ui.theme.Primary
+import com.maarijalam.eacg.ui.theme.Muted
+import com.maarijalam.eacg.ui.theme.InputOutline
+import com.maarijalam.eacg.ui.theme.DataText
+import com.maarijalam.eacg.ui.theme.CardSurface
+import com.maarijalam.eacg.ui.SectionLabel
+import com.maarijalam.eacg.ui.EaIcons
+import com.maarijalam.eacg.ui.EaCard
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.OutlinedTextField
 
 /**
  * The Records tab: every whole-sheet digitisation saved by [RecordStore],
@@ -71,10 +89,13 @@ fun RecordsScreen(
     onOpenHandled: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val proto = LocalAppSettings.current.prototypeMode
     var records by remember { mutableStateOf<List<RecordStore.Meta>?>(null) }
     var totalBytes by remember { mutableStateOf(0L) }
     var open by remember { mutableStateOf<RecordStore.Meta?>(null) }
     var reload by remember { mutableStateOf(0) }
+    var query by remember { mutableStateOf("") }
+    var filter by remember { mutableStateOf(RecordFilter.ALL) }
 
     LaunchedEffect(openRequest) {
         if (openRequest != null) { open = openRequest; onOpenHandled() }
@@ -93,59 +114,98 @@ fun RecordsScreen(
         return
     }
 
-    Column(modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Records", style = MaterialTheme.typography.titleLarge)
-        val list = records
+    val all = records
+    val filters = RecordFilter.entries.filter { it != RecordFilter.BENCHMARKED || proto }
+    if (filter !in filters) filter = RecordFilter.ALL
+    val shown = all.orEmpty().filter { filter.accepts(it) && matches(it, query) }
+
+    Column(modifier.fillMaxSize()) {
+        Text("Records", style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp).semantics { heading() })
+        OutlinedTextField(value = query, onValueChange = { query = it }, singleLine = true,
+            placeholder = { Text("Search by name, target or date", style = MaterialTheme.typography.bodyLarge) },
+            leadingIcon = { Icon(EaIcons.Search, contentDescription = null, tint = Muted, modifier = Modifier.size(20.dp)) },
+            shape = RoundedCornerShape(26.dp),
+            colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = InputOutline, focusedBorderColor = Primary,
+                unfocusedContainerColor = CardSurface, focusedContainerColor = CardSurface),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
+        UnderlineTabs(filters.map { f -> f.label + (all?.let { " (${it.count(f::accepts)})" } ?: "") },
+            filters.indexOf(filter), Modifier.padding(top = 8.dp)) { filter = filters[it] }
+
         when {
-            list == null -> CircularProgressIndicator()
-            list.isEmpty() -> Text("No records yet. Every sheet you digitise on the Scan tab " +
-                "is saved here automatically.", style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            else -> {
-                Text("${list.size} record${if (list.size == 1) "" else "s"} · " +
-                    String.format(Locale.US, "%.1f MB", totalBytes / 1e6) + " on this phone (private to the app)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(list, key = { it.id }) { m -> RecordCard(m) { open = m } }
+            all == null -> LoadingBox("Loading records")
+            all.isEmpty() -> Text("No records yet. Every sheet you digitise on the Scan tab is kept here.",
+                Modifier.padding(20.dp), style = MaterialTheme.typography.bodyMedium, color = Muted)
+            else -> LazyColumn(Modifier.fillMaxSize(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                val groups = shown.groupBy { dayLabel(it.createdMs) }
+                if (shown.isEmpty()) item {
+                    Text("Nothing matches.", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                }
+                for ((day, list) in groups) {
+                    item(key = "h_$day") { SectionLabel(day, Modifier.padding(top = 4.dp)) }
+                    item(key = "g_$day") {
+                        EaCard {
+                            list.forEachIndexed { i, m ->
+                                if (i > 0) HorizontalDivider(color = RowDivider)
+                                RecordRow(m, proto) { open = m }
+                            }
+                        }
+                    }
+                }
+                item(key = "footer") {
+                    Text("Stored privately on this phone. Each record keeps the photo, the straightened page and a " +
+                        "12-lead CSV. " + String.format(Locale.US, "%d record%s, %.1f MB.", all.size,
+                        if (all.size == 1) "" else "s", totalBytes / 1e6),
+                        style = MaterialTheme.typography.labelSmall, color = Muted, textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
                 }
             }
         }
     }
 }
 
-private fun when_(ms: Long): String =
-    SimpleDateFormat("d MMM yyyy, HH:mm", Locale.getDefault()).format(Date(ms))
+/** The Records filters (plan §3.6); Benchmarked only in prototype mode. */
+private enum class RecordFilter(val label: String) {
+    ALL("All"), CHECK("Check timing"), CLASSICAL("Classical"), BENCHMARKED("Benchmarked");
 
-private fun tracerLabel(m: RecordStore.Meta) =
-    if (m.tracer == SheetPipeline.Tracer.MODEL.name) "Learned tracer" else "Classical tracer"
+    fun accepts(m: RecordStore.Meta): Boolean = when (this) {
+        ALL -> true
+        CHECK -> m.quality == "check" || m.quality == "unreliable"
+        CLASSICAL -> m.tracer == SheetPipeline.Tracer.CLASSICAL.name
+        BENCHMARKED -> m.target != null
+    }
+}
 
+/** Search over the record's title, target name and date. */
+private fun matches(m: RecordStore.Meta, q: String): Boolean {
+    if (q.isBlank()) return true
+    val hay = listOfNotNull(recordTitle(m.target), m.target, recordWhen(m.createdMs), dayLabel(m.createdMs),
+        SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(Date(m.createdMs)))
+        .joinToString(" ").lowercase(Locale.getDefault())
+    return q.trim().lowercase(Locale.getDefault()).split(' ').filter { it.isNotEmpty() }.all { it in hay }
+}
+
+/** Name; time · tracer · geometry; status as icon + text; r in prototype mode. */
 @Composable
-private fun RecordCard(m: RecordStore.Meta, onClick: () -> Unit) {
-    val context = LocalContext.current
-    var thumb by remember(m.id) { mutableStateOf<Bitmap?>(null) }
-    LaunchedEffect(m.id) { thumb = RecordStore.image(context, m.id, RecordStore.THUMB) }
-    Card(Modifier.fillMaxWidth().clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Row(Modifier.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(84.dp).clip(RoundedCornerShape(6.dp))) {
-                thumb?.let {
-                    Image(it.asImageBitmap(), contentDescription = "Photograph of the sheet",
-                        contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                }
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(when_(m.createdMs), style = MaterialTheme.typography.titleSmall)
-                Text("${tracerLabel(m)} · ${m.ticksFound}/9 ticks",
-                    style = MaterialTheme.typography.bodySmall)
-                val score = m.medianPcc?.let {
-                    String.format(Locale.US, " · median r %.2f vs truth", it)
-                } ?: ""
-                Text((m.target?.let { "Test sheet $it" } ?: "Photograph") + score,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun RecordRow(m: RecordStore.Meta, proto: Boolean, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable(role = Role.Button, onClick = onClick)
+        .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        RecordThumb(m.id)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(recordTitle(m.target), style = MaterialTheme.typography.titleSmall)
+            val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(m.createdMs))
+            val tracer = if (m.tracer == SheetPipeline.Tracer.MODEL.name) "Learned" else "Classical"
+            val geometry = when (m.geometry) { "grid" -> "grid fit"; "corners" -> "corners only"; else -> null }
+            Text(listOfNotNull(time, tracer, geometry).joinToString(" · "), style = MaterialTheme.typography.bodySmall,
+                color = Muted)
+        }
+        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            QualityStatus(m.quality)
+            if (proto) m.medianPcc?.let {
+                Text(String.format(Locale.US, "r %.3f", it), style = DataText, color = Muted)
             }
         }
     }
