@@ -471,6 +471,24 @@ and the count and size on the phone. Tapping opens the shared Result
 screen (step 6); Delete is in its More menu. Storage untouched. 112 JVM
 tests; NOT verified on the A30s.
 
+## 24. 2026-10-08 — UI step 9: in-app camera (the redesign complete)
+
+Home's Take photo: `ActivityResultContracts.TakePicture` into
+`cache/camera/` through the FileProvider (the system camera app; no camera
+permission), then exactly the gallery's path -- `UriSource` at 3,200 px with
+EXIF orientation. The CSV's existing `photo` field reads `camera WxH`
+(gallery: `picked WxH`, as before); the record's `photo_source` says the
+same. No camera app: falls back to the picker. One shot is kept in the cache
+at a time (the record keeps its own copy).
+
+**The UI plan (docs/ui_plan.md §6) is done: steps 1-9, commits 3a37bb1 ..
+this one.** Unchanged throughout: pipeline numerics (golden vectors pass),
+the 3,200 px decode, the CSV format / file names / location, RecordStore
+(fields only added; old records open), the classical control (prototype
+mode), the Lab. The old SheetSection composable is left in SheetPanels.kt,
+unused. 112 JVM tests; NOTHING visual verified on the A30s -- see the
+plan's §7 acceptance checks.
+
 ---
 
 ## Open items (ordered)

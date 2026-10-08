@@ -65,6 +65,17 @@ cut+score ~7 s -- a per-sample median in the scorer, fixed 10-06, progress_log
 §12; confirmed on the phone 10-07: cut 62 ms). Memory instrumented 10-07
 (§13), not yet measured.
 
+### The app UI (redesigned 2026-10-07/08, docs/ui_plan.md, progress_log §16-24)
+
+Scan tab: Home → Check corners → Digitising → Result (`ScanController` holds
+the flow; same pipeline calls, CSV and record as the old SheetSection).
+Records tab opens the same `ResultScreen` (Leads / Page overlay / Photo).
+Settings: **prototype mode** (ON by default; hides research UI only) and the
+**Lab** (the old DigitiseScreen: fixtures, deskew, rhythm path, tracer
+benchmark). Benchmark target, tracer and grid fit are chosen on the Corners
+screen in prototype mode. `SheetPipeline.run(onProgress)` is display-only and
+null by default. Record format: optional fields added, none renamed.
+
 ### The pipeline as it is
 
 Python reference = `ecgproto.sheet.digitise_sheet`; phone = `SheetPipeline.kt`,
@@ -895,7 +906,7 @@ The unit tests — the port-fidelity suite included — need no device:
 java -Dorg.gradle.appname=gradlew -jar gradle/wrapper/gradle-wrapper.jar testDebugUnitTest
 ```
 
-106 JVM tests as of 2026-10-07. After changing `segment.py`, `page.py` or the
+112 JVM tests as of 2026-10-08 (UI redesign, progress_log §16-24). After changing `segment.py`, `page.py` or the
 digitise functions the photo path uses, regenerate the golden vectors with
 `python make_photo_port_fixtures.py` (from `python/`) and port the change to
 Kotlin in the same commit; each new rule gets a fixture case checked to
