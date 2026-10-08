@@ -830,6 +830,57 @@ class SheetLocation:
         return replace(self.rhythm, row_peaks=self.rows, t0_x=self.t0_x)
 
 
+#: The four rows of a 3x4 + rhythm printout are printed evenly spaced (the
+#: three lead rows ~36 mm apart, the rhythm strip ~33 mm below the third):
+#: their largest gap is at most 1.13x their smallest on all nine photographs
+#: (2026-10-08). A set of four row candidates whose gaps differ by more than
+#: this is not the printed layout.
+ROW_SPACING_MAX_RATIO = 1.3
+
+
+def row_gap_ratio(rows) -> float:
+    """Largest over smallest gap between successive rows (inf if a gap is 0)."""
+    g = np.diff(np.sort(np.asarray(rows, np.int64)))
+    return float(g.max() / g.min()) if g.size and g.min() > 0 else float("inf")
+
+
+def choose_rows(peaks, values, max_ratio: float = ROW_SPACING_MAX_RATIO) -> tuple[int, ...]:
+    """The four row centres from the row-profile peaks.
+
+    Of every set of four peaks whose gaps are even (`row_gap_ratio` <=
+    `max_ratio`, the printed layout), the set whose WEAKEST peak is strongest
+    -- so when the four tallest peaks are evenly spaced they are chosen, exactly
+    the former rule. A strong peak that does not fit the layout cannot be
+    chosen: on a photograph with a shadow across the top of the sheet
+    (eacg_photo_20261008_111150) the binarised shadow made the tallest peak by
+    far, the four tallest were 115 / 651 / 1,372 / 1,699 (gaps 536 / 721 /
+    327 px), the real second row was dropped, and every lead of rows 1-2 came
+    out empty or under the wrong name. If no set is even, the four tallest
+    (the former rule) -- and sheet_quality flags ROW_SPACING.
+
+    Sets are tried in ascending-row order (itertools.combinations over peaks
+    sorted by row) and replaced only by a strictly better one, so the Kotlin
+    port picks the same set on ties.
+    """
+    from itertools import combinations
+    peaks = np.asarray(peaks, np.int64)
+    values = np.asarray(values, np.float64)
+    order = np.argsort(peaks, kind="stable")
+    p, v = peaks[order], values[order]
+    best, best_min = None, -np.inf
+    for idx in combinations(range(len(p)), 4):
+        rows = p[list(idx)]
+        if row_gap_ratio(rows) > max_ratio:
+            continue
+        m = float(v[list(idx)].min())
+        if m > best_min:
+            best, best_min = idx, m
+    if best is not None:
+        return tuple(int(x) for x in p[list(best)])
+    top4 = np.sort(peaks[np.argsort(-values, kind="stable")][:4])
+    return tuple(int(x) for x in top4)
+
+
 def sheet_rows(image: np.ndarray, mask: np.ndarray | None = None) -> tuple[int, ...]:
     """The four trace rows of a page-cropped 3x4 + rhythm sheet, by layout."""
     h = image.shape[0]
@@ -843,8 +894,7 @@ def sheet_rows(image: np.ndarray, mask: np.ndarray | None = None) -> tuple[int, 
     peaks = find_peaks_distance(smooth, max(1, int(h * SHEET_ROW_SPACING_FRACTION)))
     if len(peaks) < 4:
         raise RuntimeError(f"found {len(peaks)} trace rows, expected 4")
-    top4 = np.sort(peaks[np.argsort(-smooth[peaks], kind="stable")][:4])
-    return tuple(int(p) for p in top4)
+    return choose_rows(peaks, smooth[peaks])
 
 
 def mask_offset_px(open_kernel: int) -> float:

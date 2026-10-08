@@ -173,6 +173,16 @@ def main() -> int:
         (10.0, [(0, 2, 1000.0), (1, 2, 1000.0), (2, 2, 989.9)]),
         (10.0, [(0, 1, 700.0), (1, 1, 800.0)]),
     ]
+    # segment.choose_rows: the shadow photo, a good photo, both sides of the
+    # threshold, the fallback.
+    ccases = [([115, 365, 651, 996, 1372, 1699], [1685, 36, 78, 72, 86, 291]), ([679, 1012, 1344, 1648], [167, 236, 250, 318]), ([300, 679, 1012, 1344, 1648], [40, 167, 236, 250, 318]),
+              ([0, 100, 200, 329, 600], [5, 5, 5, 5, 9]), ([0, 100, 200, 331], [5, 5, 5, 5]),
+              ([10, 50, 400, 900, 1000], [9, 1, 8, 7, 6])]
+    lines.append(f"choose.n {len(ccases)}")
+    for i, (pk, vals) in enumerate(ccases):
+        lines.append(f"choose.{i}.peaks " + " ".join(str(x) for x in pk))
+        lines.append(f"choose.{i}.values " + " ".join(fmt(float(x)) for x in vals))
+        lines.append(f"choose.{i}.rows " + " ".join(str(x) for x in segment.choose_rows(pk, vals)))
     lines.append(f"reject.n {len(rcases)}")
     for i, (pxm, pos) in enumerate(rcases):
         keep, drop = segment.reject_tick_outliers(pos, pxm)

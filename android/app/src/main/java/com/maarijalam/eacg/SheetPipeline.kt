@@ -461,7 +461,7 @@ object SheetPipeline {
                     t0Source = if (pulseT0.isFinite()) "pulses" else "rhythm_locator",
                     leads = layout.cells.zip(sigs).associate { (c, s) ->
                         (if (c.rhythm) "II_rhythm" else c.name) to s },
-                    tickRejected = ticks.rejected)
+                    tickRejected = ticks.rejected, rows = rows)
                 lap("quality")
                     for ((cell, sig) in layout.cells.zip(sigs)) {
                         val tr = truth12?.get(cell.name)?.let {

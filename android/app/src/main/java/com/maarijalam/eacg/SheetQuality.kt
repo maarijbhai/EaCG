@@ -66,8 +66,19 @@ object SheetQuality {
                calibration: String, pxPerMm: Double, ticksFound: Int,
                tickPositions: List<Triple<Int, Int, Double>>, t0Source: String,
                leads: Map<String, DoubleArray>,
-               tickRejected: List<Triple<Int, Int, Double>> = emptyList()): List<Warning> {
+               tickRejected: List<Triple<Int, Int, Double>> = emptyList(),
+               rows: IntArray? = null): List<Warning> {
         val out = ArrayList<Warning>()
+        if (rows != null && rows.size == 4 && SheetLayout.rowGapRatio(rows) > SheetLayout.ROW_SPACING_MAX_RATIO) {
+            val s = rows.sortedArray()
+            val g = DoubleArray(3) { (s[it + 1] - s[it]).toDouble() }
+            val gaps = if (pxPerMm.isFinite() && pxPerMm > 0)
+                g.joinToString(" / ") { String.format(java.util.Locale.US, "%.0f", it / pxPerMm) }
+                else g.joinToString(" / ") { String.format(java.util.Locale.US, "%.0f px", it) }
+            out += Warning("ROW_SPACING", Severity.SEVERE,
+                "The four rows found are not evenly spaced (gaps $gaps mm); a shadow or a mark may have been " +
+                    "taken for a row, so leads may be missing or under the wrong names.")
+        }
         if (gridRequested && !gridUsed) out += Warning("GRID_REFUSED", Severity.WARN,
             "The printed grid could not be fitted; the page geometry comes from the four corners only.")
         if (calibration != "ticks") out += Warning("NO_TICK_SCALE", Severity.SEVERE,

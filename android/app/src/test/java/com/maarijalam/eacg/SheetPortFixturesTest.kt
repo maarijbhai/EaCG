@@ -128,6 +128,15 @@ class SheetPortFixturesTest {
         assertEquals(row("ticks.rejected").count { it.isNotEmpty() } / 3, t.rejected.size)
     }
 
+    /** segment.choose_rows: the same four rows, case by case. */
+    @Test
+    fun rowsChosenAsTheReference() {
+        for (i in 0 until row("choose.n")[0].toInt()) {
+            val got = SheetLayout.chooseRows(ints("choose.$i.peaks"), doubles("choose.$i.values"))
+            assertEquals("case $i", ints("choose.$i.rows").toList(), got.toList())
+        }
+    }
+
     /** segment.reject_tick_outliers: the same ticks rejected, case by case. */
     @Test
     fun tickOutliersRejectedAsTheReference() {

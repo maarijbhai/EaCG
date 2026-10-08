@@ -515,6 +515,41 @@ All, Delete with one confirmation. Test: renameIn changes only the name,
 leaves leads.csv byte-identical, blank -> default, length cut, the record
 still listed. 113 JVM tests; NOT verified on the A30s.
 
+## 27. 2026-10-08 — Rows follow the layout; ROW_SPACING warning
+
+**Found** on a deliberately bad camera photo (eacg_photo_20261008_111150,
+strong shadow across the top right; phone export
+eacg_sheet_photo_model_20261008_111231.csv): the global binarisation inked
+the shadow (42% of the top 300 page rows), which made the tallest row-profile
+peak by far (1,685 against 72-291 for real rows). `sheet_rows` took the four
+tallest -- 115 / 651 / 1,372 / 1,699 -- dropping the real second row at 996.
+Result: I/aVR/V1/V4 empty (cut from the shadow), **II/aVL/V2/V5 holding the
+real I/aVR/V1/V4 under the wrong names**, the real II/aVL/V2/V5 never
+digitised. The warnings flagged the four empty leads but not the mislabel.
+
+**Fix 1 -- `segment.choose_rows` / `SheetLayout.chooseRows`:** of every set
+of four peaks evenly spaced as printed (largest / smallest gap <=
+`ROW_SPACING_MAX_RATIO` = 1.3), the one whose weakest peak is strongest;
+none even: the four tallest (the former rule). When the four tallest are
+even they are chosen, so the good photos cannot change. Measured: the nine
+good photos' gap ratios 1.071-1.127 (rows 35-37 mm apart, rhythm ~33 mm);
+the shadow photo's former rows 2.205.
+
+**Fix 2 -- ROW_SPACING (severe) in sheet_quality / SheetQuality:** fires when
+the rows used are not evenly spaced (only possible now through the
+fallback).
+
+**Measured:** shadow photo, b3 desktop replay of the phone path: rows 651 /
+996 / 1,372 / 1,699, all 12 leads + rhythm traced 90-100%, verdict ok (was:
+4 empty, 4 misnamed, 4 missing). The classical control still loses rows 1-2
+on this photo: the darker top half also inks the grid lines in its mask --
+the case for flat-field binarisation (post-freeze experiment). The nine good
+photos: re-verified by the replay regenerated at this commit (rows unchanged
+by construction). Tests: `RowsFollowTheLayout` (fails under the old rule:
+2 of 4), ROW_SPACING both sides of 1.3; golden cases `choose.*` (sheet port
+fixtures: only additions) and three ROW_SPACING cases in the quality
+fixtures. Python 94, JVM 114.
+
 ---
 
 ## Open items (ordered)

@@ -28,6 +28,7 @@ class SheetQualityPortTest {
         assertEquals(d(rows.getValue("const.TICK_MATE_MM")[0]), SheetQuality.TICK_MATE_MM, 0.0)
         assertEquals(rows.getValue("const.MIN_TICKS")[0].toInt(), SheetQuality.MIN_TICKS)
         assertEquals(d(rows.getValue("const.MIN_LEAD_COVERAGE")[0]), SheetQuality.MIN_LEAD_COVERAGE, 0.0)
+        assertEquals(d(rows.getValue("const.ROW_SPACING_MAX_RATIO")[0]), SheetLayout.ROW_SPACING_MAX_RATIO, 0.0)
         val pp = rows.getValue("const.REJECT_PP_MV")
         assertEquals(d(pp[0]), SheetQuality.REJECT_PP_MV[0], 0.0)
         assertEquals(d(pp[1]), SheetQuality.REJECT_PP_MV[1], 0.0)
@@ -55,7 +56,8 @@ class SheetQualityPortTest {
             val ws = SheetQuality.assess(
                 gridRequested = fl[0] == "1", gridUsed = fl[1] == "1", gridPxPerMm = d(sc[0]),
                 calibration = fl[2], pxPerMm = d(sc[1]), ticksFound = fl[3].toInt(),
-                tickPositions = ticks, t0Source = fl[4], leads = leads, tickRejected = rejected)
+                tickPositions = ticks, t0Source = fl[4], leads = leads, tickRejected = rejected,
+                rows = rows.getValue("$p.rows").map { it.toInt() }.toIntArray())
             val want = (0 until rows.getValue("$p.n")[0].toInt()).map {
                 rows.getValue("$p.w.$it").joinToString(" ")
             }

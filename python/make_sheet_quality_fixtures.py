@@ -44,7 +44,8 @@ def leads():
 def base(**over):
     d = dict(grid_requested=True, grid_used=True, grid_px_per_mm=PX,
              calibration="ticks", px_per_mm=PX, ticks_found=9,
-             tick_positions=ticks(), t0_source="pulses", leads=leads(), tick_rejected=[])
+             tick_positions=ticks(), t0_source="pulses", leads=leads(), tick_rejected=[],
+             rows=(679, 1012, 1344, 1648))
     d.update(over)
     return d
 
@@ -78,6 +79,9 @@ def cases():
     out.append(("replaced_without_mates",
                 base(tick_positions=[x for x in ticks() if x[1] != 2], ticks_found=6,
                      tick_rejected=[(1, 2, 1200.0)])))
+    out.append(("rows_shadow_photo", base(rows=(115, 651, 1372, 1699))))
+    out.append(("rows_ratio_1.29", base(rows=(0, 100, 200, 329))))
+    out.append(("rows_ratio_1.31", base(rows=(0, 100, 200, 331))))
     out.append(("lone_tick", base(tick_positions=[(0, 1, 900.0)], ticks_found=6)))
     out.append(("no_pulse", base(t0_source="rhythm_locator")))
     lv = leads()
@@ -103,7 +107,8 @@ def main() -> int:
              f"const.TICK_MATE_MM {Q.TICK_MATE_MM!r}",
              f"const.MIN_TICKS {Q.MIN_TICKS}",
              f"const.MIN_LEAD_COVERAGE {Q.MIN_LEAD_COVERAGE!r}",
-             f"const.REJECT_PP_MV {Q.REJECT_PP_MV[0]!r} {Q.REJECT_PP_MV[1]!r}"]
+             f"const.REJECT_PP_MV {Q.REJECT_PP_MV[0]!r} {Q.REJECT_PP_MV[1]!r}",
+             f"const.ROW_SPACING_MAX_RATIO {Q.ROW_SPACING_MAX_RATIO!r}"]
     cs = cases()
     lines.append(f"cases {len(cs)}")
     for i, (name, kw) in enumerate(cs):
@@ -114,6 +119,7 @@ def main() -> int:
                      f"{kw['calibration']} {kw['ticks_found']} {kw['t0_source']}")
         lines.append(f"{p}.scales {fmt(kw['grid_px_per_mm'])} {fmt(kw['px_per_mm'])}")
         lines.append(f"{p}.ticks " + " ".join(f"{r} {k} {fmt(x)}" for r, k, x in kw["tick_positions"]))
+        lines.append(f"{p}.rows " + " ".join(str(y) for y in kw["rows"]))
         lines.append(f"{p}.rejected " + " ".join(f"{r} {k} {fmt(x)}" for r, k, x in kw["tick_rejected"]))
         for n in NAMES:
             lines.append(f"{p}.lead.{n} " + " ".join(fmt(v) for v in kw["leads"][n]))

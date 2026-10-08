@@ -29,6 +29,10 @@ of PTB-XL 9, 38, 40 and 57 at the phone's 3,200 px decode, grid geometry
   lead coverage (b3)     >= 0.979 on every good lead
   lead peak-to-peak      0.24-4.11 mV on every phone lead; the band is
                          quality.REJECT_PP_MV, the physiological anchor
+  row spacing            largest / smallest gap between the four rows
+                         1.07-1.13 on every good photo; 2.21 on a photo
+                         whose top shadow was taken for a row (leads under
+                         the wrong names) -- segment.ROW_SPACING_MAX_RATIO
 
 Two severities: WARN (the result may be off; look at the overlay) and
 SEVERE (a time or geometry reference is known wrong; do not use the
@@ -42,7 +46,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from .quality import REJECT_PP_MV
-from .segment import LAYOUT_3X4, TICK_OUTLIER_MM
+from .segment import LAYOUT_3X4, ROW_SPACING_MAX_RATIO, TICK_OUTLIER_MM, row_gap_ratio
 
 #: |tick scale / grid scale - 1| above this: the two printed rulers disagree.
 SCALE_DISAGREE_FRACTION = 0.01
@@ -94,7 +98,7 @@ def _tick_leads(row: int, k: int) -> tuple[str, ...]:
 def assess(*, grid_requested: bool, grid_used: bool, grid_px_per_mm: float,
            calibration: str, px_per_mm: float, ticks_found: int,
            tick_positions, t0_source: str, leads: dict,
-           tick_rejected=()) -> list[Warning]:
+           tick_rejected=(), rows=None) -> list[Warning]:
     """Warnings for one digitised sheet.
 
     `tick_positions`: (row, k, x) per tick kept (TickScale.positions);
@@ -103,6 +107,14 @@ def assess(*, grid_requested: bool, grid_used: bool, grid_px_per_mm: float,
     `leads`: name -> mV samples, the rhythm strip as "II_rhythm".
     """
     out: list[Warning] = []
+    if rows is not None and len(rows) == 4 and row_gap_ratio(rows) > ROW_SPACING_MAX_RATIO:
+        g = np.diff(np.sort(np.asarray(rows, np.float64)))
+        gaps = " / ".join(f"{x / px_per_mm:.0f}" for x in g) if np.isfinite(px_per_mm) and px_per_mm > 0 \
+            else " / ".join(f"{x:.0f} px" for x in g)
+        out.append(Warning("ROW_SPACING", SEVERE,
+                           f"The four rows found are not evenly spaced (gaps {gaps} mm); a shadow or a "
+                           "mark may have been taken for a row, so leads may be missing or under the "
+                           "wrong names."))
     if grid_requested and not grid_used:
         out.append(Warning("GRID_REFUSED", WARN,
                            "The printed grid could not be fitted; the page "
@@ -172,4 +184,5 @@ def assess_result(res, grid_requested: bool) -> list[Warning]:
                   ticks_found=res.ticks_found,
                   tick_positions=res.ticks.positions if res.ticks is not None else (),
                   t0_source=res.t0_source, leads=leads,
-                  tick_rejected=res.ticks.rejected if res.ticks is not None else ())
+                  tick_rejected=res.ticks.rejected if res.ticks is not None else (),
+                  rows=res.location.rows if res.location is not None else None)

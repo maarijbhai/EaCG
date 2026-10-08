@@ -114,6 +114,17 @@ class SheetQualityTest(unittest.TestCase):
         self.assertIn("-5.5 mm", ws[0].message)
         self.assertEqual(Q.verdict(ws), "check")
 
+    def test_row_spacing(self):
+        # The shadow photo's former rows (gaps 536 / 721 / 327 px): severe.
+        ws = Q.assess(**kw(rows=(115, 651, 1372, 1699)))
+        self.assertEqual([w.code for w in ws], ["ROW_SPACING"])
+        self.assertEqual(Q.verdict(ws), "unreliable")
+        # A good photo's rows (gaps 333 / 332 / 304, ratio 1.10): nothing.
+        self.assertEqual(Q.assess(**kw(rows=(679, 1012, 1344, 1648))), [])
+        # Both sides of 1.3.
+        self.assertEqual(Q.assess(**kw(rows=(0, 100, 200, 329))), [])
+        self.assertEqual([w.code for w in Q.assess(**kw(rows=(0, 100, 200, 331)))], ["ROW_SPACING"])
+
     def test_no_pulse(self):
         self.assertEqual(codes(Q.assess(**kw(t0_source="rhythm_locator"))), ["NO_PULSE"])
 

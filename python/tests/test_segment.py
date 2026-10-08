@@ -216,6 +216,34 @@ class TickOutlierIsReplaced(unittest.TestCase):
         self.assertEqual((keep, drop), ([0, 1], []))
 
 
+class RowsFollowTheLayout(unittest.TestCase):
+    """A shadow across the top of a sheet (eacg_photo_20261008_111150)
+    binarised as ink and made the tallest row-profile peak by far; the four
+    tallest dropped the real second row and named rows 1-2's leads wrongly.
+    The rows are the evenly spaced set whose weakest peak is strongest.
+    Under the old rule (the four tallest) the first test fails: (115, 651,
+    1372, 1699)."""
+
+    def test_the_shadow_photo_gets_its_real_rows(self):
+        self.assertEqual(segment.choose_rows([115, 365, 651, 996, 1372, 1699], [1685, 36, 78, 72, 86, 291]), (651, 996, 1372, 1699))
+
+    def test_even_tallest_four_are_unchanged(self):
+        # ptbxl38_20261005_01's peaks: the former rule's answer.
+        self.assertEqual(segment.choose_rows([679, 1012, 1344, 1648], [167, 236, 250, 318]), (679, 1012, 1344, 1648))
+        # Extra weak peaks do not displace an even tallest four.
+        self.assertEqual(segment.choose_rows([300, 679, 1012, 1344, 1648], [40, 167, 236, 250, 318]),
+                         (679, 1012, 1344, 1648))
+
+    def test_threshold_both_sides(self):
+        # gaps 100 / 100 / 129 and 100 / 100 / 131 at max_ratio 1.3
+        self.assertEqual(segment.choose_rows([0, 100, 200, 329, 600], [5, 5, 5, 5, 9]), (0, 100, 200, 329))
+        self.assertEqual(segment.choose_rows([0, 100, 200, 331], [5, 5, 5, 5]), (0, 100, 200, 331))   # fallback
+        self.assertGreater(segment.row_gap_ratio([0, 100, 200, 331]), segment.ROW_SPACING_MAX_RATIO)
+
+    def test_no_even_set_falls_back_to_the_four_tallest(self):
+        self.assertEqual(segment.choose_rows([10, 50, 400, 900, 1000], [9, 1, 8, 7, 6]), (10, 400, 900, 1000))
+
+
 KIT = Path(__file__).resolve().parents[2] / "out" / "kit_targets"
 
 

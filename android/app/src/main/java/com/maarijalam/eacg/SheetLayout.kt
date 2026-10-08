@@ -36,6 +36,8 @@ object SheetLayout {
     const val FS = 500.0
     const val SEPARATOR_GUARD_MM = 1.0
     const val SHEET_ROW_SPACING_FRACTION = 0.11
+    /** segment.ROW_SPACING_MAX_RATIO: see [chooseRows]. */
+    const val ROW_SPACING_MAX_RATIO = 1.3
 
     const val PULSE_TOP_MM = 10.0
     const val PULSE_SLAB_MM = 2.5
@@ -174,10 +176,42 @@ object SheetLayout {
         val smooth = StripLocator.convolveSameBox(rows, win)
         val peaks = StripLocator.findPeaks(smooth, max(1, (h * SHEET_ROW_SPACING_FRACTION).toInt()))
         check(peaks.size >= 4) { "found ${peaks.size} trace rows, expected 4" }
+        return chooseRows(peaks.toIntArray(), DoubleArray(peaks.size) { smooth[peaks[it]] })
+    }
+
+    /** segment.row_gap_ratio: largest over smallest gap between successive rows. */
+    fun rowGapRatio(rows: IntArray): Double {
+        val s = rows.sortedArray()
+        if (s.size < 2) return Double.POSITIVE_INFINITY
+        val g = IntArray(s.size - 1) { s[it + 1] - s[it] }
+        val mn = g.min()
+        return if (mn > 0) g.max().toDouble() / mn else Double.POSITIVE_INFINITY
+    }
+
+    /**
+     * `segment.choose_rows`: of every set of four peaks evenly spaced as the
+     * printed layout ([rowGapRatio] <= [ROW_SPACING_MAX_RATIO]), the set whose
+     * weakest peak is strongest (the four tallest when they are even -- the
+     * former rule); none even: the four tallest. Sets in ascending-row order,
+     * replaced only by a strictly better one, as itertools.combinations.
+     */
+    fun chooseRows(peaks: IntArray, values: DoubleArray, maxRatio: Double = ROW_SPACING_MAX_RATIO): IntArray {
+        val order = peaks.indices.sortedWith(compareBy({ peaks[it] }, { it }))
+        val p = IntArray(order.size) { peaks[order[it]] }
+        val v = DoubleArray(order.size) { values[order[it]] }
+        var best: IntArray? = null
+        var bestMin = Double.NEGATIVE_INFINITY
+        val n = p.size
+        for (a in 0 until n) for (b in a + 1 until n) for (c in b + 1 until n) for (d in c + 1 until n) {
+            val rows = intArrayOf(p[a], p[b], p[c], p[d])
+            if (rowGapRatio(rows) > maxRatio) continue
+            val m = minOf(minOf(v[a], v[b]), minOf(v[c], v[d]))
+            if (m > bestMin) { best = rows; bestMin = m }
+        }
+        best?.let { return it }
         // Tallest four, stable on ties (argsort(-v, kind="stable")), then by row.
-        val top = peaks.withIndex().sortedWith(compareBy({ -smooth[it.value] }, { it.index }))
-            .take(4).map { it.value }.sorted()
-        return top.toIntArray()
+        return peaks.withIndex().sortedWith(compareBy({ -values[it.index] }, { it.index }))
+            .take(4).map { it.value }.sorted().toIntArray()
     }
 
     /**
