@@ -5,8 +5,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -14,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 
 /**
  * The Scan tab: Home → Corners → Processing → Result, driven by one
@@ -84,5 +81,5 @@ fun PageTab(page: Bitmap?, data: ResultData, traces: List<SheetPipeline.RowTrace
             ticks: List<Triple<Int, Int, Double>>, replaced: List<Triple<Int, Int, Double>>,
             cells: List<SheetPipeline.CellBox>, pageW: Int, pageH: Int, truth12: Map<String, DoubleArray>?) {
     if (page == null) { LoadingBox("Loading the page"); return }
-    Box(Modifier.padding(16.dp)) { ZoomableImage(page) }
+    PageOverlay(page, traces, t0X, rowY, ticks, replaced, cells, pageW, pageH, data.leads, data.pxPerMm, truth12)
 }

@@ -444,6 +444,21 @@ The Page overlay tab shows the page for now (step 7). 112 JVM tests
 (ResultDataTest: ticks, cells, memory summary, an old record); NOT verified
 on the A30s.
 
+## 22. 2026-10-08 — UI step 7: Page overlay
+
+`PageOverlay` (mock-up artboard 6): the straightened page in its own view
+transform (pinch, double-tap, + / − / fit), the digitised rows drawn thin
+and dotted in teal (1.8 dp, dash [0.1, 3.2 dp], constant on screen at any
+zoom) over the printed trace, t0 and the nine ticks as dashed teal lines
+("tick 7.5 s" when zoomed; amber, "borrowed", where a tick was missing or
+replaced), lead labels at each cell, a legend, and a lead card ("Lead V5 ·
+7.5 to 10.0 s · Timed from the 7.5 s tick") whose previous / next zoom to
+each cell. Prototype mode: "Show truth" draws the PTB-XL signal in grey,
+placed by cell extent (APPROXIMATE: a record keeps cell boxes, not the
+exact time map; labelled so). Records saved before the overlay fields show
+the page and the dotted trace only. Display only. 112 JVM tests; NOT
+verified on the A30s.
+
 ---
 
 ## Open items (ordered)
