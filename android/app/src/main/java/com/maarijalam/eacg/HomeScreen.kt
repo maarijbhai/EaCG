@@ -190,7 +190,7 @@ private fun RecentRow(m: RecordStore.Meta, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         RecordThumb(m.id)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(recordTitle(m.target), style = MaterialTheme.typography.titleSmall)
+            Text(recordName(m), style = MaterialTheme.typography.titleSmall)
             Text("${recordWhen(m.createdMs)} · 12 leads", style = MaterialTheme.typography.bodySmall, color = Muted)
         }
         QualityStatus(m.quality)

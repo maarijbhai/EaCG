@@ -501,6 +501,20 @@ camera writes the ORIGINAL to the gallery (MediaStore Pictures/EaCG, Android
 Downloads" (the record's photo.jpg as digitised and page.jpg). Formats
 untouched. 112 JVM tests; NOT verified on the A30s.
 
+## 26. 2026-10-08 — Rename records; delete several at once
+
+Rename (Result screen ⋮ → Rename, for a scan just made or a saved record):
+an optional `name` field in record.properties (absent on older records,
+which keep their default "PTB-XL n" / "Photo"); blank restores the default;
+80 characters at most. Only record.properties is rewritten (through a
+temporary file), never the leads, the CSV or the images; the exported CSV
+and its frozen file name do not use the name. Search matches it. Delete:
+still one at a time from the Result screen, and now several at once in
+Records -- long-press a record to start selecting, tap to add or remove,
+All, Delete with one confirmation. Test: renameIn changes only the name,
+leaves leads.csv byte-identical, blank -> default, length cut, the record
+still listed. 113 JVM tests; NOT verified on the A30s.
+
 ---
 
 ## Open items (ordered)

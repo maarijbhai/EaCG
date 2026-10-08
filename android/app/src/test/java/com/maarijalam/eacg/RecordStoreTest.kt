@@ -87,6 +87,28 @@ class RecordStoreTest {
     }
 
     @Test
+    fun renameChangesOnlyTheNameAndBlankRestoresTheDefault() {
+        val dir = tmp.newFolder("rec1")
+        val m = meta("rec1", 5L)
+        File(dir, RecordStore.META).writeText(RecordStore.metaToText(m))
+        File(dir, RecordStore.LEADS).writeText("time_s,I\n0.000,0.1\n")
+        val csvBefore = File(dir, RecordStore.LEADS).readText()
+
+        val named = RecordStore.renameIn(dir, "  Bad photo: steep tilt  ")
+        assertEquals("Bad photo: steep tilt", named.name)
+        val back = RecordStore.metaFromText(File(dir, RecordStore.META).readText())
+        assertEquals("Bad photo: steep tilt", back.name)
+        assertEquals(m.copy(corners = back.corners, pxPerMm = back.pxPerMm, name = back.name), back)
+        assertEquals(csvBefore, File(dir, RecordStore.LEADS).readText())     // the CSV is untouched
+        assertTrue(!File(dir, RecordStore.META + ".tmp").exists())
+
+        assertNull(RecordStore.renameIn(dir, "   ").name)                  // blank: default title again
+        assertEquals(RecordStore.MAX_NAME, RecordStore.renameIn(dir, "x".repeat(200)).name!!.length)
+        // Still listed (a renamed record is a complete record).
+        assertEquals(listOf("rec1"), RecordStore.listIn(dir.parentFile!!).map { it.id })
+    }
+
+    @Test
     fun tracesRoundTripWithGaps() {
         val rows = listOf(SheetPipeline.RowTrace(120, doubleArrayOf(510.25, Double.NaN, 511.0)),
             SheetPipeline.RowTrace(-3, doubleArrayOf(Double.NaN)))

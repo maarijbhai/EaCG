@@ -89,7 +89,9 @@ object RecordStore {
         val ticks: String? = null,
         val ticksRejected: String? = null,
         /** Each cell's extent, "name rhythm x0 x1 y0 y1;...", page px. */
-        val cells: String? = null
+        val cells: String? = null,
+        /** A name the user gave the record (Rename); null shows "PTB-XL n" / "Photo". */
+        val name: String? = null
     )
 
     fun root(context: Context) = File(context.filesDir, "records")
@@ -120,6 +122,7 @@ object RecordStore {
         put("t0_x", m.t0X?.let { String.format(Locale.US, "%.2f", it) })
         put("row_y", m.rowY); put("ticks", m.ticks); put("ticks_rejected", m.ticksRejected)
         put("cells", m.cells)
+        put("name", m.name)
         return StringWriter().also { p.store(it, "EaCG record") }.toString()
     }
 
@@ -146,7 +149,8 @@ object RecordStore {
             photoSource = p.getProperty("photo_source"),
             t0X = p.getProperty("t0_x")?.toDouble(), rowY = p.getProperty("row_y"),
             ticks = p.getProperty("ticks"), ticksRejected = p.getProperty("ticks_rejected"),
-            cells = p.getProperty("cells")
+            cells = p.getProperty("cells"),
+            name = p.getProperty("name")
         )
     }
 
@@ -294,6 +298,30 @@ object RecordStore {
         }
         meta
     }
+
+    /** Longest name kept; longer ones are cut. */
+    const val MAX_NAME = 80
+
+    /**
+     * Give the record in [dir] a name (blank: back to the default title).
+     * Only record.properties changes, rewritten through a temporary file and
+     * renamed into place, so a crash cannot leave a record without its
+     * metadata. The leads, CSV and images are untouched.
+     */
+    fun renameIn(dir: File, name: String?): Meta {
+        val f = File(dir, META)
+        val m = metaFromText(f.readText()).copy(name = name?.trim()?.take(MAX_NAME)?.takeIf { it.isNotEmpty() })
+        val tmp = File(dir, "$META.tmp")
+        tmp.writeText(metaToText(m))
+        if (!tmp.renameTo(f)) {                      // some filesystems will not rename over a file
+            f.delete()
+            check(tmp.renameTo(f)) { "could not update the record's name" }
+        }
+        return m
+    }
+
+    suspend fun rename(context: Context, id: String, name: String?): Meta =
+        withContext(Dispatchers.IO) { renameIn(dir(context, id), name) }
 
     suspend fun list(context: Context): List<Meta> = withContext(Dispatchers.IO) { listIn(root(context)) }
 

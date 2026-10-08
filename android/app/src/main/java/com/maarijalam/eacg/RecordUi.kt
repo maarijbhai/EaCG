@@ -46,6 +46,9 @@ private val PTBXL = Regex("""ptbxl(\d+)""")
 fun recordTitle(target: String?): String =
     target?.let { PTBXL.find(it)?.groupValues?.get(1)?.let { id -> "PTB-XL $id" } ?: it } ?: "Photo"
 
+/** The record's own name if it was renamed, else [recordTitle] of its target. */
+fun recordName(m: RecordStore.Meta): String = m.name ?: recordTitle(m.target)
+
 /** "Today, 16:42", "Yesterday, 10:27" or "5 Oct, 10:27" (with the year if not this one). */
 fun recordWhen(ms: Long, now: Long = System.currentTimeMillis()): String {
     val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(ms))

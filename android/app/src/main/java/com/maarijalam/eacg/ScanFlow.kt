@@ -102,6 +102,7 @@ private fun LiveResult(scan: ScanController, modifier: Modifier) {
         savedNote = if (scan.saved != null) "Saved to Records." else scan.saveError?.let { "Not saved to Records: $it." },
         csvForShare = { scan.csvForShare() },
         onDelete = if (scan.saved != null) ({ scan.deleteSaved() }) else null,
+        onRename = if (scan.saved != null) ({ n: String? -> scan.renameSaved(n) }) else null,
         pageContent = {
             LaunchedEffect(r) { if (page == null) page = decodeForView(r.pageJpeg) }
             PageTab(page, data, r.rowTraces, r.t0X, r.rowY, r.tickPositions, r.ticksRejected, r.cells,

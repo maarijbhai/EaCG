@@ -75,6 +75,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.OutlinedTextField
+import com.maarijalam.eacg.ui.theme.Tint
+import com.maarijalam.eacg.ui.theme.Text2
+import com.maarijalam.eacg.ui.theme.ButtonOutline
+import com.maarijalam.eacg.ui.theme.BadText
+import androidx.compose.material3.IconButton
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 
 /**
  * The Records tab: every whole-sheet digitisation saved by [RecordStore],
@@ -96,6 +105,10 @@ fun RecordsScreen(
     var reload by remember { mutableStateOf(0) }
     var query by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(RecordFilter.ALL) }
+    // Selection for deleting several at once: long-press a record to start.
+    var selected by remember { mutableStateOf(setOf<String>()) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(openRequest) {
         if (openRequest != null) { open = openRequest; onOpenHandled() }
@@ -109,8 +122,8 @@ fun RecordsScreen(
     val current = open
     if (current != null) {
         BackHandler { open = null }
-        RecordResult(current, modifier, onBack = { open = null },
-            onDeleted = { open = null; reload++ })
+        RecordResult(current, modifier, onBack = { open = null; reload++ },
+            onDeleted = { open = null; reload++ }, onRenamed = { open = it })
         return
     }
 
@@ -118,9 +131,40 @@ fun RecordsScreen(
     val filters = RecordFilter.entries.filter { it != RecordFilter.BENCHMARKED || proto }
     if (filter !in filters) filter = RecordFilter.ALL
     val shown = all.orEmpty().filter { filter.accepts(it) && matches(it, query) }
+    val selecting = selected.isNotEmpty()
+    BackHandler(enabled = selecting) { selected = emptySet() }
+
+    if (confirmDelete) {
+        val n = selected.size
+        AlertDialog(onDismissRequest = { confirmDelete = false },
+            title = { Text("Delete $n record${if (n == 1) "" else "s"}?") },
+            text = { Text("Their photographs, pages and digitised leads are removed from this phone. " +
+                "Exported CSV files in Downloads are not affected.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDelete = false
+                    val ids = selected
+                    scope.launch {
+                        for (id in ids) RecordStore.delete(context, id)
+                        selected = emptySet(); reload++
+                    }
+                }) { Text("Delete", color = BadText) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } })
+    }
 
     Column(modifier.fillMaxSize()) {
-        Text("Records", style = MaterialTheme.typography.headlineSmall,
+        if (selecting) {
+            Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { selected = emptySet() }, modifier = Modifier.size(48.dp)) {
+                    Icon(EaIcons.Close, contentDescription = "Cancel selection", tint = Text2)
+                }
+                Text("${selected.size} selected", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                TextButton(onClick = { selected = shown.map { it.id }.toSet() }) { Text("All", color = Primary) }
+                TextButton(onClick = { confirmDelete = true }) { Text("Delete", color = BadText) }
+            }
+        } else Text("Records", style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp).semantics { heading() })
         OutlinedTextField(value = query, onValueChange = { query = it }, singleLine = true,
             placeholder = { Text("Search by name, target or date", style = MaterialTheme.typography.bodyLarge) },
@@ -149,7 +193,12 @@ fun RecordsScreen(
                         EaCard {
                             list.forEachIndexed { i, m ->
                                 if (i > 0) HorizontalDivider(color = RowDivider)
-                                RecordRow(m, proto) { open = m }
+                                RecordRow(m, proto, selecting, m.id in selected,
+                                    onClick = {
+                                        if (selecting) selected = if (m.id in selected) selected - m.id else selected + m.id
+                                        else open = m
+                                    },
+                                    onLongClick = { selected = selected + m.id })
                             }
                         }
                     }
@@ -181,28 +230,43 @@ private enum class RecordFilter(val label: String) {
 /** Search over the record's title, target name and date. */
 private fun matches(m: RecordStore.Meta, q: String): Boolean {
     if (q.isBlank()) return true
-    val hay = listOfNotNull(recordTitle(m.target), m.target, recordWhen(m.createdMs), dayLabel(m.createdMs),
+    val hay = listOfNotNull(recordName(m), recordTitle(m.target), m.target, recordWhen(m.createdMs), dayLabel(m.createdMs),
         SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(Date(m.createdMs)))
         .joinToString(" ").lowercase(Locale.getDefault())
     return q.trim().lowercase(Locale.getDefault()).split(' ').filter { it.isNotEmpty() }.all { it in hay }
 }
 
-/** Name; time · tracer · geometry; status as icon + text; r in prototype mode. */
+/**
+ * Name; time · tracer · geometry; status as icon + text; r in prototype mode.
+ * Long-press selects (for deleting several); while selecting, a tap toggles.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun RecordRow(m: RecordStore.Meta, proto: Boolean, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable(role = Role.Button, onClick = onClick)
+private fun RecordRow(m: RecordStore.Meta, proto: Boolean, selecting: Boolean, isSelected: Boolean,
+                      onClick: () -> Unit, onLongClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp)
+        .background(if (isSelected) Tint else Color.Transparent)
+        .combinedClickable(role = Role.Button, onClick = onClick, onLongClick = onLongClick,
+            onLongClickLabel = "Select")
         .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         RecordThumb(m.id)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(recordTitle(m.target), style = MaterialTheme.typography.titleSmall)
+            Text(recordName(m), style = MaterialTheme.typography.titleSmall)
             val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(m.createdMs))
             val tracer = if (m.tracer == SheetPipeline.Tracer.MODEL.name) "Learned" else "Classical"
             val geometry = when (m.geometry) { "grid" -> "grid fit"; "corners" -> "corners only"; else -> null }
             Text(listOfNotNull(time, tracer, geometry).joinToString(" · "), style = MaterialTheme.typography.bodySmall,
                 color = Muted)
         }
-        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        if (selecting) {
+            Box(Modifier.size(24.dp).background(if (isSelected) Primary else Color.Transparent, RoundedCornerShape(12.dp))
+                .border(2.dp, if (isSelected) Primary else ButtonOutline, RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center) {
+                if (isSelected) Icon(EaIcons.Check, contentDescription = "Selected", tint = Color.White,
+                    modifier = Modifier.size(14.dp))
+            }
+        } else Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             QualityStatus(m.quality)
             if (proto) m.medianPcc?.let {
                 Text(String.format(Locale.US, "r %.3f", it), style = DataText, color = Muted)
@@ -217,7 +281,8 @@ private fun RecordRow(m: RecordStore.Meta, proto: Boolean, onClick: () -> Unit) 
  * `eacg_sheet_<target|photo>_<tracer>_<record id>.csv`.
  */
 @Composable
-private fun RecordResult(m: RecordStore.Meta, modifier: Modifier, onBack: () -> Unit, onDeleted: () -> Unit) {
+private fun RecordResult(m: RecordStore.Meta, modifier: Modifier, onBack: () -> Unit, onDeleted: () -> Unit,
+                         onRenamed: (RecordStore.Meta) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var leads by remember(m.id) { mutableStateOf<List<SheetPipeline.LeadResult>?>(null) }
@@ -253,6 +318,10 @@ private fun RecordResult(m: RecordStore.Meta, modifier: Modifier, onBack: () -> 
         exportMessage = message, savedNote = "Saved to Records.",
         csvForShare = { exportName to RecordStore.csv(context, m.id) },
         onDelete = { scope.launch { RecordStore.delete(context, m.id); onDeleted() } },
+        onRename = { n -> scope.launch {
+            runCatching { RecordStore.rename(context, m.id, n) }
+                .onSuccess(onRenamed).onFailure { message = "Rename failed: ${it.message}" }
+        } },
         pageContent = {
             LaunchedEffect(m.id) { if (page == null) page = RecordStore.image(context, m.id, RecordStore.PAGE) }
             val ticks = ResultData.parseTicks(m.ticks)

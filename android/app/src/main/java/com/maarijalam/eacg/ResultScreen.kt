@@ -32,6 +32,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -136,7 +137,7 @@ class ResultData(
         fun fromLive(r: SheetPipeline.Result, meta: RecordStore.Meta?, target: String?): ResultData {
             val now = meta?.createdMs ?: System.currentTimeMillis()
             return ResultData(
-                title = recordTitle(target), subtitle = "${recordWhen(now)} · 12 leads",
+                title = meta?.name ?: recordTitle(target), subtitle = "${recordWhen(now)} · 12 leads",
                 leads = r.leads, quality = r.quality,
                 warnings = r.warnings.map {
                     RecordStore.StoredWarning(it.code, it.severity.name.lowercase(Locale.US), it.leads, it.message)
@@ -155,7 +156,7 @@ class ResultData(
         }
 
         fun fromRecord(m: RecordStore.Meta, leads: List<SheetPipeline.LeadResult>?): ResultData = ResultData(
-            title = recordTitle(m.target), subtitle = "${recordWhen(m.createdMs)} · 12 leads",
+            title = recordName(m), subtitle = "${recordWhen(m.createdMs)} · 12 leads",
             leads = leads, quality = m.quality, warnings = RecordStore.decodeWarnings(m.warnings),
             tracer = m.tracer, cornersAuto = m.cornersAuto, cornersRefined = m.cornersRefined,
             geometry = m.geometry, gridRmsMm = m.gridRmsMm, gridRules = m.gridRules, gridNote = m.gridNote,
@@ -186,6 +187,8 @@ fun ResultScreen(
     savedNote: String?,
     csvForShare: suspend () -> Pair<String, String>?,
     onDelete: (() -> Unit)?,
+    /** Rename the saved record (null: not saved, so nothing to rename). */
+    onRename: ((String?) -> Unit)? = null,
     pageContent: @Composable () -> Unit,
     photoContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
@@ -197,6 +200,23 @@ fun ResultScreen(
     var menu by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var shareError by remember { mutableStateOf<String?>(null) }
+    var renaming by remember { mutableStateOf(false) }
+
+    if (renaming && onRename != null) {
+        var text by remember { mutableStateOf(data.title) }
+        AlertDialog(onDismissRequest = { renaming = false },
+            title = { Text("Rename record") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(value = text, onValueChange = { text = it.take(RecordStore.MAX_NAME) },
+                        singleLine = true, label = { Text("Name") })
+                    Text("Leave empty to go back to the default name. The exported CSV and its file name " +
+                        "do not change.", style = MaterialTheme.typography.bodySmall, color = Muted)
+                }
+            },
+            confirmButton = { TextButton(onClick = { renaming = false; onRename(text) }) { Text("Save", color = Primary) } },
+            dismissButton = { TextButton(onClick = { renaming = false }) { Text("Cancel") } })
+    }
 
     if (confirmDelete && onDelete != null) {
         AlertDialog(onDismissRequest = { confirmDelete = false },
@@ -225,6 +245,8 @@ fun ResultScreen(
                     Icon(EaIcons.More, contentDescription = "More options", tint = com.maarijalam.eacg.ui.theme.Text2)
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(text = { Text("Rename") }, enabled = onRename != null,
+                        onClick = { menu = false; renaming = true })
                     // The record's photo (as digitised) and straightened page to
                     // Downloads/EaCG, for the desktop replay and for diagnosis.
                     DropdownMenuItem(text = { Text("Save photo and page to Downloads") },

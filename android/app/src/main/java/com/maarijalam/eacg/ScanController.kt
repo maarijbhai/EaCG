@@ -250,6 +250,12 @@ class ScanController(
             SheetPipeline.csv(r, photoLabel(bmp), resultTarget?.name, stamp)
     }
 
+    /** Rename the record this scan was saved as. */
+    fun renameSaved(name: String?) {
+        val id = saved?.id ?: return
+        scope.launch { saved = runCatching { RecordStore.rename(context, id, name) }.getOrDefault(saved) }
+    }
+
     /** Delete the record this scan was saved as, then back to Home. */
     fun deleteSaved() {
         val id = saved?.id ?: return
