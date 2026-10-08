@@ -1,23 +1,20 @@
 package com.maarijalam.eacg
 
+import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.maarijalam.eacg.ui.SecondaryButton
-import com.maarijalam.eacg.ui.TopBar
 
 /**
  * The Scan tab: Home → Corners → Processing → Result, driven by one
@@ -53,28 +50,39 @@ fun ScanFlow(
             modifier = modifier)
         ScanRoute.CORNERS -> CornersScreen(scan, modifier)
         ScanRoute.PROCESSING -> ProcessingScreen(scan, modifier)
-        else -> InterimScanPanel(scan, modifier)
+        ScanRoute.RESULT -> LiveResult(scan, modifier)
     }
 }
 
-/**
- * INTERIM (UI steps 4-5): progress and the former result panel, driven by
- * [ScanController], until the Digitising (step 5) and Result (step 6)
- * screens replace it.
- */
+/** The Result screen for the scan just made (saved to Records already, unless saving failed). */
 @Composable
-private fun InterimScanPanel(scan: ScanController, modifier: Modifier) {
-    Column(modifier.fillMaxSize()) {
-        TopBar(if (scan.busy) "Digitising" else "Result", onBack = { if (scan.busy) scan.cancel() else scan.reset() })
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            if (scan.status.isNotEmpty()) Text(scan.status, style = MaterialTheme.typography.bodySmall)
-            scan.saveError?.let { Text("Not saved to Records: $it", style = MaterialTheme.typography.bodySmall) }
-            scan.result?.let { r ->
-                SheetResultPanel(r, scan.truth12)
-                SecondaryButton("Export 12-lead CSV", { scan.export() }, Modifier.fillMaxWidth())
-                scan.exported?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
-            }
-        }
-    }
+private fun LiveResult(scan: ScanController, modifier: Modifier) {
+    val r = scan.result ?: return
+    val data = remember(r, scan.saved) { ResultData.fromLive(r, scan.saved, scan.resultTarget?.name) }
+    var page by remember(r) { mutableStateOf<Bitmap?>(null) }
+    ResultScreen(
+        data = data, truth12 = scan.truth12,
+        onBack = { scan.reset() },
+        onExport = { scan.export() }, exportMessage = scan.exported,
+        savedNote = if (scan.saved != null) "Saved to Records." else scan.saveError?.let { "Not saved to Records: $it." },
+        csvForShare = { scan.csvForShare() },
+        onDelete = if (scan.saved != null) ({ scan.deleteSaved() }) else null,
+        pageContent = {
+            LaunchedEffect(r) { if (page == null) page = decodeForView(r.pageJpeg) }
+            PageTab(page, data, r.rowTraces, r.t0X, r.rowY, r.tickPositions, r.ticksRejected, r.cells,
+                r.rectW, r.rectH, scan.truth12)
+        },
+        photoContent = {
+            scan.bitmap?.let { ZoomableImage(it) } ?: LoadingBox("No photograph")
+        },
+        modifier = modifier)
+}
+
+/** The Page overlay tab's frame: the page, or a loading box until it is decoded. */
+@Composable
+fun PageTab(page: Bitmap?, data: ResultData, traces: List<SheetPipeline.RowTrace>, t0X: Double, rowY: List<Int>,
+            ticks: List<Triple<Int, Int, Double>>, replaced: List<Triple<Int, Int, Double>>,
+            cells: List<SheetPipeline.CellBox>, pageW: Int, pageH: Int, truth12: Map<String, DoubleArray>?) {
+    if (page == null) { LoadingBox("Loading the page"); return }
+    Box(Modifier.padding(16.dp)) { ZoomableImage(page) }
 }

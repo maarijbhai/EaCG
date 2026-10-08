@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider roots (docs/ui_plan.md §3.4 share, §3.1 camera). Cache only:
+     records stay private in files/records and are never exposed. -->
+<paths>
+    <cache-path name="share" path="share/" />
+    <cache-path name="camera" path="camera/" />
+</paths>

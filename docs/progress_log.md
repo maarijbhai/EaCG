@@ -422,6 +422,28 @@ active row, tiles / rows progress, stage list with times. `TileCountTest`
 pins tileCount to predictTiled's calls. 109 JVM tests; NOT verified on the
 A30s.
 
+## 21. 2026-10-08 — UI step 6: Result screen (Scan and Records)
+
+`ResultScreen` + `ResultData` (built from a live Result or a saved record,
+display copies only): top bar (title "PTB-XL n" / "Photo", date, Share via
+the share sheet, More -> Delete), underline tabs Leads / Page overlay /
+Photo; quality banner (none / amber / red) with "Compare on the page
+overlay"; the leads as printed on pink paper at the paper's own scale,
+labels at each cell start, ticks as bars (amber if not found or replaced;
+plain on records saved before the tick field); details list (grid fit,
+lead markers, time zero, tracer and time); Export CSV. Prototype mode
+adds per-lead r on the labels, the PTB-XL truth in grey, a Benchmark card
+(median lead r, leads >= 0.9) and an expandable Prototype details card
+(everything the old result panel printed: corners, calibration, ticks, t0,
+geometry, stage times, memory). Export is unchanged for both (the scan:
+ScanController.export; a record: its own leads.csv as
+`eacg_sheet_<target|photo>_<tracer>_<record id>.csv`). Share writes the
+same text to cache/share and hands it over through a FileProvider (cache
+paths only). Records now opens records here; the old detail view is gone.
+The Page overlay tab shows the page for now (step 7). 112 JVM tests
+(ResultDataTest: ticks, cells, memory summary, an old record); NOT verified
+on the A30s.
+
 ---
 
 ## Open items (ordered)

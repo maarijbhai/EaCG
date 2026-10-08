@@ -241,6 +241,21 @@ class ScanController(
         }
     }
 
+    /** The shown result's CSV and file name, exactly as [export] writes them, for the share sheet. */
+    fun csvForShare(): Pair<String, String>? {
+        val r = result ?: return null
+        val bmp = bitmap ?: return null
+        val stamp = Exporter.stamp()
+        return exportName(resultTarget?.name, r.tracer, stamp) to
+            SheetPipeline.csv(r, photoLabel(bmp), resultTarget?.name, stamp)
+    }
+
+    /** Delete the record this scan was saved as, then back to Home. */
+    fun deleteSaved() {
+        val id = saved?.id ?: return
+        scope.launch { RecordStore.delete(context, id); reset() }
+    }
+
     /** Back to Home, forgetting the photograph. */
     fun reset() {
         job?.cancel()

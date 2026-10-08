@@ -88,7 +88,7 @@ fun RecordsScreen(
     val current = open
     if (current != null) {
         BackHandler { open = null }
-        RecordDetail(current, modifier, onBack = { open = null },
+        RecordResult(current, modifier, onBack = { open = null },
             onDeleted = { open = null; reload++ })
         return
     }
@@ -151,22 +151,21 @@ private fun RecordCard(m: RecordStore.Meta, onClick: () -> Unit) {
     }
 }
 
-private enum class View(val label: String) { LEADS("Leads"), PAGE("Page + trace"), PHOTO("Photo") }
-
+/**
+ * A saved record in the shared Result screen (docs/ui_plan.md §3.4). Export
+ * is unchanged: the record's own leads.csv to Downloads/EaCG as
+ * `eacg_sheet_<target|photo>_<tracer>_<record id>.csv`.
+ */
 @Composable
-private fun RecordDetail(m: RecordStore.Meta, modifier: Modifier, onBack: () -> Unit, onDeleted: () -> Unit) {
+private fun RecordResult(m: RecordStore.Meta, modifier: Modifier, onBack: () -> Unit, onDeleted: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var view by remember { mutableStateOf(View.LEADS) }
-    var leads by remember { mutableStateOf<List<SheetPipeline.LeadResult>?>(null) }
-    var truth by remember { mutableStateOf<Map<String, DoubleArray>?>(null) }
-    var showTruth by remember { mutableStateOf(true) }
-    var traces by remember { mutableStateOf<List<SheetPipeline.RowTrace>>(emptyList()) }
-    var page by remember { mutableStateOf<Bitmap?>(null) }
-    var photo by remember { mutableStateOf<Bitmap?>(null) }
-    var showTrace by remember { mutableStateOf(true) }
-    var message by remember { mutableStateOf<String?>(null) }
-    var confirmDelete by remember { mutableStateOf(false) }
+    var leads by remember(m.id) { mutableStateOf<List<SheetPipeline.LeadResult>?>(null) }
+    var truth by remember(m.id) { mutableStateOf<Map<String, DoubleArray>?>(null) }
+    var traces by remember(m.id) { mutableStateOf<List<SheetPipeline.RowTrace>>(emptyList()) }
+    var page by remember(m.id) { mutableStateOf<Bitmap?>(null) }
+    var photo by remember(m.id) { mutableStateOf<Bitmap?>(null) }
+    var message by remember(m.id) { mutableStateOf<String?>(null) }
 
     LaunchedEffect(m.id) {
         leads = runCatching { RecordStore.leads(context, m.id) }.getOrElse {
@@ -180,153 +179,39 @@ private fun RecordDetail(m: RecordStore.Meta, modifier: Modifier, onBack: () -> 
             }.getOrNull()
         }
     }
-    // Full-resolution images are decoded only when their view is open.
-    LaunchedEffect(m.id, view) {
-        when (view) {
-            View.PAGE -> if (page == null) page = RecordStore.image(context, m.id, RecordStore.PAGE)
-            View.PHOTO -> if (photo == null) photo = RecordStore.image(context, m.id, RecordStore.PHOTO)
-            View.LEADS -> Unit
-        }
-    }
-
-    if (confirmDelete) {
-        AlertDialog(onDismissRequest = { confirmDelete = false },
-            title = { Text("Delete this record?") },
-            text = { Text("The photograph, the page and the digitised leads are removed from this " +
-                "phone. Exported CSV files in Downloads are not affected.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmDelete = false
-                    scope.launch { RecordStore.delete(context, m.id); onDeleted() }
-                }) { Text("Delete") }
-            },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } })
-    }
-
-    Column(modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ Records") }
-        }
-        Text(when_(m.createdMs), style = MaterialTheme.typography.titleMedium)
-        Text("${tracerLabel(m)} · corners ${if (m.cornersAuto) "automatic" else "by hand"} · " +
-            (m.geometry?.let { if (it == "grid") "grid fit · " else "corners only · " } ?: "") +
-            String.format(Locale.US, "%s %.3f px/mm (%d/9 ticks)", m.calibration, m.pxPerMm, m.ticksFound) +
-            (m.target?.let { " · test sheet $it" } ?: ""),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            View.entries.forEach { v ->
-                FilterChip(selected = view == v, onClick = { view = v }, label = { Text(v.label) })
+    val exportName = "eacg_sheet_${m.target ?: "photo"}_${m.tracer.lowercase(Locale.US)}_${m.id}.csv"
+    val data = ResultData.fromRecord(m, leads)
+    ResultScreen(
+        data = data, truth12 = truth, onBack = onBack,
+        onExport = {
+            scope.launch {
+                message = runCatching {
+                    "Exported to " + Exporter.exportText(context, exportName, RecordStore.csv(context, m.id))
+                }.getOrElse { "Export failed: ${it.message}" }
             }
-        }
-        message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            when (view) {
-                View.LEADS -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    val ls = leads
-                    if (ls == null) CircularProgressIndicator() else {
-                        if (truth != null) {
-                            Row(verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Switch(checked = showTruth, onCheckedChange = { showTruth = it })
-                                Text("Show the PTB-XL truth (grey)", style = MaterialTheme.typography.bodySmall)
-                            }
-                        }
-                        for (row in 0 until 4) {
-                            val rowLeads = ls.filter {
-                                if (row < 3) !it.rhythm && SheetLayout.LAYOUT_3X4[row].contains(it.name) else it.rhythm
-                            }
-                            Text(rowLeads.joinToString("   ") { l ->
-                                l.name + (l.pcc?.let { String.format(Locale.US, "  r=%.2f", it) } ?: "")
-                            }, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
-                            LeadRow(rowLeads, if (showTruth) truth else null)
-                        }
-                        m.medianPcc?.let {
-                            Text(String.format(Locale.US, "Median lead r = %.3f over %d leads (as-is).",
-                                it, m.leadsScored), style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
-                View.PAGE -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Switch(checked = showTrace, onCheckedChange = { showTrace = it })
-                        Text("Digitised trace over the page · pinch to zoom",
-                            style = MaterialTheme.typography.bodySmall)
-                    }
-                    val p = page
-                    if (p == null) Text("Loading the page…", style = MaterialTheme.typography.bodySmall)
-                    else ZoomableImage(p, m.pageW, m.pageH, if (showTrace) traces else emptyList())
-                }
-                View.PHOTO -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("The photograph as digitised · pinch to zoom",
-                        style = MaterialTheme.typography.bodySmall)
-                    val p = photo
-                    if (p == null) Text("Loading the photograph…", style = MaterialTheme.typography.bodySmall)
-                    else ZoomableImage(p, p.width, p.height, emptyList())
-                }
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = {
-                scope.launch {
-                    message = runCatching {
-                        val name = "eacg_sheet_${m.target ?: "photo"}_${m.tracer.lowercase(Locale.US)}_${m.id}.csv"
-                        "Exported to " + Exporter.exportText(context, name, RecordStore.csv(context, m.id))
-                    }.getOrElse { "Export failed: ${it.message}" }
-                }
-            }, modifier = Modifier.weight(1f)) { Text("Export CSV") }
-            OutlinedButton(onClick = { confirmDelete = true }, modifier = Modifier.weight(1f)) { Text("Delete") }
-        }
-    }
+        },
+        exportMessage = message, savedNote = "Saved to Records.",
+        csvForShare = { exportName to RecordStore.csv(context, m.id) },
+        onDelete = { scope.launch { RecordStore.delete(context, m.id); onDeleted() } },
+        pageContent = {
+            LaunchedEffect(m.id) { if (page == null) page = RecordStore.image(context, m.id, RecordStore.PAGE) }
+            val ticks = ResultData.parseTicks(m.ticks)
+            val replaced = ResultData.parseTicks(m.ticksRejected)
+            PageTab(page, data, traces, m.t0X ?: Double.NaN,
+                m.rowY?.split(' ')?.mapNotNull { it.toIntOrNull() } ?: emptyList(),
+                ticks, replaced, parseCells(m.cells), m.pageW, m.pageH, truth)
+        },
+        photoContent = {
+            LaunchedEffect(m.id) { if (photo == null) photo = RecordStore.image(context, m.id, RecordStore.PHOTO) }
+            photo?.let { ZoomableImage(it) } ?: LoadingBox("Loading the photograph")
+        },
+        modifier = modifier)
 }
 
-/**
- * An image with pinch-zoom and pan, and optionally the traced rows drawn on
- * it in the image's own pixel coordinates ([imgW] x [imgH]).
- */
-@Composable
-private fun ZoomableImage(bmp: Bitmap, imgW: Int, imgH: Int, traces: List<SheetPipeline.RowTrace>) {
-    var scale by remember(bmp) { mutableFloatStateOf(1f) }
-    var offset by remember(bmp) { mutableStateOf(Offset.Zero) }
-    val traceColour = Color(0xFF1565C0)
-    Box(Modifier.fillMaxWidth().aspectRatio(imgW.toFloat() / imgH).clipToBounds()
-        .pointerInput(bmp) {
-            detectTransformGestures { _, pan, zoom, _ ->
-                val s = (scale * zoom).coerceIn(1f, 12f)
-                // Keep the image covering the frame: offset bounded by the overhang.
-                val maxX = size.width * (s - 1f) / 2f
-                val maxY = size.height * (s - 1f) / 2f
-                offset = Offset((offset.x + pan.x).coerceIn(-maxX, maxX),
-                    (offset.y + pan.y).coerceIn(-maxY, maxY))
-                scale = s
-            }
-        }) {
-        Box(Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale,
-            translationX = offset.x, translationY = offset.y)) {
-            Image(bmp.asImageBitmap(), contentDescription = null, contentScale = ContentScale.FillBounds,
-                modifier = Modifier.fillMaxSize())
-            if (traces.isNotEmpty()) {
-                Canvas(Modifier.fillMaxSize()) {
-                    val k = size.width / imgW
-                    val stroke = Stroke(width = 1.5.dp.toPx() / scale)
-                    for (t in traces) {
-                        val path = Path()
-                        var pen = false
-                        for (i in t.pos.indices) {
-                            val y = t.pos[i]
-                            if (!y.isFinite()) { pen = false; continue }
-                            val px = (t.x0 + i) * k
-                            val py = y.toFloat() * k
-                            if (pen) path.lineTo(px, py) else path.moveTo(px, py)
-                            pen = true
-                        }
-                        drawPath(path, traceColour, style = stroke)
-                    }
-                }
-            }
-        }
+/** A record's cell boxes ("name rhythm x0 x1 y0 y1;..."); empty for older records. */
+internal fun parseCells(s: String?): List<SheetPipeline.CellBox> =
+    s.orEmpty().split(';').filter { it.isNotBlank() }.mapNotNull { e ->
+        val f = e.trim().split(' ')
+        runCatching { SheetPipeline.CellBox(f[0], f[1].toBoolean(), f[2].toInt(), f[3].toInt(), f[4].toInt(), f[5].toInt()) }
+            .getOrNull()
     }
-}
