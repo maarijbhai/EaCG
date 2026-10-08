@@ -489,6 +489,18 @@ mode), the Lab. The old SheetSection composable is left in SheetPanels.kt,
 unused. 112 JVM tests; NOTHING visual verified on the A30s -- see the
 plan's §7 acceptance checks.
 
+## 25. 2026-10-08 — Camera photos must leave the phone
+
+Found on the first deliberately bad camera photo (eacg_sheet_photo_model_
+20261008_111231.csv: row 1 -- I, aVR, V1, V4 -- 0% traced): an in-app camera
+photo lived only in the app cache (cleared at the next shot) and the private
+record, so it could not reach data/kit_photos for the desktop replay. Now the
+camera writes the ORIGINAL to the gallery (MediaStore Pictures/EaCG, Android
+10+, no permission; a cancelled shot's empty entry is deleted; cache below
+10), and the Result screen's More menu has "Save photo and page to
+Downloads" (the record's photo.jpg as digitised and page.jpg). Formats
+untouched. 112 JVM tests; NOT verified on the A30s.
+
 ---
 
 ## Open items (ordered)

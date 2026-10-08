@@ -225,6 +225,25 @@ fun ResultScreen(
                     Icon(EaIcons.More, contentDescription = "More options", tint = com.maarijalam.eacg.ui.theme.Text2)
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    // The record's photo (as digitised) and straightened page to
+                    // Downloads/EaCG, for the desktop replay and for diagnosis.
+                    DropdownMenuItem(text = { Text("Save photo and page to Downloads") },
+                        enabled = data.recordId != null, onClick = {
+                            menu = false
+                            val id = data.recordId ?: return@DropdownMenuItem
+                            scope.launch {
+                                shareError = runCatching {
+                                    val dir = RecordStore.dir(context, id)
+                                    val out = listOf(RecordStore.PHOTO to "eacg_photo_$id.jpg",
+                                        RecordStore.PAGE to "eacg_page_$id.jpg").mapNotNull { (f, n) ->
+                                        File(dir, f).takeIf { it.isFile }?.let {
+                                            Exporter.exportImage(context, n, withContext(Dispatchers.IO) { it.readBytes() })
+                                        }
+                                    }
+                                    "Saved " + out.joinToString(", ")
+                                }.getOrElse { "Save failed: ${it.message}" }
+                            }
+                        })
                     DropdownMenuItem(text = { Text("Delete record", color = BadText) }, enabled = onDelete != null,
                         onClick = { menu = false; confirmDelete = true })
                 }

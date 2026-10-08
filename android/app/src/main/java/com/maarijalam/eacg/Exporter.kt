@@ -42,6 +42,48 @@ object Exporter {
 
     fun stamp(): String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
 
+    /**
+     * A JPEG to Downloads/EaCG (a record's photo or page), so a scan's images
+     * can reach the desktop replay like a gallery photo. Returns where it went.
+     */
+    suspend fun exportImage(context: Context, name: String, bytes: ByteArray): String =
+        withContext(Dispatchers.IO) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values = ContentValues().apply {
+                    put(MediaStore.Downloads.DISPLAY_NAME, name)
+                    put(MediaStore.Downloads.MIME_TYPE, "image/jpeg")
+                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/EaCG")
+                }
+                val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                    ?: error("MediaStore refused to create $name")
+                context.contentResolver.openOutputStream(uri)?.use { it.write(bytes) }
+                    ?: error("could not open $uri for writing")
+                "Downloads/EaCG/$name"
+            } else {
+                val dir = File(context.getExternalFilesDir(null), "exports").apply { mkdirs() }
+                File(dir, name).apply { writeBytes(bytes) }.absolutePath
+            }
+        }
+
+    /**
+     * Where the in-app camera writes its photo: a new gallery entry in
+     * Pictures/EaCG (Android 10+, no permission needed for the app's own
+     * entries), so every camera photo is ALSO a normal gallery photo -- the
+     * original, full resolution -- that can be copied to data/kit_photos for
+     * the desktop replay. Null below Android 10 (the caller uses the cache).
+     */
+    fun newCameraPhotoUri(context: Context, name: String): android.net.Uri? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, name)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/EaCG")
+        }
+        return runCatching {
+            context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+        }.getOrNull()
+    }
+
     /** Any CSV into Downloads/EaCG/ (see the class comment); returns where. */
     suspend fun exportText(context: Context, name: String, text: String): String =
         withContext(Dispatchers.IO) {

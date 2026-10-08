@@ -44,19 +44,27 @@ fun ScanFlow(
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
         val u = pendingShot
         pendingShot = null
-        if (ok && u != null) scan.load(Uri.parse(u), "camera")
+        if (u == null) return@rememberLauncherForActivityResult
+        if (ok) scan.load(Uri.parse(u), "camera")
+        // A cancelled shot leaves no empty gallery entry behind.
+        else if (u.startsWith("content://media")) runCatching { context.contentResolver.delete(Uri.parse(u), null, null) }
     }
     val take = {
-        val dir = File(context.cacheDir, "camera").apply { mkdirs() }
-        // One shot at a time: the record keeps its own copy of the photo.
-        dir.listFiles()?.forEach { it.delete() }
-        val f = File(dir, "scan_${Exporter.stamp()}.jpg")
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.files", f)
+        // The photo goes to the gallery (Pictures/EaCG, original resolution) so
+        // it can be copied off the phone like any other; the cache only below
+        // Android 10.
+        val name = "eacg_${Exporter.stamp()}.jpg"
+        val uri = Exporter.newCameraPhotoUri(context, name) ?: run {
+            val dir = File(context.cacheDir, "camera").apply { mkdirs() }
+            dir.listFiles()?.forEach { it.delete() }
+            FileProvider.getUriForFile(context, "${context.packageName}.files", File(dir, name))
+        }
         pendingShot = uri.toString()
         try {
             camera.launch(uri)
         } catch (e: ActivityNotFoundException) {
             pendingShot = null
+            if (uri.toString().startsWith("content://media")) runCatching { context.contentResolver.delete(uri, null, null) }
             pick()     // no camera app: fall back to the gallery
         }
     }
