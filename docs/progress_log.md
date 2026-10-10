@@ -550,6 +550,21 @@ by construction). Tests: `RowsFollowTheLayout` (fails under the old rule:
 fixtures: only additions) and three ROW_SPACING cases in the quality
 fixtures. Python 94, JVM 114.
 
+## 28. 2026-10-10 — Eight more test sheets, bundled into the app
+
+Eight further fold-10 sheets had been generated (2026-10-08, commit
+00414ff, minor grid 242,160,160, all files present): PTB-XL 160 / 167
+(STTC: NST_, ISCAL), 1737 / 3908 (MI: IMI, ASMI), 4016 / 8504 (CD: CLBBB,
+CRBBB), 5830 / 7916 (HYP: LVH). The original four (9, 38, 40, 57) are all
+NORM, so these add every diagnostic superclass -- and Mishra et al.'s
+classes (LBBB, RBBB, MI, T-wave). `make_kit_assets.py` now bundles all 12
+into the app (assets/kit: targets.txt + 16 new truth CSVs; the four
+existing files byte-identical), so the phone's benchmark selector offers
+them and its exports carry the target for score_device_sheets.py. Checked:
+the bundled 12-lead truth equals the desktop scorer's (SheetTruth) exactly
+(max |diff| 0.0, V1 of 4016 and 5830). The selector is sorted by record
+number. 114 JVM tests; NOT verified on the A30s.
+
 ---
 
 ## Open items (ordered)

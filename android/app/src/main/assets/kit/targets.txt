@@ -1,5 +1,13 @@
 # written by python/make_kit_assets.py; one printed sheet per line
+name=ptbxl160_kit_500hz_300dpi ecg_id=160 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl160_kit_500hz_300dpi_II.csv truth12=ptbxl160_kit_500hz_300dpi_12lead.csv
+name=ptbxl167_kit_500hz_300dpi ecg_id=167 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl167_kit_500hz_300dpi_II.csv truth12=ptbxl167_kit_500hz_300dpi_12lead.csv
+name=ptbxl1737_kit_500hz_300dpi ecg_id=1737 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl1737_kit_500hz_300dpi_II.csv truth12=ptbxl1737_kit_500hz_300dpi_12lead.csv
 name=ptbxl38_kit_500hz_300dpi ecg_id=38 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl38_kit_500hz_300dpi_II.csv truth12=ptbxl38_kit_500hz_300dpi_12lead.csv
+name=ptbxl3908_kit_500hz_300dpi ecg_id=3908 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl3908_kit_500hz_300dpi_II.csv truth12=ptbxl3908_kit_500hz_300dpi_12lead.csv
+name=ptbxl4016_kit_500hz_300dpi ecg_id=4016 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl4016_kit_500hz_300dpi_II.csv truth12=ptbxl4016_kit_500hz_300dpi_12lead.csv
 name=ptbxl40_kit_500hz_300dpi ecg_id=40 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl40_kit_500hz_300dpi_II.csv truth12=ptbxl40_kit_500hz_300dpi_12lead.csv
 name=ptbxl57_kit_500hz_300dpi ecg_id=57 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl57_kit_500hz_300dpi_II.csv truth12=ptbxl57_kit_500hz_300dpi_12lead.csv
+name=ptbxl5830_kit_500hz_300dpi ecg_id=5830 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl5830_kit_500hz_300dpi_II.csv truth12=ptbxl5830_kit_500hz_300dpi_12lead.csv
+name=ptbxl7916_kit_500hz_300dpi ecg_id=7916 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl7916_kit_500hz_300dpi_II.csv truth12=ptbxl7916_kit_500hz_300dpi_12lead.csv
+name=ptbxl8504_kit_500hz_300dpi ecg_id=8504 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl8504_kit_500hz_300dpi_II.csv truth12=ptbxl8504_kit_500hz_300dpi_12lead.csv
 name=ptbxl9_kit_500hz_300dpi ecg_id=9 strat_fold=10 width_mm=277.02933333333334 height_mm=189.992 fs=500.0 n=5000 truth=ptbxl9_kit_500hz_300dpi_II.csv truth12=ptbxl9_kit_500hz_300dpi_12lead.csv

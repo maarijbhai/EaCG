@@ -108,7 +108,8 @@ class ScanController(
 
     init {
         scope.launch {
-            targets = runCatching { KitTargets.load(context) }.getOrDefault(emptyList())
+            // By record number (targets.txt is in file-name order: 160, 167, 1737, 38, ...).
+            targets = runCatching { KitTargets.load(context) }.getOrDefault(emptyList()).sortedBy { it.ecgId }
             val remembered = settings.benchmarkTarget
             target = targets.firstOrNull { it.name == remembered }
         }
