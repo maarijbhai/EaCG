@@ -565,6 +565,22 @@ the bundled 12-lead truth equals the desktop scorer's (SheetTruth) exactly
 (max |diff| 0.0, V1 of 4016 and 5830). The selector is sorted by record
 number. 114 JVM tests; NOT verified on the A30s.
 
+## 29. 2026-10-11 — Diagnosis classifier: scripts written, training not yet run
+
+`ml/clf_data.py` (PTB-XL 100 Hz cache; the three input views -- full
+12 x 10 s, printed = each lead only in its 2.5 s window + lead II 10 s, and
+Mishra's single lead 400 samples; superclass multi-label and Mishra
+single-label labels), `ml/clf_models.py` (1-D ResNet ~0.5 M; Mishra et al.
+Fig. 3b re-implemented with stated choices), `ml/train_classifier.py`
+(folds 1-8 / 9 / 10, checkpoint on validation macro AUROC, test once;
+results/ml/clf_<run>.csv + .json), `ml/run_clf_overnight.sh` (cache, smoke
+test, 7 runs), manual `docs/classifier_training.md`. Checked without
+training: views and labels on 300 records; label counts per split match
+PTB-XL's (superclass-labelled 17,084 / 2,146 / 2,158; Mishra classes in
+training NORM 7,505, MI 3,904, CLBBB 400, CRBBB 198, T-wave 300); the AUROC
+equals a brute-force pairwise count with ties; scripts compile; bash
+syntax ok. The user runs the training overnight (by hand, in WSL).
+
 ---
 
 ## Open items (ordered)
