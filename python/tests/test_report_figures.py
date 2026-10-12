@@ -94,6 +94,14 @@ class Failures(unittest.TestCase):
         self.assertTrue(np.isnan(sm["median"]))
 
 
+class Json(unittest.TestCase):
+
+    def test_nan_becomes_null(self):
+        import json
+        o = R.clean_json({"a": float("nan"), "b": [1.0, np.inf, np.float64(2.5)], "c": np.int64(3)})
+        self.assertEqual(json.loads(json.dumps(o, allow_nan=False)), {"a": None, "b": [1.0, None, 2.5], "c": 3})
+
+
 class Pairing(unittest.TestCase):
 
     def test_unpaired_learned_export_is_reported_not_crashed_on(self):

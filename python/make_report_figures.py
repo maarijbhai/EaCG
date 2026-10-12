@@ -247,6 +247,19 @@ def choose_example(df_set: pd.DataFrame) -> pd.Series | None:
 
 # ============================================================ output helpers
 
+def clean_json(o):
+    """NaN / inf -> None, recursively (json.dumps would write invalid 'NaN')."""
+    if isinstance(o, dict):
+        return {k: clean_json(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [clean_json(v) for v in o]
+    if isinstance(o, (float, np.floating)):
+        return float(o) if np.isfinite(o) else None
+    if isinstance(o, np.integer):
+        return int(o)
+    return o
+
+
 def git(*a) -> str:
     return subprocess.run(["git", *a], cwd=REPO, capture_output=True, text=True).stdout.strip()
 
@@ -271,7 +284,7 @@ class Out:
 
     def sidecar(self, stem: str, files: list[str], extra: dict | None = None):
         (self.root / f"{stem}.json").write_text(json.dumps(
-            {**self.prov, "files": files, **(extra or {})}, indent=2, default=str), encoding="utf-8")
+            clean_json({**self.prov, "files": files, **(extra or {})}), indent=2, default=str), encoding="utf-8")
         self.written += files
 
     def csv(self, name: str, frame: pd.DataFrame):
@@ -323,6 +336,8 @@ def fig_example(out: Out, plt, df: pd.DataFrame, set_name: str, pcc_lim) -> dict
                 traces[tk] = (t0, sig, tr)
                 rows[tk] = r
     fs = 500.0
+    t0_any, _, tr_any = next(iter(traces.values()))
+    xlim = (t0_any, t0_any + (len(tr_any) - 1) / fs)
     allv = []
     for t0, sig, tr in traces.values():
         allv += [sig - np.nanmedian(sig), tr - np.nanmedian(tr)]
@@ -341,9 +356,9 @@ def fig_example(out: Out, plt, df: pd.DataFrame, set_name: str, pcc_lim) -> dict
             for i in range(len(tr)):
                 data.append({"tracer": tk, "t_s": round(t[i], 4), "truth_mv": tr[i] - np.nanmedian(tr),
                              "digitised_mv": (sig[i] - np.nanmedian(sig)) if i < len(sig) else np.nan})
-            ax.set_xlim(t[0], t[-1])
         else:
             no_data(ax, f"no {tk} export of this photo")
+        ax.set_xlim(*xlim)
         ax.set_ylim(*ylim)
         ax.set_xlabel("time (s)")
         ax.set_ylabel("mV")
@@ -398,8 +413,10 @@ def fig_pcc_by_set(out: Out, plt, df: pd.DataFrame, pcc_lim):
                            medianprops={"color": COLOUR[tk], "lw": 1.5},
                            whiskerprops={"color": COLOUR[tk]}, capprops={"color": COLOUR[tk]},
                            flierprops={"markeredgecolor": COLOUR[tk], "markersize": 3})
-            ax.text(x, pcc_lim[0] + 0.01, f"{sm['n']}", ha="center", va="bottom", fontsize=7, color=COLOUR[tk])
-    ax.set_xticks(range(len(cats)), [c.replace("_", " ") for _, c in cats])
+    ns = {(r["set"], r["condition"], r["tracer"]): r["n"] for r in rows}
+    ax.set_xticks(range(len(cats)), [f"{c.replace('_', ' ')}\n{ns[(s, c, 'learned')]} | {ns[(s, c, 'classical')]}"
+                                      for s, c in cats])
+    ax.text(1.0, -0.22, "n leads: learned | classical", transform=ax.transAxes, ha="right", va="top", fontsize=7)
     ax.set_xlim(-0.6, len(cats) - 0.4)
     ax.set_ylim(*pcc_lim)
     ax.set_ylabel("lead PCC")
@@ -476,8 +493,7 @@ def fig_pcc_by_quality(out: Out, plt, df: pd.DataFrame, pcc_lim):
         if len(ok):
             ax.scatter(i + rng.uniform(-0.18, 0.18, len(ok)), ok, s=6, color=COLOUR["learned"], alpha=0.6, lw=0)
             ax.plot([i - 0.25, i + 0.25], [sm["median"]] * 2, color="black", lw=1.2)
-        ax.text(i, pcc_lim[0] + 0.01, f"{sm['n']}", ha="center", va="bottom", fontsize=7)
-    ax.set_xticks(range(len(order)), order)
+    ax.set_xticks(range(len(order)), [f"{v}\nn = {r['n']}" for v, r in zip(order, rows)])
     ax.set_ylim(*pcc_lim)
     ax.set_ylabel("lead PCC (learned)")
     fig.savefig(out.root / "pcc_by_quality.pdf")
@@ -519,12 +535,13 @@ def fig_robustness(out: Out, plt, rob: pd.DataFrame):
                 ax.plot([x], [r["median_diff"]], "o", color=COLOUR[tk], ms=4)
     ax.axhline(0, color="black", lw=0.8)
     ax.set_xticks(range(len(conds)), [c.replace("_", " ") for c in conds])
+    ax.set_xlim(-0.6, len(conds) - 0.4)
     ax.set_ylabel(r"$\Delta$ lead PCC vs ideal")
     for tk in TRACERS:
         ax.plot([], [], "o-", color=COLOUR[tk], ms=4, label=tk)
     ax.legend(loc="lower right", frameon=False, ncol=2)
     if not any_data:
-        no_data(ax, "no robustness photos yet")
+        ax.text(0.5, 0.75, "no robustness photos yet", transform=ax.transAxes, ha="center", color="#666666")
     fig.savefig(out.root / "robustness.pdf")
     plt.close(fig)
 
@@ -775,7 +792,8 @@ def main(argv=None) -> int:
     gd = {g: summary(lv[lv["group"] == g]["pcc_asis"])["median"] for g in ("dev", "held_out")}
     head["dev_vs_held_out"] = {"dev_median": gd["dev"], "held_out_median": gd["held_out"],
                                "difference": (gd["held_out"] - gd["dev"]) if all(np.isfinite(v) for v in gd.values()) else None}
-    (out.root / "headline.json").write_text(json.dumps({**out.prov, "headline": head}, indent=2, default=str), encoding="utf-8")
+    (out.root / "headline.json").write_text(json.dumps(clean_json({**out.prov, "headline": head}), indent=2,
+                                                       default=str, allow_nan=False), encoding="utf-8")
     print(f"wrote {len(out.written) + 1} files to {out.root}")
     return 0
 
