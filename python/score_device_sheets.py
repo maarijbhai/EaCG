@@ -20,6 +20,7 @@ from __future__ import annotations
 import csv
 import json
 import platform
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -58,6 +59,36 @@ def read_export(path: Path) -> tuple[dict, dict]:
     return meta, {n: a[:, i] for i, n in enumerate(names)}
 
 
+_CALIB = re.compile(r"(\d+)\s*/\s*9 ticks")
+_T0 = re.compile(r"t0 from (\S+)")
+
+
+def calibration_facts(calibration: str | None) -> tuple:
+    """(ticks found of 9, time-zero source) parsed from the header's
+    calibration line ('ticks 9.9320 px/mm, 6/9 ticks, t0 from pulses');
+    ('', '') where a part is absent."""
+    c = calibration or ""
+    m, t = _CALIB.search(c), _T0.search(c)
+    return (int(m.group(1)) if m else ""), (t.group(1) if t else "")
+
+
+def export_leads(path: Path, meta: dict, cols: dict) -> list[tuple]:
+    """Each lead of one export with its truth: (name, rhythm, row, col,
+    digitised mV, truth mV). THE cutting every score and figure uses: a 3x4
+    lead is its 2.5 s window of the 10 s column, the rhythm strip all 10 s,
+    the truth from score_12lead.SheetTruth."""
+    truth = S12.SheetTruth(skp.Target(meta["target"]))
+    out = []
+    for r, names in enumerate(tuple(segment.LAYOUT_3X4) + (("II",),)):
+        for k, name in enumerate(names):
+            rhythm = r == 3
+            sig = cols["II_rhythm" if rhythm else name]
+            if not rhythm:
+                sig = sig[k * CELL:(k + 1) * CELL]
+            out.append((name, rhythm, r, k, sig, truth.leads[(name, rhythm)]["mv"]))
+    return out
+
+
 def main() -> int:
     out = []
     for path in sorted(EXPORTS.glob("eacg_sheet_*.csv")):
@@ -66,7 +97,7 @@ def main() -> int:
         if target == "none":
             continue
         t = skp.Target(target)
-        truth = S12.SheetTruth(t)
+        ticks_found, t0_source = calibration_facts(meta.get("calibration"))
         head = {"export": path.name, "local_time": meta.get("local_time"),
                 "target": target, "ecg_id": t.ecg_id, "tracer": meta.get("tracer"),
                 "corners": meta.get("corners"), "rect": meta.get("rect"),
@@ -76,18 +107,14 @@ def main() -> int:
                 "pss_end_mb": meta.get("pss_end_mb"),
                 # FR8 (SheetQuality.kt); absent before 2026-10-07
                 "quality": meta.get("quality"), "warnings": meta.get("warnings")}
-        for r, names in enumerate(tuple(segment.LAYOUT_3X4) + (("II",),)):
-            for k, name in enumerate(names):
-                rhythm = r == 3
-                sig = cols["II_rhythm" if rhythm else name]
-                if not rhythm:
-                    sig = sig[k * CELL:(k + 1) * CELL]
-                tr = truth.leads[(name, rhythm)]["mv"]
-                sc = S12.score_lead(sig, tr, segment.RECORDING_S if rhythm else segment.CELL_S)
-                sh = timemap.best_shift(tr, sig, S12.FS)
-                out.append({**head, "lead": name, "rhythm": rhythm, "row": r, "col": k, **sc,
-                            "shift_ms": round(sh.shift_ms, 1) if np.isfinite(sh.shift_ms) else "",
-                            "shift_status": sh.status})
+        # Added 2026-10-12 (additive; empty where an older export lacks the line).
+        tail = {"geometry": meta.get("geometry", ""), "ticks_found": ticks_found, "t0_source": t0_source}
+        for name, rhythm, r, k, sig, tr in export_leads(path, meta, cols):
+            sc = S12.score_lead(sig, tr, segment.RECORDING_S if rhythm else segment.CELL_S)
+            sh = timemap.best_shift(tr, sig, S12.FS)
+            out.append({**head, "lead": name, "rhythm": rhythm, "row": r, "col": k, **sc,
+                        "shift_ms": round(sh.shift_ms, 1) if np.isfinite(sh.shift_ms) else "",
+                        "shift_status": sh.status, **tail})
         cells = [x for x in out if x["export"] == path.name and not x["rhythm"]]
         med = lambda key: np.median([float(x[key]) for x in cells if x.get(key, "") != ""])
         print(f"{path.name}: {meta.get('calibration')}\n    median lead PCC {med('pcc_asis'):.3f}"
