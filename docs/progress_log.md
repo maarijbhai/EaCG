@@ -700,6 +700,43 @@ signals' on 3 of 7. The low CD threshold flags CD on two NORM records even
 from their true signals (p 0.07-0.08); the failed 3x3-kernel export reads as
 MI 0.85. No held-out sheet has a phone export yet.
 
+## 33. 2026-10-12 — The clean set: all 12 printed sheets as images, both tracers, on the A30s
+
+The user ran the 12 printed-sheet IMAGES (3200 x 2304, picked from the
+gallery; no camera) through the phone, learned and classical, with the
+classifier APK (bd9245c). 26 exports; three are the same run exported again
+(57 classical x3, 8504 classical x3; only local_time differs) and are left
+out. Manifest `python/test_set.csv` = 24 rows, set/condition `clean`
+(96bbbbc); scores e6d2afb; figures and tables `results/report/` (66d1ed6).
+The pre-fix dev exports are no longer on disk (`archive/` holds 11 photos,
+no CSVs); their scores stay in git at b24bd1a.
+
+| 144 leads | learned | classical |
+|---|---|---|
+| PCC median [IQR] | **0.994** [0.991, 0.997] | 0.971 [0.952, 0.984] |
+| aligned PCC | 0.998 | 0.988 |
+| SNR / shifted (dB) | **19.3 / 23.0** | 12.5 / 15.5 |
+| gain | 0.98 | 0.94 |
+| R-peak ratio | 0.97 | 0.88 |
+| PCC >= 0.9 | **99%** (143/144) | 93% |
+
+Wilcoxon (paired by sheet and lead), n = 144: p = 1.1e-22. Every sheet
+`quality: ok`, no warnings. The one learned lead below 0.9 is PTB-XL 38
+lead I (0.79; RMSE 0.045 mV: a low-amplitude lead; classical 0.84 there).
+Time per sheet: learned 22.4 s (trace 19.9 s), classical 2.9 s; classify
+~55 ms. **Peak native memory (first measurement): learned 518 MB
+(507-521), classical 150 MB.** This is the ceiling: on a clean image the
+plain-vs-shifted SNR gap is ~4 dB, against ~6 on photos.
+
+Classifier on the digitised sheets vs on the true signals (the true-signal
+verdicts from the deployed model): learned identical on 9/12 (57 and 160
+lose a false MI, 4016 adds HYP at 0.48 against its 0.48 threshold);
+learned output names exactly the PTB-XL label on 7/12 and contains it on
+11/12 (167, STTC, reads HYP even from true signals); classical 6/12 exact,
+10/12 containing. 4016 (CLBBB) flags MI + CD + HYP from both tracers and
+MI + CD from true signals: LBBB mimics MI and LVH, a classifier error, not
+a digitiser one.
+
 ---
 
 ## Open items (ordered)
