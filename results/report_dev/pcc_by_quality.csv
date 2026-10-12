@@ -1,0 +1,5 @@
+verdict,n,n_unavailable,pct_ge_09,median,q1,q3
+ok,0,0,,,,
+check,0,0,,,,
+unreliable,0,0,,,,
+not recorded,84,0,42.857142857142854,0.8662000000000001,0.686925,0.9522

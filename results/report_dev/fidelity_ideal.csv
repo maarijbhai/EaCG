@@ -1,0 +1,17 @@
+measure,tracer,n,n_unavailable,pct_ge_09,median,q1,q3
+PCC,learned,84,0,42.857142857142854,0.8662000000000001,0.686925,0.9522
+PCC,classical,0,0,,,,
+Aligned PCC,learned,84,0,84.52380952380952,0.9849,0.9619249999999999,0.99125
+Aligned PCC,classical,0,0,,,,
+SNR (dB),learned,84,0,77.38095238095238,5.961,2.27,10.17275
+SNR (dB),classical,0,0,,,,
+Shifted SNR (dB),learned,84,0,85.71428571428571,12.284500000000001,6.428,15.84225
+Shifted SNR (dB),classical,0,0,,,,
+RMSE (mV),learned,84,0,0.0,0.10875,0.048825,0.16472499999999998
+RMSE (mV),classical,0,0,,,,
+Gain,learned,84,0,28.571428571428573,0.83405,0.658025,0.913975
+Gain,classical,0,0,,,,
+R-peak ratio,learned,84,0,53.57142857142857,0.9099999999999999,0.8059999999999999,0.948825
+R-peak ratio,classical,0,0,,,,
+Coverage,learned,84,0,100.0,0.9984,0.9968,0.9984
+Coverage,classical,0,0,,,,

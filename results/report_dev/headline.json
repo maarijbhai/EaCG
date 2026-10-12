@@ -1,0 +1,119 @@
+{
+  "generated_by": "python/make_report_figures.py",
+  "utc": "2026-10-12T08:44:54+00:00",
+  "git_commit": "b24bd1a3cd56ae10c72bc2a439ffcb969494f221",
+  "git_dirty": false,
+  "params": {
+    "scores": "results\\device\\sheet_scores.csv",
+    "manifest": "python\\test_set.csv",
+    "manifest_sha256": "325937efe3ac657762256edbe5dc516a33a53f6a56dfa7b4402e61488d783589",
+    "n_boot": 2000,
+    "seed": 20261012,
+    "good_pcc": 0.9,
+    "dev_ids": [
+      9,
+      38,
+      40,
+      57
+    ],
+    "held_out_ids": [
+      1737,
+      3908,
+      4016,
+      8504,
+      167,
+      160,
+      7916,
+      5830
+    ]
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "pandas": "3.0.2",
+    "matplotlib": "3.10.5"
+  },
+  "headline": {
+    "sets": {
+      "ideal": {
+        "learned": {
+          "median_pcc": 0.8662000000000001,
+          "ci95": [
+            0.5721,
+            0.9074
+          ],
+          "pct_ge_09": 42.857142857142854,
+          "median_shifted_snr_db": 12.284500000000001,
+          "n_leads": 84,
+          "n_unavailable": 0,
+          "n_photos": 7,
+          "rhythm_median_pcc": 0.7771,
+          "rhythm_n": 7
+        }
+      }
+    },
+    "wilcoxon": {
+      "clean": {
+        "n_pairs": 0,
+        "statistic": null,
+        "p": null,
+        "median_diff": null
+      },
+      "ideal": {
+        "n_pairs": 0,
+        "statistic": null,
+        "p": null,
+        "median_diff": null
+      },
+      "robustness": {
+        "n_pairs": 0,
+        "statistic": null,
+        "p": null,
+        "median_diff": null
+      }
+    },
+    "examples": {
+      "clean": null,
+      "ideal": {
+        "set": "ideal",
+        "photo_id": "eacg_sheet_ptbxl57_kit_500hz_300dpi_model_20261007_151220_6a8",
+        "export": "eacg_sheet_ptbxl57_kit_500hz_300dpi_model_20261007_151220_6a8.csv",
+        "lead": "aVL",
+        "ecg_id": 57,
+        "learned_pcc": 0.8695,
+        "set_learned_median": 0.8662000000000001,
+        "classical_export_found": false
+      }
+    },
+    "on_device": {
+      "n_exports": 7,
+      "median_total_ms": 21602.0,
+      "model_share": 0.9067215998518656,
+      "median_peak_native_mb": null,
+      "median_pss_end_mb": null
+    },
+    "pairing": {
+      "learned_photos_without_classical": [
+        "eacg_sheet_ptbxl38_kit_500hz_300dpi_model_20261005_164847_915",
+        "eacg_sheet_ptbxl40_kit_500hz_300dpi_model_20261004_191334",
+        "eacg_sheet_ptbxl57_kit_500hz_300dpi_model_20261005_164201_957",
+        "eacg_sheet_ptbxl57_kit_500hz_300dpi_model_20261007_151220_6a8",
+        "eacg_sheet_ptbxl9_kit_500hz_300dpi_model_20261005_102723_d55",
+        "eacg_sheet_ptbxl9_kit_500hz_300dpi_model_20261005_104102_c38",
+        "eacg_sheet_ptbxl9_kit_500hz_300dpi_model_20261005_122715"
+      ],
+      "classical_photos_without_learned": []
+    },
+    "skipped": {
+      "skipped_not_in_manifest": [],
+      "in_manifest_without_scores": [
+        "eacg_sheet_photo_model_20261008_111231.csv"
+      ]
+    },
+    "dev_vs_held_out": {
+      "dev_median": 0.8662000000000001,
+      "held_out_median": null,
+      "difference": null
+    }
+  }
+}

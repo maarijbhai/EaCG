@@ -1,0 +1,15 @@
+tracer,stage,median_ms,n_exports
+learned,corners,0.0,7
+learned,rectify,175.0,7
+learned,grid,2415.5,4
+learned,locate,298.0,7
+learned,calibrate+segment,28.0,7
+learned,trace,19587.0,7
+learned,cut,62.0,1
+classical,corners,0.0,0
+classical,rectify,0.0,0
+classical,grid,0.0,0
+classical,locate,0.0,0
+classical,calibrate+segment,0.0,0
+classical,trace,0.0,0
+classical,cut,0.0,0

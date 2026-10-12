@@ -581,6 +581,37 @@ training NORM 7,505, MI 3,904, CLBBB 400, CRBBB 198, T-wave 300); the AUROC
 equals a brute-force pairwise count with ties; scripts compile; bash
 syntax ok. The user runs the training overnight (by hand, in WSL).
 
+## 30. 2026-10-12 — Results figures and tables script (make_report_figures.py)
+
+Analysis code only; no change to the app, `ecgproto` or any scoring
+function. `python/make_report_figures.py` reads
+`results/device/sheet_scores.csv` and a manifest `python/test_set.csv`
+(`export, photo_id, set, condition, photo_path`; `--draft-manifest` writes a
+first draft from the exports present) and writes F1-F7, T1-T3 and
+`headline.json`, each with a JSON sidecar. Rules: the lead is the unit (the
+rhythm strip is reported apart); an empty PCC is a failure (counted in n and
+as not >= 0.9); an empty aligned PCC is "not measurable" and counted;
+latency and memory once per export, `score*` stages are harness and the old
+`cut+score` is legacy (excluded from totals); median [IQR] with a
+cluster-bootstrap CI over photographs (2,000 resamples, seed 20261012);
+Wilcoxon paired by (photo, lead); robustness paired against the same
+record's ideal median. Scorer extension (additive, checked: no pre-existing
+column changed): `geometry`, `ticks_found`, `t0_source`, and
+`export_leads` -- the one cutting both the scores and the figures use.
+12 new tests (parsing, example choice, failures, NaN -> null, pairing).
+Commits d70f466 (code + draft manifest), b24bd1a (layout fixes found by
+viewing the PDFs; sheet_scores regenerated).
+
+Dev run (`--out results/report_dev`, 8 exports in the draft manifest, all
+`ideal`): learned PCC 0.866 [0.687, 0.952], aligned 0.985, SNR 6.0 / shifted
+12.3 dB, 43% of 84 leads >= 0.9, rhythm 0.777; total 21.6 s (19.8-24.0),
+the model 91% of it. **Not results:** the draft manifest includes pre-fix
+and failed exports (the 3x3-kernel run scores PCC ~0, which pulls the median
+down and the shared axis floor to -0.4); no classical, clean, robustness or
+held-out exports yet, so those panels, the Wilcoxon (n = 0) and the memory
+column are empty; F5 is all "not recorded" (exports predate the quality
+line). The real manifest is written after the photo session.
+
 ---
 
 ## Open items (ordered)
