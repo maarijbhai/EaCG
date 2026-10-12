@@ -139,7 +139,9 @@ def measured_errors() -> dict:
     import pandas as pd
     s = pd.read_csv(REPO / "results" / "device" / "sheet_scores.csv")
     s = s[s["tracer"].astype(str).str.startswith("model") & ~s["rhythm"].astype(bool)]
-    shift = pd.to_numeric(s["shift_ms"], errors="coerce").dropna()
+    # Shifts the scorer itself marks unreliable (a lost lead: the 3x3-kernel
+    # run's +-160 ms) are not timing errors and would set the spread alone.
+    shift = pd.to_numeric(s.loc[s["shift_status"] == "ok", "shift_ms"], errors="coerce").dropna()
     cov = pd.to_numeric(s["coverage"], errors="coerce").dropna()
     gain = pd.to_numeric(s["gain_ratio"], errors="coerce").dropna()
     # Uniform in +-L has sd L/sqrt(3): L chosen so the sd matches the measured one.
@@ -148,7 +150,8 @@ def measured_errors() -> dict:
             "stretch_pct": 0.0,
             "noise_mv": 0.02,
             "gap_pct": round(float(max(0.0, 1.0 - cov.median()) * 100), 2),
-            "source": "results/device/sheet_scores.csv (learned, 3x4 leads; noise assumed)",
+            "source": "results/device/sheet_scores.csv (learned, 3x4 leads, shift_status ok; noise assumed)",
+            "n_shifts": int(len(shift)),
             "n_leads": int(len(s))}
 
 
