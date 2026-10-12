@@ -612,6 +612,38 @@ held-out exports yet, so those panels, the Wilcoxon (n = 0) and the memory
 column are empty; F5 is all "not recorded" (exports predate the quality
 line). The real manifest is written after the photo session.
 
+## 31. 2026-10-12 — Diagnosis classifier: first results (7 runs)
+
+Run by the user in WSL (`ml/run_clf_overnight.sh`, then two re-runs), all at
+5953161, `git_dirty: false`; `results/ml/clf_<run>.csv/.json` (b84708d).
+PTB-XL 100 Hz, folds 1-8 / 9 / 10 (17,084 / 2,146 / 2,158 superclass-labelled
+records); checkpoint chosen on validation, test evaluated once.
+
+| run | input | val | **test** macro AUROC |
+|---|---|---|---|
+| full_resnet | 12 x 10 s | 0.919 | **0.917** |
+| printed_resnet / _s2 | printed 3x4 + II | 0.917 / 0.918 | **0.914 / 0.912** |
+| printed_resnet_aug / _s2 | printed + digitiser noise | 0.916 / 0.920 | **0.915 / 0.913** |
+| mishra_resnet (Mishra 5 classes) | printed | 0.959 | **0.970** (acc 0.860, F1 0.786) |
+| mishra_arch (their network) | lead II, 400 samples | 0.752 | **0.730** (acc 0.690, F1 0.364) |
+
+Findings: (1) the printed view costs ~0.003-0.005 macro AUROC against the
+full 12 x 10 s, about the spread between seeds -- a 3x4 printout keeps the
+superclass information. (2) The digitiser-noise augmentation changes the
+clean test score by nothing measurable; whether it buys robustness on
+digitised signals is the degradation curve's question (not yet run).
+(3) Mishra et al.'s architecture on lead II alone is far weaker here
+(CRBBB F1 0.09, T-wave 0.04); the 12-lead printed ResNet separates the
+bundle-branch blocks almost perfectly (AUROC 0.999 / 1.000). T-wave stays
+weak by F1 (0.40) despite AUROC 0.958: few examples (300 in training) and
+an argmax decision. HYP is the weakest superclass throughout (~0.89).
+
+Two runs were first killed by the Linux OOM killer at ~7.3 GB (WSL's
+default cap, half of 16 GB). Fixed outside the repo with a `.wslconfig`
+(`memory=11GB`, `swap=8GB`) in the user's profile; the re-runs completed.
+The smoke run (`clf_smoke.*`, 2,000 records, 1 epoch) is a set-up check
+only and is not committed.
+
 ---
 
 ## Open items (ordered)
