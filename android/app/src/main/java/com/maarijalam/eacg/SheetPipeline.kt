@@ -102,7 +102,11 @@ object SheetPipeline {
         /** Ticks rejected as outliers and replaced by their column-mates. */
         val ticksRejected: List<Triple<Int, Int, Double>> = emptyList(),
         /** Each lead's cell on the page. */
-        val cells: List<CellBox> = emptyList()
+        val cells: List<CellBox> = emptyList(),
+        /** The diagnosis classifier's output ([Classifier]); null if it could not run. */
+        val diagnosis: Diagnosis? = null,
+        /** Why there is no [diagnosis], when there is none. */
+        val diagnosisNote: String? = null
     ) {
         /** "ok", "check" or "unreliable" ([SheetQuality.verdict]). */
         val quality: String get() = SheetQuality.verdict(warnings)
@@ -418,6 +422,8 @@ object SheetPipeline {
                 val leads = ArrayList<LeadResult>()
                 var rowTraces: List<RowTrace> = emptyList()
                 var warnings: List<SheetQuality.Warning> = emptyList()
+                var diagnosis: Diagnosis? = null
+                var diagnosisNote: String? = null
                 try {
                     // With a listener: count tiles as the model reads them.
                     val m = if (tracer == Tracer.MODEL) (model ?: ownModel)!! else null
@@ -472,6 +478,15 @@ object SheetPipeline {
                         leads += LeadResult(cell.name, cell.rhythm, cell.tStartS, sig, sc?.first, sc?.second)
                     }
                     if (truth12 != null) lap(SCORE_KEY)
+                    // The diagnosis classifier on the cut leads: a pipeline
+                    // stage (timed, memory-logged), but never allowed to cost
+                    // the digitisation -- a failure is a note, not an error.
+                    runCatching { Classifier(context).use { it.diagnose(leads) } }
+                        .onSuccess { diagnosis = it }
+                        .onFailure { diagnosisNote = "classifier not run (${it.message})" }
+                    lap("classify", diagnosis?.let { d ->
+                        if (d.abnormal.isNotEmpty()) "Flagged: " + d.abnormal.joinToString(", ")
+                        else if ("NORM" in d.flags) "No abnormality flagged" else "Nothing flagged" })
                     rowTraces = traces.map { (pos, x0) -> RowTrace(x0, pos) }
                 } finally {
                     ownModel?.close()
@@ -486,7 +501,8 @@ object SheetPipeline {
                     mem.baseline, mem.peaks(), runCatching { pssMb() }.getOrNull(), warnings,
                     t0X = t0, rowY = rows.toList(), tickPositions = ticks.positions,
                     ticksRejected = ticks.rejected,
-                    cells = layout.cells.map { CellBox(it.name, it.rhythm, it.x0, it.x1, it.y0, it.y1) })
+                    cells = layout.cells.map { CellBox(it.name, it.rhythm, it.x0, it.x1, it.y0, it.y1) },
+                    diagnosis = diagnosis, diagnosisNote = diagnosisNote)
             } finally {
                 rect.release()
             }
@@ -539,6 +555,12 @@ object SheetPipeline {
         meta("warnings", r.warnings.joinToString("; ") {
             "${it.code}/${it.severity.name.lowercase()}" + (if (it.leads.isEmpty()) "" else "/" + it.leads.joinToString(","))
         })
+        // The diagnosis classifier (Diagnosis): probabilities, thresholds, model.
+        r.diagnosis?.let {
+            meta("diagnosis", it.probLine())
+            meta("diagnosis_thresholds", it.thresholdLine())
+            meta("diagnosis_model", it.model)
+        } ?: r.diagnosisNote?.let { meta("diagnosis_note", it) }
         for (l in r.leads) l.pcc?.let { meta("pcc_asis_${l.name}${if (l.rhythm) "_rhythm" else ""}", f("%.4f", it)) }
         val order = listOf("I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6")
         append("time_s," + order.joinToString(",") + ",II_rhythm\n")

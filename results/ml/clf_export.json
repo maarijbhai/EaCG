@@ -1,0 +1,26 @@
+{
+  "generated_by": "ml/export_classifier.py",
+  "utc": "2026-10-12T10:08:33+00:00",
+  "git_commit": "049c04e454fa0db6d7d71392df9cd7f5794f7a9e",
+  "git_dirty": false,
+  "params": {
+    "run": "printed_resnet_aug_s2",
+    "threshold_grid": "0.01-0.99 step 0.01"
+  },
+  "n": {
+    "val": 2146,
+    "test": 2158
+  },
+  "test_macro_auroc": {
+    "keras": 0.91304,
+    "tflite": 0.91306
+  },
+  "val_macro_auroc_tflite": 0.9199109121765364,
+  "model_bytes": 1710580,
+  "asset": "assets/ml/clf_superclass_fp16.tflite",
+  "versions": {
+    "python": "3.12.3",
+    "tensorflow": "2.21.0",
+    "numpy": "2.5.3"
+  }
+}

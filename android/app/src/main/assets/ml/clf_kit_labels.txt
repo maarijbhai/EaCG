@@ -1,0 +1,13 @@
+# written by python/make_clf_kit_labels.py: PTB-XL superclasses of the printed test sheets
+ecg_id=9 superclasses=NORM codes=NORM,SR
+ecg_id=38 superclasses=NORM codes=NORM,SR
+ecg_id=40 superclasses=NORM codes=NORM,SR
+ecg_id=57 superclasses=NORM codes=NORM,SR
+ecg_id=160 superclasses=STTC codes=NST_,SR
+ecg_id=167 superclasses=STTC codes=ISCAL,SR
+ecg_id=1737 superclasses=MI codes=IMI,SR
+ecg_id=3908 superclasses=MI codes=ASMI,SR
+ecg_id=4016 superclasses=CD codes=CLBBB,SR
+ecg_id=5830 superclasses=HYP codes=LVH,SEHYP,SR
+ecg_id=7916 superclasses=HYP codes=LVH,SR
+ecg_id=8504 superclasses=CD codes=CRBBB,SR

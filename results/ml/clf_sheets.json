@@ -1,0 +1,70 @@
+{
+  "generated_by": "ml/clf_degradation.py",
+  "utc": "2026-10-12T10:15:40+00:00",
+  "git_commit": "a2c39ab68560959929b47776d9102ff677b0f5b9",
+  "git_dirty": false,
+  "params": {
+    "exports": "data/device_exports",
+    "model": {
+      "model": "clf_superclass_fp16.tflite",
+      "run": "printed_resnet_aug_s2",
+      "task": "superclass (multi-label, sigmoid)",
+      "classes": [
+        "NORM",
+        "MI",
+        "STTC",
+        "CD",
+        "HYP"
+      ],
+      "thresholds": {
+        "NORM": 0.47,
+        "MI": 0.35,
+        "STTC": 0.4,
+        "CD": 0.05,
+        "HYP": 0.48
+      },
+      "threshold_rule": "per class, the F1-maximising value on the validation fold (9)",
+      "input": {
+        "name": "ecg",
+        "shape": [
+          1,
+          1000,
+          13
+        ],
+        "fs_hz": 100,
+        "from_500hz": "mean of each block of 5 samples, NaN ignored",
+        "view": "printed: each lead in its 2.5 s window about its median, zero elsewhere; channel 13 = lead II rhythm, all 10 s; NaN -> 0",
+        "lead_order": [
+          "I",
+          "II",
+          "III",
+          "aVR",
+          "aVL",
+          "aVF",
+          "V1",
+          "V2",
+          "V3",
+          "V4",
+          "V5",
+          "V6",
+          "II_rhythm"
+        ]
+      },
+      "output": {
+        "name": "prob",
+        "shape": [
+          1,
+          5
+        ]
+      },
+      "val_macro_auroc": 0.9199,
+      "test_macro_auroc": 0.9131,
+      "git_commit": "049c04e454fa0db6d7d71392df9cd7f5794f7a9e",
+      "git_dirty": false
+    }
+  },
+  "versions": {
+    "python": "3.12.3",
+    "numpy": "2.5.3"
+  }
+}

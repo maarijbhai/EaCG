@@ -291,8 +291,12 @@ private fun RecordResult(m: RecordStore.Meta, modifier: Modifier, onBack: () -> 
     var page by remember(m.id) { mutableStateOf<Bitmap?>(null) }
     var photo by remember(m.id) { mutableStateOf<Bitmap?>(null) }
     var message by remember(m.id) { mutableStateOf<String?>(null) }
+    var diagnosis by remember(m.id) { mutableStateOf<Diagnosis?>(null) }
 
     LaunchedEffect(m.id) {
+        // The classifier's output as saved in the record's CSV header (null on
+        // records made before the classifier; the Diagnosis tab computes it).
+        diagnosis = runCatching { Diagnosis.fromCsv(RecordStore.csv(context, m.id)) }.getOrNull()
         leads = runCatching { RecordStore.leads(context, m.id) }.getOrElse {
             message = "Could not read the leads: ${it.message}"; emptyList()
         }
@@ -305,7 +309,7 @@ private fun RecordResult(m: RecordStore.Meta, modifier: Modifier, onBack: () -> 
         }
     }
     val exportName = "eacg_sheet_${m.target ?: "photo"}_${m.tracer.lowercase(Locale.US)}_${m.id}.csv"
-    val data = ResultData.fromRecord(m, leads)
+    val data = ResultData.fromRecord(m, leads, diagnosis)
     ResultScreen(
         data = data, truth12 = truth, onBack = onBack,
         onExport = {

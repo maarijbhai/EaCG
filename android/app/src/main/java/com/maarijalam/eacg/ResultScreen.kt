@@ -126,6 +126,8 @@ class ResultData(
     val ticksReplaced: Set<Pair<Int, Int>>,
     /** Saved record id, if this result is in Records. */
     val recordId: String?,
+    /** The classifier's output as stored; null = not run (older record): the tab computes it. */
+    val diagnosis: Diagnosis? = null,
 ) {
     companion object {
         fun parseTicks(s: String?): List<Triple<Int, Int, Double>> =
@@ -152,10 +154,11 @@ class ResultData(
                 target = target,
                 ticksKept = r.tickPositions.map { it.first to it.second }.toSet(),
                 ticksReplaced = r.ticksRejected.map { it.first to it.second }.toSet(),
-                recordId = meta?.id)
+                recordId = meta?.id, diagnosis = r.diagnosis)
         }
 
-        fun fromRecord(m: RecordStore.Meta, leads: List<SheetPipeline.LeadResult>?): ResultData = ResultData(
+        fun fromRecord(m: RecordStore.Meta, leads: List<SheetPipeline.LeadResult>?,
+                       diagnosis: Diagnosis? = null): ResultData = ResultData(
             title = recordName(m), subtitle = "${recordWhen(m.createdMs)} · 12 leads",
             leads = leads, quality = m.quality, warnings = RecordStore.decodeWarnings(m.warnings),
             tracer = m.tracer, cornersAuto = m.cornersAuto, cornersRefined = m.cornersRefined,
@@ -165,11 +168,13 @@ class ResultData(
             pssEndMb = m.pssEndMb, target = m.target,
             ticksKept = m.ticks?.let { t -> parseTicks(t).map { it.first to it.second }.toSet() },
             ticksReplaced = parseTicks(m.ticksRejected).map { it.first to it.second }.toSet(),
-            recordId = m.id)
+            recordId = m.id, diagnosis = diagnosis)
     }
 }
 
-private enum class ResultTab(val label: String) { LEADS("Leads"), OVERLAY("Page overlay"), PHOTO("Photo") }
+private enum class ResultTab(val label: String) {
+    LEADS("Leads"), DIAGNOSIS("Diagnosis"), OVERLAY("Page overlay"), PHOTO("Photo")
+}
 
 /**
  * The Result screen (mock-up artboards 4 and 5), for a scan and for a saved
@@ -288,6 +293,7 @@ fun ResultScreen(
                 shareError?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = BadText) }
                 Disclaimer(text = listOfNotNull(savedNote, "Research use only; not for diagnosis.").joinToString(" "))
             }
+            ResultTab.DIAGNOSIS -> DiagnosisTab(data, proto, Modifier.fillMaxWidth().weight(1f))
             ResultTab.OVERLAY -> Box(Modifier.fillMaxWidth().weight(1f)) { pageContent() }
             ResultTab.PHOTO -> Box(Modifier.fillMaxWidth().weight(1f).padding(16.dp)) { photoContent() }
         }

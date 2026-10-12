@@ -75,6 +75,7 @@ fun ProcessingScreen(scan: ScanController, modifier: Modifier = Modifier) {
         UiStage("Find rows and markers", listOf("locate", "calibrate+segment"), ""),
         UiStage("Read the trace", listOf("trace"), ""),
         UiStage("Cut into 12 leads", listOf("cut", "quality"), "Seconds and millivolts, 500 Hz"),
+        UiStage("Classify", listOf("classify"), "Research classifier, five superclasses"),
         UiStage("Save record", emptyList(), "Stored privately on this phone"),
     )
     val ms = scan.stageMs
@@ -134,6 +135,8 @@ fun ProcessingScreen(scan: ScanController, modifier: Modifier = Modifier) {
                         "Read the trace" -> (if (learned) "Learned tracer" else "Classical tracer") +
                             if (state == StageState.ACTIVE) ", row ${minOf(rowsDone + 1, 4)} of 4" else ""
                         "Grid fit" -> if (state == StageState.SKIPPED) "Off: corners only" else st.detail
+                        "Classify" -> scan.stageDetail["classify"]
+                            ?.takeIf { state == StageState.DONE } ?: st.detail
                         else -> st.detail
                     }
                     StageRow(st.name, detail, state, time)
