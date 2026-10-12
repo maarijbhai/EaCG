@@ -1,0 +1,9 @@
+condition,tracer,median_pcc,pct_ge_09,n_leads,n_unavailable,median_diff,diff_ci_lo,diff_ci_hi,n_paired,median_shifted_snr
+side_light,learned,,,0,0,,,,0,
+side_light,classical,,,0,0,,,,0,
+shadow,learned,,,0,0,,,,0,
+shadow,classical,,,0,0,,,,0,
+tilt,learned,,,0,0,,,,0,
+tilt,classical,,,0,0,,,,0,
+curl,learned,,,0,0,,,,0,
+curl,classical,,,0,0,,,,0,
