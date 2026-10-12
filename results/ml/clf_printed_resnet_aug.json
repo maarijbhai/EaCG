@@ -1,0 +1,67 @@
+{
+  "generated_by": "ml/train_classifier.py",
+  "utc": "2026-10-12T09:05:18+00:00",
+  "git_commit": "595316177c860ab63a742f51a8b0eaa81be0b188",
+  "git_dirty": false,
+  "params": {
+    "name": "printed_resnet_aug",
+    "task": "superclass",
+    "input": "printed",
+    "arch": "resnet",
+    "augment": "digitiser",
+    "epochs": 40,
+    "batch": 128,
+    "lr": 0.001,
+    "patience": 10,
+    "class_weight": null,
+    "seed": 1,
+    "limit": 0,
+    "cache": "/home/maari/data/ptbxl_clf/ptbxl100.npz",
+    "class_weight_mode": "none",
+    "classes": [
+      "NORM",
+      "MI",
+      "STTC",
+      "CD",
+      "HYP"
+    ],
+    "model_params": 830053,
+    "n": {
+      "train": 17084,
+      "val": 2146,
+      "test": 2158
+    }
+  },
+  "best_epoch": 9,
+  "epochs_run": 19,
+  "minutes": 6.4,
+  "val": {
+    "macro_auroc": 0.915769733953416,
+    "auroc": {
+      "NORM": 0.9413269679665555,
+      "MI": 0.9121096812877635,
+      "STTC": 0.9282070550998239,
+      "CD": 0.923041438002068,
+      "HYP": 0.874163527410869
+    }
+  },
+  "test": {
+    "macro_auroc": 0.9148220870010195,
+    "auroc": {
+      "NORM": 0.9383273157018904,
+      "MI": 0.908681592039801,
+      "STTC": 0.9285700048189833,
+      "CD": 0.9001919083110128,
+      "HYP": 0.8983396141334107
+    }
+  },
+  "versions": {
+    "python": "3.12.3",
+    "tensorflow": "2.21.0",
+    "keras": "3.15.1",
+    "numpy": "2.5.3",
+    "gpu": [
+      "/physical_device:GPU:0"
+    ]
+  }
+}

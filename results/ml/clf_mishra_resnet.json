@@ -1,0 +1,159 @@
+{
+  "generated_by": "ml/train_classifier.py",
+  "utc": "2026-10-12T09:12:54+00:00",
+  "git_commit": "595316177c860ab63a742f51a8b0eaa81be0b188",
+  "git_dirty": false,
+  "params": {
+    "name": "mishra_resnet",
+    "task": "mishra",
+    "input": "printed",
+    "arch": "resnet",
+    "augment": "none",
+    "epochs": 40,
+    "batch": 128,
+    "lr": 0.001,
+    "patience": 10,
+    "class_weight": null,
+    "seed": 1,
+    "limit": 0,
+    "cache": "/home/maari/data/ptbxl_clf/ptbxl100.npz",
+    "class_weight_mode": "balanced",
+    "classes": [
+      "NORM",
+      "MI",
+      "CLBBB",
+      "CRBBB",
+      "TWAVE"
+    ],
+    "model_params": 830053,
+    "n": {
+      "train": 12307,
+      "val": 1543,
+      "test": 1567
+    }
+  },
+  "best_epoch": 20,
+  "epochs_run": 30,
+  "minutes": 6.7,
+  "val": {
+    "accuracy": 0.8561244329228775,
+    "macro_f1": 0.7414817833423646,
+    "macro_auroc": 0.9593256231326153,
+    "f1": {
+      "NORM": 0.9200603318250377,
+      "MI": 0.7765830346475507,
+      "CLBBB": 0.8484848484848485,
+      "CRBBB": 0.9122807017543859,
+      "TWAVE": 0.25
+    },
+    "auroc": {
+      "NORM": 0.958609998548061,
+      "MI": 0.9342080020046122,
+      "CLBBB": 0.9909160451329126,
+      "CRBBB": 0.9987505893446488,
+      "TWAVE": 0.9141434806328423
+    },
+    "confusion": [
+      [
+        915,
+        16,
+        0,
+        0,
+        15
+      ],
+      [
+        109,
+        325,
+        8,
+        3,
+        36
+      ],
+      [
+        0,
+        6,
+        42,
+        0,
+        1
+      ],
+      [
+        2,
+        0,
+        0,
+        26,
+        0
+      ],
+      [
+        17,
+        9,
+        0,
+        0,
+        13
+      ]
+    ]
+  },
+  "test": {
+    "accuracy": 0.8602425015954053,
+    "macro_f1": 0.7859290908905778,
+    "macro_auroc": 0.9698398802751115,
+    "f1": {
+      "NORM": 0.9217046580773043,
+      "MI": 0.7615658362989324,
+      "CLBBB": 0.9108910891089109,
+      "CRBBB": 0.9354838709677419,
+      "TWAVE": 0.4
+    },
+    "auroc": {
+      "NORM": 0.9572205635411644,
+      "MI": 0.935001130710086,
+      "CLBBB": 0.9989244709741604,
+      "CRBBB": 0.9999327384422223,
+      "TWAVE": 0.9581204977079241
+    },
+    "confusion": [
+      [
+        930,
+        14,
+        1,
+        0,
+        9
+      ],
+      [
+        126,
+        321,
+        5,
+        4,
+        39
+      ],
+      [
+        0,
+        3,
+        46,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        29,
+        0
+      ],
+      [
+        8,
+        10,
+        0,
+        0,
+        22
+      ]
+    ]
+  },
+  "versions": {
+    "python": "3.12.3",
+    "tensorflow": "2.21.0",
+    "keras": "3.15.1",
+    "numpy": "2.5.3",
+    "gpu": [
+      "/physical_device:GPU:0"
+    ]
+  }
+}
