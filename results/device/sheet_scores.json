@@ -1,7 +1,7 @@
 {
   "generated_by": "python/score_device_sheets.py",
-  "utc": "2026-10-12T08:43:12+00:00",
-  "git_commit": "d70f466ee9c8c8a289d64eb8615b7eadd79c4e2e",
+  "utc": "2026-10-12T14:07:06+00:00",
+  "git_commit": "96bbbbc863cd38755c30b074be5e85c3ddd926b7",
   "git_dirty": false,
   "params": {
     "exports": "data/device_exports/eacg_sheet_*.csv",
