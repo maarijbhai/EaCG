@@ -644,6 +644,62 @@ default cap, half of 16 GB). Fixed outside the repo with a `.wslconfig`
 The smoke run (`clf_smoke.*`, 2,000 records, 1 epoch) is a set-up check
 only and is not committed.
 
+## 32. 2026-10-12 — The diagnosis classifier on the phone, and its degradation curve
+
+**Deployed model.** `printed_resnet_aug_s2` (best VALIDATION macro AUROC of
+the printed-view runs, 0.920), sigmoid in the graph, LiteRT FP16, 1.71 MB
+(`assets/ml/clf_superclass_fp16.tflite`; `ml/export_classifier.py`, 049c04e).
+Parity with Keras on the 2,158 test records: max |dp| 0.001, 0 decisions
+changed, test macro AUROC 0.9131 (`results/ml/clf_export.*`). Thresholds per
+class = F1-maximising on VALIDATION: NORM 0.47, MI 0.35, STTC 0.40,
+**CD 0.05**, HYP 0.48. Test at those thresholds: sensitivity / specificity
+NORM 0.88/0.84, MI 0.78/0.84, STTC 0.82/0.89, CD 0.69/0.95, HYP 0.68/0.91.
+
+**Input path.** `python/ecgproto/clf_input.py` is the reference: the
+export's 500 Hz columns -> 100 Hz by the NaN-ignoring mean of each block of
+5 (blocks sit exactly on cell boundaries), then the training view (tested
+equal to `ml/clf_data.printed_view`). `ClfInput.kt` is its port, golden
+vectors from `python/make_clf_port_fixtures.py` (a real export + edge
+cases); the port test fails 3/4 if decimation takes every 5th sample.
+
+**App.** `Classifier.kt` runs after the leads are cut as a timed,
+memory-logged pipeline stage `classify` (a failure is a note, never an
+error); the CSV header gets `diagnosis`, `diagnosis_thresholds`,
+`diagnosis_model` (so every record's leads.csv keeps it); a **Diagnosis**
+tab on the Result screen (bars per class with the threshold marked, a
+summary line, an unreliable/check notice first, the test sheet's PTB-XL
+label in prototype mode from `assets/ml/clf_kit_labels.txt`, "research use
+only"). Older records are classified when the tab opens, and say so. JVM
+tests 114 -> 122; Python 113. Device behaviour not yet seen (no phone run).
+
+**Degradation curve** (`ml/clf_degradation.py`, a2c39ab;
+`results/ml/clf_degradation.*`), test fold, macro AUROC (reference 0.913):
+
+| error (one at a time) | small | medium | large |
+|---|---|---|---|
+| phone resampling (500 -> 100 Hz block mean) | 0.913 | | |
+| gain 0.9 / 0.83 / 0.6 | 0.913 | 0.911 | 0.893 |
+| shift per window +-5 / 10 / 20 ms | 0.911 | 0.903 | 0.876 |
+| stretch per window +-0.5 / 1 / 2 % | 0.895 | 0.876 | 0.855 |
+| noise 0.02 / 0.05 / 0.1 mV | 0.913 | 0.910 | 0.892 |
+| gaps 5 / 10 / 25 % | 0.911 | 0.908 | 0.897 |
+| **measured phone errors together** | **0.861** | | |
+
+"Measured" = gain 0.834, shift uniform +-20.9 ms (sd of 72 phone leads'
+`shift_ms` with status ok -- the first run used all 84 and got +-70 ms
+because the failed 3x3-kernel export's +-160 ms shifts set the spread
+alone; that run was dirty and discarded), gaps 0.16%, noise 0.02 mV
+ASSUMED. Only 41% of records keep all five decisions. **Timing is what
+hurts the classifier**, as it is what limits the digitiser: amplitude,
+noise and gaps barely move it at the phone's sizes. Retraining with
+time-shift/stretch augmentation (step 5 of the plan) is now justified.
+
+**Real sheets** (`results/ml/clf_sheets.*`, 7 phone exports of 4 NORM
+records; dev exports, not results): decisions identical to the true
+signals' on 3 of 7. The low CD threshold flags CD on two NORM records even
+from their true signals (p 0.07-0.08); the failed 3x3-kernel export reads as
+MI 0.85. No held-out sheet has a phone export yet.
+
 ---
 
 ## Open items (ordered)
