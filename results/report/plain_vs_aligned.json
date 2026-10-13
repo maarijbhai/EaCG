@@ -1,12 +1,12 @@
 {
   "generated_by": "python/make_report_figures.py",
-  "utc": "2026-10-12T14:07:31+00:00",
-  "git_commit": "e6d2afbad1f6fff89c1df40013d36d84a91445d8",
+  "utc": "2026-10-13T15:49:22+00:00",
+  "git_commit": "efc208a7929f6d15929c29581ae13af729967c64",
   "git_dirty": false,
   "params": {
     "scores": "results\\device\\sheet_scores.csv",
     "manifest": "python\\test_set.csv",
-    "manifest_sha256": "466b39c627c858184076ded5122cfe49bc3c1d7e9afe857504623adf00f22501",
+    "manifest_sha256": "8f31825dcc901352c8811cad6af136a6d96b7697fef644b144ec84384ae089b7",
     "n_boot": 2000,
     "seed": 20261012,
     "good_pcc": 0.9,
@@ -37,6 +37,6 @@
     "plain_vs_aligned.pdf",
     "plain_vs_aligned.csv"
   ],
-  "n_points": 0,
+  "n_points": 288,
   "n_aligned_not_measurable": 0
 }

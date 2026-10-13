@@ -808,6 +808,53 @@ computation is untouched (the turned bitmap is simply its input; Records
 keep the turned photo). Tests: Python 117, JVM 130 (`SheetOrientationTest`
 shares the Python cases). Not yet tried on the phone.
 
+## 36. 2026-10-13 — The ideal set (Set B): 24 photographs x 2 tracers
+
+**Files.** `data/device_exports/Set B` held 76 CSVs; the phone's
+Download/EaCG had 95 -- 19 had not been copied (incl. the missing partners
+of 57, 3908, 8504, 167 and 9), now copied from the phone (Shell/MTP, nothing
+overwritten). Of 95: 29 copies of another run (auto-export + Records export
++ manual Export taps: manual Export does not carry pair_id), 66 distinct
+runs; excluded 18: 10 failed retakes (`unreliable`), 6 with no benchmark
+target (clean images of 167 and 5830, a camera photo of 40), 2 with the
+WRONG target (labelled 4016, the sheet is PTB-XL 167: PCC 0.969 against 167's
+truth, 0.01 against 4016's). All 47 moved to `Set B/_excluded/` with a
+README of reasons (nothing deleted). Left: **48 runs = 24 photographs x
+(learned + classical), 2 photographs per sheet, every pair complete.** The
+54 camera photos (Pictures/EaCG) copied to `data/kit_photos/setB/`; each run
+mapped to its photo by time (confirmed by the automatic corners, 0.3-13 px).
+
+**Scorer.** `score_device_sheets.export_files`: exports in session
+subfolders too; folders starting `_` skipped; a duplicate name is an error
+(efc208a). The 364 clean-set rows are identical to e6d2afb's.
+
+**Results** (`results/report/`, at efc208a), 288 leads per tracer:
+
+| | learned | classical |
+|---|---|---|
+| PCC median [IQR] | **0.947** [0.909, 0.973] | 0.646 [0.393, 0.884] |
+| aligned PCC | 0.992 | 0.720 (14 n.m.) |
+| SNR / shifted (dB) | 10.0 / 15.5 | 2.0 / 2.4 |
+| gain | 0.92 | 0.59 |
+| PCC >= 0.9 | **80%** | 21% |
+| leads without a score | 0 | 14 |
+
+Wilcoxon n = 274, p = 6e-42. Clean -> ideal costs the learned tracer
+0.994 -> 0.947 PCC and ~9 dB SNR; the classical tracer 0.971 -> 0.646.
+On the A30s (24 learned runs): total **21.5 s** (21.1-23.1), trace 19.6 s,
+grid 1.5 s, classify 56 ms; **peak native 506 MB**.
+
+**How ideal the photos are** (measured on the 24 photos): soft even indoor
+light (paper light ratio p5/p95 0.79-0.91, nothing clipped, sharp), blue
+desk (good contrast), sheets flat. But 20/24 were shot PORTRAIT: the sheet
+fills ~40% of the frame and resolves at **7.0-8.2 px/mm**, at or below the
+8 px/mm floor found earlier; the 4 landscape-filling shots reach 9.1-10.6.
+Perspective: corner angles off square by up to **9.3 degrees** (median ~4.5;
+keystone up to 1.20) -- the phone was not held parallel to the sheet; 7 photos
+exceed 5 degrees. Learned PCC falls with that tilt (Spearman rho -0.45,
+p = 0.03, n = 24); with frame fill rho +0.37 (p = 0.08). So "ideal" here
+is good light, but not square-on and not filling the frame.
+
 ---
 
 ## Open items (ordered)

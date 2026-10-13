@@ -1,12 +1,12 @@
 {
   "generated_by": "python/make_report_figures.py",
-  "utc": "2026-10-12T14:07:31+00:00",
-  "git_commit": "e6d2afbad1f6fff89c1df40013d36d84a91445d8",
+  "utc": "2026-10-13T15:49:22+00:00",
+  "git_commit": "efc208a7929f6d15929c29581ae13af729967c64",
   "git_dirty": false,
   "params": {
     "scores": "results\\device\\sheet_scores.csv",
     "manifest": "python\\test_set.csv",
-    "manifest_sha256": "466b39c627c858184076ded5122cfe49bc3c1d7e9afe857504623adf00f22501",
+    "manifest_sha256": "8f31825dcc901352c8811cad6af136a6d96b7697fef644b144ec84384ae089b7",
     "n_boot": 2000,
     "seed": 20261012,
     "good_pcc": 0.9,
@@ -64,6 +64,36 @@
           "rhythm_median_pcc": 0.97645,
           "rhythm_n": 12
         }
+      },
+      "ideal": {
+        "learned": {
+          "median_pcc": 0.94725,
+          "ci95": [
+            0.9382999999999999,
+            0.9561
+          ],
+          "pct_ge_09": 79.86111111111111,
+          "median_shifted_snr_db": 15.503,
+          "n_leads": 288,
+          "n_unavailable": 0,
+          "n_photos": 24,
+          "rhythm_median_pcc": 0.9047000000000001,
+          "rhythm_n": 24
+        },
+        "classical": {
+          "median_pcc": 0.6460999999999999,
+          "ci95": [
+            0.5436,
+            0.7524
+          ],
+          "pct_ge_09": 20.833333333333332,
+          "median_shifted_snr_db": 2.408,
+          "n_leads": 288,
+          "n_unavailable": 14,
+          "n_photos": 24,
+          "rhythm_median_pcc": 0.6266,
+          "rhythm_n": 24
+        }
       }
     },
     "wilcoxon": {
@@ -74,10 +104,10 @@
         "median_diff": 0.019950000000000023
       },
       "ideal": {
-        "n_pairs": 0,
-        "statistic": null,
-        "p": null,
-        "median_diff": null
+        "n_pairs": 274,
+        "statistic": 1026.5,
+        "p": 6.33155095566295e-42,
+        "median_diff": 0.26865
       },
       "robustness": {
         "n_pairs": 0,
@@ -97,14 +127,23 @@
         "set_learned_median": 0.994,
         "classical_export_found": true
       },
-      "ideal": null
+      "ideal": {
+        "set": "ideal",
+        "photo_id": "pair_20261013_145443",
+        "export": "eacg_sheet_ptbxl160_kit_500hz_300dpi_model_20261013_145443.csv",
+        "lead": "V3",
+        "ecg_id": 160,
+        "learned_pcc": 0.9473,
+        "set_learned_median": 0.94725,
+        "classical_export_found": true
+      }
     },
     "on_device": {
-      "n_exports": 0,
-      "median_total_ms": null,
-      "model_share": null,
-      "median_peak_native_mb": null,
-      "median_pss_end_mb": null
+      "n_exports": 24,
+      "median_total_ms": 21510.5,
+      "model_share": 0.9123683782338857,
+      "median_peak_native_mb": 506.5,
+      "median_pss_end_mb": 548.25
     },
     "pairing": {
       "learned_photos_without_classical": [],
@@ -120,9 +159,9 @@
       "in_manifest_without_scores": []
     },
     "dev_vs_held_out": {
-      "dev_median": null,
-      "held_out_median": null,
-      "difference": null
+      "dev_median": 0.9319500000000001,
+      "held_out_median": 0.9544,
+      "difference": 0.02244999999999997
     }
   }
 }

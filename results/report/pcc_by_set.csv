@@ -1,8 +1,8 @@
 set,condition,tracer,n,n_unavailable,pct_ge_09,median,q1,q3
 clean,clean,learned,144,0,98.61111111111111,0.994,0.990625,0.9966250000000001
 clean,clean,classical,144,0,93.05555555555556,0.9712000000000001,0.95225,0.9844250000000001
-ideal,ideal,learned,0,0,,,,
-ideal,ideal,classical,0,0,,,,
+ideal,ideal,learned,288,0,79.86111111111111,0.94725,0.908825,0.9729
+ideal,ideal,classical,288,14,20.833333333333332,0.6460999999999999,0.392625,0.8843000000000001
 robustness,side_light,learned,0,0,,,,
 robustness,side_light,classical,0,0,,,,
 robustness,shadow,learned,0,0,,,,

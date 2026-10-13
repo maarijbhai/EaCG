@@ -1,10 +1,19 @@
-% caption: time and memory per sheet on the Galaxy A30s, learned tracer, ideal set (n = 0 exports);
-% harness stages excluded: none
+% caption: time and memory per sheet on the Galaxy A30s, learned tracer, ideal set (n = 24 exports);
+% harness stages excluded: score*
 \begin{tabular}{@{}lrrr@{}}
 \toprule
 \textbf{Stage} & \textbf{Median (ms)} & \textbf{Range (ms)} & \textbf{Peak native (MB)}\\
 \midrule
+corners & 0 & 0--0 & 70\\
+rectify & 122 & 97--182 & 116\\
+grid & 1530 & 1349--2567 & 128\\
+locate & 219 & 163--322 & 113\\
+calibrate+segment & 3 & 2--46 & 85\\
+trace & 19626 & 19272--20466 & 506\\
+cut & 9 & 8--44 & 443\\
+quality & 0 & 0--8 & 443\\
+classify & 56 & 52--103 & 452\\
 \midrule
-\textbf{Total} & -- & -- & --\\
+\textbf{Total} & 21510 & 21139--23126 & 506\\
 \bottomrule
 \end{tabular}
