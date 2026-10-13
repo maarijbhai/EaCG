@@ -737,6 +737,38 @@ learned output names exactly the PTB-XL label on 7/12 and contains it on
 MI + CD from true signals: LBBB mimics MI and LVH, a classifier error, not
 a digitiser one.
 
+## 34. 2026-10-13 — "Run both tracers" testing mode (UI/workflow only)
+
+For the photo sessions. Prototype mode, Check corners -> Research options:
+**Run both tracers (testing)**, default off, remembered
+(`AppSettings.bothTracers`). On, one Digitise tap runs the LEARNED tracer
+(saved, its CSV exported once to Downloads/EaCG -- the record's own text,
+same stamp), then the CLASSICAL tracer on the same bitmap object with the
+same corners (automatic or hand), grid-fit setting and target (saved,
+exported once), and shows the learned result with a note naming the
+classical export and a link to its record. The progress screen says "Run 1
+of 2: learned" / "Run 2 of 2: classical". Cancel in run 1: nothing saved
+(as before); cancel or failure in run 2: the learned record and export are
+kept and the note says what happened. Each run is its own SheetPipeline.run,
+so timings and memory are measured per run (the learned one first). Off:
+unchanged.
+
+Pairing: both CSVs carry ONE new header line `# pair_id: <the learned run's
+stamp>`, written as the last header line (no existing line moves) and only
+in this mode. `make_report_figures.py --draft-manifest` sets photo_id =
+`pair_<pair_id>` where present, else the export stem as before; the scorer
+ignores the line (checked: only an extra header key, every column equal).
+
+**Nothing computed changed**: SheetPipeline.run, the golden vectors, the CSV
+columns and every existing header line are untouched (the CSV writer only
+gained the optional pair_id line and a `device` parameter with the same
+default, so the JVM tests can supply it). Runs before and after this build
+are comparable. Tests: `ScanRunsTest` (the both-tracers plan hands each run
+the same spec as a separate tap with that tracer; the CSV differs from a
+separate tap's only in local_time and pair_id; Records and Diagnosis read it
+identically). JVM 122 -> 127, Python 113 -> 115, mutations 21/21 and 14/15
+(the documented survivor). Commit 4acea45. Device behaviour not yet seen.
+
 ---
 
 ## Open items (ordered)
