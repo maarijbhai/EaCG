@@ -876,6 +876,25 @@ ideal 0.141 -> 0.128. The workbook carries both (`rmse_mv_median_removed`
 computed there only); `sheet_scores.csv` and the report still carry the
 scorer's version.
 
+## 38. 2026-10-13 — RMSE fixed (medians removed) and every thesis result regenerated
+
+The user agreed. `score_lead` now takes RMSE on the median-removed signals,
+as SNR (90372a6; `tests/test_score_lead.py` fails under the old rule).
+Regenerated at 90372a6, `git_dirty: false`: `results/device/sheet_scores.*`,
+`results/report/*` and `stats_sets_A_B.xlsx` (its extra column dropped).
+Check against 8fa84a7: same 988 rows, **only `rmse_mv_asis` changed** (941
+rows). Learned RMSE median [IQR]: set A 0.018 [0.010, 0.027] mV, set B
+0.049 [0.030, 0.076]; classical A 0.036, B 0.128.
+
+**Left with the OLD RMSE definition (dated, not thesis results):** the
+desktop experiment CSVs from `score_lead` -- `results/ml/sheets_*.csv`,
+`results/ml/phone_path_*.csv`, `results/kitphoto/leads12.csv`. Their PCC,
+SNR and every other column are unaffected; regenerate before quoting an
+RMSE from them.
+
+**Set B kept as the ideal set** (the user, 2026-10-13): portrait,
+hand-held, good light. Reported as such, with the photo-quality table.
+
 ---
 
 ## Open items (ordered)

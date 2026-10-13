@@ -917,7 +917,7 @@ FAIL under the old rule.
 From `python/`. There is no pytest dependency and no reason to add one.
 
 ```
-python -m unittest discover -s tests     # 117 tests
+python -m unittest discover -s tests     # 120 tests
 python tests/mutate_timemap.py           # 21 of 21 mutations caught
 python tests/mutate_quality.py           # 14 of 15 mutations caught
 ```
