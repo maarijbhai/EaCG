@@ -330,8 +330,9 @@ def fig_example(out: Out, plt, df: pd.DataFrame, set_name: str, pcc_lim) -> dict
         if r.empty:
             continue
         r = r.iloc[0]
-        meta, cols = SDS.read_export(EXPORTS / r["export"])
-        for name, rhythm, row, col, sig, tr in SDS.export_leads(EXPORTS / r["export"], meta, cols):
+        path = SDS.find_export(r["export"], EXPORTS)
+        meta, cols = SDS.read_export(path)
+        for name, rhythm, row, col, sig, tr in SDS.export_leads(path, meta, cols):
             if name == lead and not rhythm:
                 t0 = col * 2.5
                 traces[tk] = (t0, sig, tr)
@@ -725,7 +726,8 @@ def draft_manifest(path: Path, force: bool, exports_dir: Path = EXPORTS) -> int:
     if path.exists() and not force:
         print(f"{path} exists; not overwritten (use --force)")
         return 1
-    files = sorted(exports_dir.glob("eacg_sheet_*.csv"))
+    import score_device_sheets as SDS
+    files = SDS.export_files(exports_dir)
     ids = [pair_id(f) for f in files]
     photo = [f"pair_{i}" if i else f.stem for f, i in zip(files, ids)]
     pd.DataFrame({"export": [f.name for f in files], "photo_id": photo, "set": "ideal",

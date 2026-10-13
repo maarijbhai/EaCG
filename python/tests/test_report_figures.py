@@ -164,5 +164,23 @@ class PairId(unittest.TestCase):
             self.assertEqual(R.pair_id(d / "a.csv"), "")
 
 
+class ExportFiles(unittest.TestCase):
+
+    def test_subfolders_read_underscore_folders_skipped_duplicates_refused(self):
+        import tempfile
+        import score_device_sheets as SDS
+        with tempfile.TemporaryDirectory() as t:
+            d = Path(t)
+            (d / "Set B" / "_excluded").mkdir(parents=True)
+            for p in (d / "eacg_sheet_a.csv", d / "Set B" / "eacg_sheet_b.csv",
+                      d / "Set B" / "_excluded" / "eacg_sheet_c.csv", d / "notes.txt"):
+                p.write_text("x", encoding="utf-8")
+            self.assertEqual([p.name for p in SDS.export_files(d)], ["eacg_sheet_a.csv", "eacg_sheet_b.csv"])
+            self.assertEqual(SDS.find_export("eacg_sheet_b.csv", d), d / "Set B" / "eacg_sheet_b.csv")
+            (d / "Set B" / "eacg_sheet_a.csv").write_text("x", encoding="utf-8")
+            with self.assertRaises(RuntimeError):
+                SDS.export_files(d)
+
+
 if __name__ == "__main__":
     unittest.main()

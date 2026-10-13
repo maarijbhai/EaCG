@@ -59,6 +59,30 @@ def read_export(path: Path) -> tuple[dict, dict]:
     return meta, {n: a[:, i] for i, n in enumerate(names)}
 
 
+def export_files(root: Path | None = None) -> list[Path]:
+    """Every sheet export under data/device_exports, in subfolders too (a
+    session per folder, e.g. 'Set B'), skipping any folder whose name starts
+    with '_' (e.g. '_excluded': copies and runs left out, with a README).
+    Sorted by file name; a name found twice is an error, because the name is
+    the key the manifest and every result use."""
+    root = EXPORTS if root is None else root
+    out = [p for p in root.rglob("eacg_sheet_*.csv")
+           if not any(part.startswith("_") for part in p.relative_to(root).parts[:-1])]
+    names = [p.name for p in out]
+    dup = sorted({n for n in names if names.count(n) > 1})
+    if dup:
+        raise RuntimeError(f"the same export name in two places: {dup}")
+    return sorted(out, key=lambda p: p.name)
+
+
+def find_export(name: str, root: Path | None = None) -> Path:
+    """The path of the export called `name` (export_files' rules)."""
+    for p in export_files(root):
+        if p.name == name:
+            return p
+    raise FileNotFoundError(name)
+
+
 _CALIB = re.compile(r"(\d+)\s*/\s*9 ticks")
 _T0 = re.compile(r"t0 from (\S+)")
 
@@ -91,7 +115,7 @@ def export_leads(path: Path, meta: dict, cols: dict) -> list[tuple]:
 
 def main() -> int:
     out = []
-    for path in sorted(EXPORTS.glob("eacg_sheet_*.csv")):
+    for path in export_files():
         meta, cols = read_export(path)
         target = meta.get("target", "none")
         if target == "none":
