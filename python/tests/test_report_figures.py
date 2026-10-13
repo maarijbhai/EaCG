@@ -132,5 +132,37 @@ class Pairing(unittest.TestCase):
         self.assertTrue(0.8 <= lo <= hi <= 0.95)
 
 
+class PairId(unittest.TestCase):
+
+    def _export(self, d, name, pair=None):
+        head = ["# generated_by: EaCG SheetPipeline", "# local_time: 20261013_100000"]
+        if pair:
+            head.append(f"# pair_id: {pair}")
+        (d / name).write_text("\n".join(head + ["time_s,I", "0.000,0.1", ""]), encoding="utf-8")
+
+    def test_draft_manifest_pairs_by_pair_id_and_leaves_others_alone(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as t:
+            d = Path(t)
+            self._export(d, "eacg_sheet_ptbxl9_kit_model_20261013_100000.csv", "20261013_100000")
+            self._export(d, "eacg_sheet_ptbxl9_kit_classical_20261013_100030.csv", "20261013_100000")
+            self._export(d, "eacg_sheet_ptbxl38_kit_model_20261013_110000.csv")     # an older export: no pair_id
+            out = d / "manifest.csv"
+            self.assertEqual(R.draft_manifest(out, force=False, exports_dir=d), 0)
+            m = pd.read_csv(out).set_index("export")["photo_id"]
+            self.assertEqual(m["eacg_sheet_ptbxl9_kit_model_20261013_100000.csv"], "pair_20261013_100000")
+            self.assertEqual(m["eacg_sheet_ptbxl9_kit_classical_20261013_100030.csv"], "pair_20261013_100000")
+            self.assertEqual(m["eacg_sheet_ptbxl38_kit_model_20261013_110000.csv"],
+                             "eacg_sheet_ptbxl38_kit_model_20261013_110000")
+            self.assertEqual(R.draft_manifest(out, force=False, exports_dir=d), 1)   # never overwrites unasked
+
+    def test_pair_id_absent_is_empty(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as t:
+            d = Path(t)
+            self._export(d, "a.csv")
+            self.assertEqual(R.pair_id(d / "a.csv"), "")
+
+
 if __name__ == "__main__":
     unittest.main()

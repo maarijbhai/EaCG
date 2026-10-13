@@ -2,6 +2,7 @@
 """Every figure and table of the Results chapter, from the scored phone exports.
 
     python make_report_figures.py --draft-manifest      # write python/test_set.csv to edit
+                                                        # (exports with a pair_id pair by themselves)
     python make_report_figures.py                       # -> results/report/
     python make_report_figures.py --out results/report_dev
 
@@ -704,14 +705,34 @@ def table_on_device(out: Out, pe: pd.DataFrame) -> dict:
 
 # ============================================================ manifest draft
 
-def draft_manifest(path: Path, force: bool) -> int:
+def pair_id(path: Path) -> str:
+    """The export's `# pair_id:` header value ('' if absent). Written by the
+    app's both-tracers testing mode: the same id on the learned and classical
+    run of one Digitise tap, i.e. of one photograph."""
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("#"):
+            break
+        k, _, v = line[1:].partition(":")
+        if k.strip() == "pair_id":
+            return v.strip()
+    return ""
+
+
+def draft_manifest(path: Path, force: bool, exports_dir: Path = EXPORTS) -> int:
+    """A first manifest to edit: every export, set/condition 'ideal'. photo_id
+    = 'pair_<pair_id>' when the export carries one (so a both-tracers tap's two
+    exports pair by themselves), else the export's own stem (unpaired)."""
     if path.exists() and not force:
         print(f"{path} exists; not overwritten (use --force)")
         return 1
-    exports = sorted(p.name for p in EXPORTS.glob("eacg_sheet_*.csv"))
-    pd.DataFrame({"export": exports, "photo_id": [Path(e).stem for e in exports], "set": "ideal",
-                  "condition": "ideal", "photo_path": ""}).to_csv(path, index=False)
-    print(f"wrote {path}: {len(exports)} exports, all set=ideal, condition=ideal, photo_id = export stem")
+    files = sorted(exports_dir.glob("eacg_sheet_*.csv"))
+    ids = [pair_id(f) for f in files]
+    photo = [f"pair_{i}" if i else f.stem for f, i in zip(files, ids)]
+    pd.DataFrame({"export": [f.name for f in files], "photo_id": photo, "set": "ideal",
+                  "condition": "ideal", "photo_path": ""}).to_csv(path, index=False, lineterminator="\n")
+    n_pairs = sum(1 for i in set(ids) if i and ids.count(i) == 2)
+    print(f"wrote {path}: {len(files)} exports, all set=ideal, condition=ideal; "
+          f"{n_pairs} pairs by pair_id, {ids.count('')} without one (photo_id = export stem)")
     return 0
 
 

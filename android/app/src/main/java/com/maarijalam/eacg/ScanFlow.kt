@@ -18,6 +18,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import java.io.File
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.unit.dp
+import com.maarijalam.eacg.ui.theme.Muted
+import com.maarijalam.eacg.ui.theme.Primary
 
 /**
  * The Scan tab: Home → Corners → Processing → Result, driven by one
@@ -85,13 +94,13 @@ fun ScanFlow(
             modifier = modifier)
         ScanRoute.CORNERS -> CornersScreen(scan, modifier)
         ScanRoute.PROCESSING -> ProcessingScreen(scan, modifier)
-        ScanRoute.RESULT -> LiveResult(scan, modifier)
+        ScanRoute.RESULT -> LiveResult(scan, onOpenRecord, modifier)
     }
 }
 
 /** The Result screen for the scan just made (saved to Records already, unless saving failed). */
 @Composable
-private fun LiveResult(scan: ScanController, modifier: Modifier) {
+private fun LiveResult(scan: ScanController, onOpenRecord: (RecordStore.Meta) -> Unit, modifier: Modifier) {
     val r = scan.result ?: return
     val data = remember(r, scan.saved) { ResultData.fromLive(r, scan.saved, scan.resultTarget?.name) }
     var page by remember(r) { mutableStateOf<Bitmap?>(null) }
@@ -111,7 +120,15 @@ private fun LiveResult(scan: ScanController, modifier: Modifier) {
         photoContent = {
             scan.bitmap?.let { ZoomableImage(it) } ?: LoadingBox("No photograph")
         },
-        modifier = modifier)
+        modifier = modifier,
+        extraNote = scan.pairNote?.let { note -> {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(note, style = MaterialTheme.typography.bodySmall, color = Muted)
+                scan.pairedRecord?.let { m ->
+                    TextButton(onClick = { onOpenRecord(m) }) { Text("Open the classical record", color = Primary) }
+                }
+            }
+        } })
 }
 
 /** The Page overlay tab's frame: the page, or a loading box until it is decoded. */

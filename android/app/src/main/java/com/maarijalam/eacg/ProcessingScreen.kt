@@ -118,6 +118,9 @@ fun ProcessingScreen(scan: ScanController, modifier: Modifier = Modifier) {
                     gapSize = 0.dp, drawStopIndicator = {})
             }
 
+            ScanRuns.label(scan.runIndex, scan.runCount, scan.runTracer)?.let {
+                Text(it, style = MaterialTheme.typography.titleSmall, color = Primary)
+            }
             val shape = RoundedCornerShape(16.dp)
             Column(Modifier.fillMaxWidth().background(CardSurface, shape).border(1.dp, CardBorder, shape)) {
                 stages.forEachIndexed { i, st ->

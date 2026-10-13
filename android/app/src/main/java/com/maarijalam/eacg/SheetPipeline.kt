@@ -528,13 +528,24 @@ object SheetPipeline {
             }
         }
 
-    /** FR10 for the whole sheet: 12 leads + rhythm, 500 Hz, mV. */
-    fun csv(r: Result, photoLabel: String, targetName: String?, stamp: String): String = buildString {
+    /** The CSV's `device` header value. */
+    fun deviceLabel(): String =
+        "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} (API ${android.os.Build.VERSION.SDK_INT})"
+
+    /**
+     * FR10 for the whole sheet: 12 leads + rhythm, 500 Hz, mV. [pairId]
+     * (both-tracers testing mode only) adds ONE header line, `pair_id`, the
+     * same for the learned and classical run of one Digitise tap; without it
+     * the text is exactly as before. [device] is a parameter only so the JVM
+     * tests can supply it (android.os.Build is not available there).
+     */
+    fun csv(r: Result, photoLabel: String, targetName: String?, stamp: String,
+            pairId: String? = null, device: String = deviceLabel()): String = buildString {
         fun meta(k: String, v: Any?) = append("# $k: ${v ?: ""}\n")
         fun f(fmt: String, v: Double) = String.format(java.util.Locale.US, fmt, v)
         meta("generated_by", "EaCG SheetPipeline")
         meta("local_time", stamp)
-        meta("device", "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} (API ${android.os.Build.VERSION.SDK_INT})")
+        meta("device", device)
         meta("photo", photoLabel)
         meta("target", targetName ?: "none")
         meta("tracer", if (r.tracer == Tracer.MODEL) "model $MODEL_ASSET" else "classical")
@@ -562,6 +573,7 @@ object SheetPipeline {
             meta("diagnosis_model", it.model)
         } ?: r.diagnosisNote?.let { meta("diagnosis_note", it) }
         for (l in r.leads) l.pcc?.let { meta("pcc_asis_${l.name}${if (l.rhythm) "_rhythm" else ""}", f("%.4f", it)) }
+        pairId?.let { meta("pair_id", it) }
         val order = listOf("I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6")
         append("time_s," + order.joinToString(",") + ",II_rhythm\n")
         val n = (SheetLayout.RECORDING_S * SheetLayout.FS).toInt()

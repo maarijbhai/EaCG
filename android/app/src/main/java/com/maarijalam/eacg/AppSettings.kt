@@ -30,6 +30,19 @@ class AppSettings private constructor(private val context: Context) {
         prefs().edit().putString(KEY_TARGET, name).apply()
     }
 
+    /**
+     * Testing sessions (prototype mode only): one Digitise tap runs the learned
+     * tracer, then the classical one on the same photo and corners, saving and
+     * exporting both. Off by default; remembered like the benchmark target.
+     */
+    var bothTracers by mutableStateOf(prefs().getBoolean(KEY_BOTH, false))
+        private set
+
+    fun updateBothTracers(on: Boolean) {
+        bothTracers = on
+        prefs().edit().putBoolean(KEY_BOTH, on).apply()
+    }
+
     fun updatePrototypeMode(on: Boolean) {
         prototypeMode = on
         prefs().edit().putBoolean(KEY_PROTOTYPE, on).apply()
@@ -41,6 +54,7 @@ class AppSettings private constructor(private val context: Context) {
         private const val PREFS = "eacg_settings"
         private const val KEY_PROTOTYPE = "prototype_mode"
         private const val KEY_TARGET = "benchmark_target"
+        private const val KEY_BOTH = "both_tracers"
 
         @Volatile private var instance: AppSettings? = null
 

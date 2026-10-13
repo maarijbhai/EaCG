@@ -155,7 +155,20 @@ private fun ResearchOptions(scan: ScanController) {
             Text("Tracer", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
             Segmented(
                 options = listOf("Learned" to SheetPipeline.Tracer.MODEL, "Classical" to SheetPipeline.Tracer.CLASSICAL),
-                selected = scan.tracer, enabled = !scan.busy, onSelect = { scan.tracer = it })
+                selected = scan.tracer, enabled = !scan.busy && !scan.bothTracers, onSelect = { scan.tracer = it })
+        }
+        // Testing sessions: learned then classical on the same photo and
+        // corners, both saved and exported (ScanController.digitise).
+        Row(Modifier.fillMaxWidth().heightIn(min = 48.dp)
+            .clickable(role = Role.Switch, enabled = !scan.busy) { scan.chooseBothTracers(!scan.bothTracers) },
+            verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Run both tracers (testing)", style = MaterialTheme.typography.bodyLarge)
+                if (scan.bothTracers) Text("Learned, then classical; both saved and exported",
+                    style = MaterialTheme.typography.bodySmall, color = Muted)
+            }
+            Switch(checked = scan.bothTracers, onCheckedChange = null, enabled = !scan.busy,
+                colors = SwitchDefaults.colors(checkedTrackColor = Primary, checkedThumbColor = Color.White))
         }
         Row(Modifier.fillMaxWidth().heightIn(min = 48.dp)
             .clickable(role = Role.Switch, enabled = !scan.busy) { scan.gridFit = !scan.gridFit },

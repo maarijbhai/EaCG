@@ -197,6 +197,8 @@ fun ResultScreen(
     pageContent: @Composable () -> Unit,
     photoContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    /** Shown above Export on the Leads tab (both-tracers mode: the classical run's note). */
+    extraNote: (@Composable () -> Unit)? = null,
 ) {
     val proto = LocalAppSettings.current.prototypeMode
     val context = LocalContext.current
@@ -287,6 +289,7 @@ fun ResultScreen(
                 DetailsList(data)
                 if (proto && data.target != null) BenchmarkCard(data)
                 if (proto) PrototypeDetails(data)
+                extraNote?.invoke()
                 PrimaryButton("Export CSV", onExport, Modifier.fillMaxWidth(), icon = EaIcons.Download)
                 exportMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Muted,
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }

@@ -68,6 +68,15 @@ class ScanController(
     var exported by mutableStateOf<String?>(null); private set
     private var job: Job? = null
 
+    // ---- both-tracers testing mode (prototype mode only)
+    /** The run in flight (0-based) and how many this tap makes (2 in both-tracers mode). */
+    var runIndex by mutableStateOf(0); private set
+    var runCount by mutableStateOf(1); private set
+    /** What happened to the classical run of a both-tracers tap, for the Result screen. */
+    var pairNote by mutableStateOf<String?>(null); private set
+    /** The classical run's record, to open from the Result screen. */
+    var pairedRecord by mutableStateOf<RecordStore.Meta?>(null); private set
+
     // ---- progress of the run in flight (SheetPipeline.Progress), for the Digitising screen
     /** Stage key (timingsMs) -> ms, as each finishes. */
     var stageMs by mutableStateOf<Map<String, Long>>(emptyMap()); private set
@@ -119,6 +128,11 @@ class ScanController(
     val effectiveTracer get() = if (settings.prototypeMode) tracer else SheetPipeline.Tracer.MODEL
     val effectiveGridFit get() = if (settings.prototypeMode) gridFit else true
     val effectiveTarget get() = if (settings.prototypeMode) target else null
+    val effectiveBothTracers get() = settings.prototypeMode && settings.bothTracers
+    /** The switch's own state (shown in prototype mode). */
+    val bothTracers get() = settings.bothTracers
+
+    fun chooseBothTracers(on: Boolean) = settings.updateBothTracers(on)
 
     fun chooseTarget(t: KitTargets.Target?) {
         target = t
@@ -166,46 +180,101 @@ class ScanController(
     /** The CSV's `photo` header value, as SheetSection wrote it ("picked WxH"). */
     private fun photoLabel(bmp: Bitmap) = "$photoSource ${bmp.width}x${bmp.height}"
 
-    /** Digitise with the effective options; save to Records; show the result. */
+    /** One run's outcome: the result, its record (or why saving failed), its CSV, stamp and pair id. */
+    private class Done(val result: SheetPipeline.Result, val meta: RecordStore.Meta?, val saveError: String?,
+                       val csv: String, val stamp: String, val pairId: String?)
+
+    /**
+     * One pipeline run and its record, exactly as a Digitise tap always did:
+     * SheetPipeline.run with the spec's options, the CSV, RecordStore.save.
+     * Every digitisation is kept; a failed save is reported but never
+     * discards the result. [pairWithOwnStamp]: this run's stamp becomes the
+     * pair id (the learned run of a both-tracers tap); else [pairId] is used.
+     */
+    private suspend fun runOne(bmp: Bitmap, spec: RunSpec, truth: Map<String, DoubleArray>?,
+                               pairId: String?, pairWithOwnStamp: Boolean): Done {
+        val r = SheetPipeline.run(context, bmp, spec.corners.toDoubleArray(), spec.tracer, truth,
+            cornersAuto = spec.cornersAuto, cornersRefined = spec.cornersRefined,
+            geometry = spec.geometry, onProgress = ::onProgress)
+        saveMs = -1L
+        val saveStart = System.nanoTime()
+        val stamp = Exporter.stamp()
+        val pid = if (pairWithOwnStamp) stamp else pairId
+        var csv = ""
+        val meta = runCatching {
+            csv = SheetPipeline.csv(r, photoLabel(bmp), spec.target, stamp, pid)
+            RecordStore.save(context, r, bmp, spec.target, csv, photoSource)
+        }
+        // runCatching would swallow a cancellation: a run cancelled at the very
+        // end must still not show (RecordStore.save is atomic, so no partial
+        // record exists either way).
+        (meta.exceptionOrNull() as? CancellationException)?.let { throw it }
+        saveMs = (System.nanoTime() - saveStart) / 1_000_000
+        return Done(r, meta.getOrNull(), meta.exceptionOrNull()?.message, csv, stamp, pid)
+    }
+
+    /** Both-tracers mode: the run's own CSV (the record's text, same stamp) to Downloads/EaCG, once. */
+    private suspend fun autoExport(d: Done, target: String?): String =
+        Exporter.exportText(context, exportName(target, d.result.tracer, d.stamp), d.csv)
+
+    /**
+     * Digitise with the effective options; save to Records; show the result.
+     * In both-tracers mode (prototype mode, testing): the learned run, saved
+     * and exported, then the classical run on the same photograph, corners,
+     * grid-fit setting and target, saved and exported; the learned result is
+     * shown. A cancelled or failed classical run never costs the learned one.
+     */
     fun digitise() {
         val bmp = bitmap ?: return
         val c = corners?.copyOf() ?: return
-        val tr = effectiveTracer
         val tg = effectiveTarget
+        val both = effectiveBothTracers
+        val plan = ScanRuns.plan(RunSpec(effectiveTracer, c.toList(), cornersAuto, cornersRefined,
+            if (effectiveGridFit) SheetPipeline.Geometry.GRID else SheetPipeline.Geometry.CORNERS, tg?.name), both)
         job?.cancel()
         job = scope.launch {
             busy = true
             result = null; saved = null; exported = null; saveError = null
+            pairNote = null; pairedRecord = null
+            runIndex = 0; runCount = plan.size
             resetProgress()
             runGridFit = effectiveGridFit
-            runTracer = tr
-            status = "Digitising 12 leads (${tr.name.lowercase(Locale.US)})..."
+            runTracer = plan[0].tracer
+            status = "Digitising 12 leads (${ScanRuns.tracerName(plan[0].tracer)})..."
             route = ScanRoute.PROCESSING
             try {
                 val truth = tg?.truth12Asset?.let { SheetPipeline.loadTruth12(context, it) }
-                val r = SheetPipeline.run(context, bmp, c, tr, truth,
-                    cornersAuto = cornersAuto, cornersRefined = cornersRefined,
-                    geometry = if (effectiveGridFit) SheetPipeline.Geometry.GRID else SheetPipeline.Geometry.CORNERS,
-                    onProgress = ::onProgress)
+                val d1 = runOne(bmp, plan[0], truth, null, pairWithOwnStamp = both)
                 truth12 = truth
                 resultTarget = tg
-                // Every digitisation is kept (RecordStore); a failed save is
-                // reported but never discards the result on screen.
-                saveMs = -1L
-                val saveStart = System.nanoTime()
-                val meta = runCatching {
-                    val csv = SheetPipeline.csv(r, photoLabel(bmp), tg?.name, Exporter.stamp())
-                    RecordStore.save(context, r, bmp, tg?.name, csv, photoSource)
+                saved = d1.meta
+                saveError = d1.saveError
+                result = d1.result
+                if (both) {
+                    val e1 = runCatching { autoExport(d1, tg?.name) }
+                    (e1.exceptionOrNull() as? CancellationException)?.let { throw it }
+                    exported = e1.fold({ "Exported to $it" }, { "Export failed: ${it.message}" })
+
+                    runIndex = 1
+                    resetProgress()
+                    runTracer = plan[1].tracer
+                    status = "Digitising 12 leads (classical)..."
+                    try {
+                        val d2 = runOne(bmp, plan[1], truth, d1.pairId, pairWithOwnStamp = false)
+                        val e2 = runCatching { autoExport(d2, tg?.name) }
+                        (e2.exceptionOrNull() as? CancellationException)?.let { throw it }
+                        pairedRecord = d2.meta
+                        pairNote = "The classical run was also " +
+                            (if (d2.meta != null) "saved to Records" else "run but not saved (${d2.saveError})") +
+                            e2.fold({ " and exported to $it." }, { "; its export failed: ${it.message}." })
+                    } catch (e: CancellationException) {
+                        throw e             // cancel() has said so and shows the learned result
+                    } catch (e: Throwable) {
+                        pairNote = "The classical run failed (${e::class.java.simpleName}: ${e.message}); " +
+                            "nothing was saved for it. The learned run is kept."
+                    }
                 }
-                // runCatching would swallow a cancellation: a run cancelled at
-                // the very end must still not show (RecordStore.save is atomic,
-                // so no partial record exists either way).
-                (meta.exceptionOrNull() as? CancellationException)?.let { throw it }
-                saveMs = (System.nanoTime() - saveStart) / 1_000_000
-                saved = meta.getOrNull()
-                saveError = meta.exceptionOrNull()?.message
-                result = r
-                status = "Done in ${r.pipelineMs} ms."
+                status = "Done in ${d1.result.pipelineMs} ms."
                 busy = false
                 route = ScanRoute.RESULT
             } catch (e: CancellationException) {
@@ -220,12 +289,23 @@ class ScanController(
         }
     }
 
-    /** Cancel a run in flight; no record is left (the pipeline had not saved). */
+    /**
+     * Cancel a run in flight; no record is left for it (the pipeline had not
+     * saved). In both-tracers mode, cancelling the CLASSICAL run keeps the
+     * learned run (already saved and exported) and shows it.
+     */
     fun cancel() {
+        val keepLearned = runCount == 2 && result != null      // the learned run is already saved
         job?.cancel()
         job = null
         busy = false
-        route = ScanRoute.CORNERS
+        if (keepLearned) {
+            pairNote = "The classical run was cancelled: nothing was saved or exported for it. " +
+                "The learned run is saved" + (if (exported != null) " and exported." else ".")
+            route = ScanRoute.RESULT
+        } else {
+            route = ScanRoute.CORNERS
+        }
     }
 
     /** Export the shown result: the former SheetSection's file name and text, to Downloads/EaCG. */
@@ -268,6 +348,7 @@ class ScanController(
         job?.cancel()
         bitmap = null; preview = null; corners = null; result = null; truth12 = null; resultTarget = null
         saved = null; exported = null; saveError = null; status = ""; busy = false
+        pairNote = null; pairedRecord = null; runIndex = 0; runCount = 1
         route = ScanRoute.HOME
     }
 
