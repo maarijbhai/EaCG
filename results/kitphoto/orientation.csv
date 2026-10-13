@@ -1,0 +1,129 @@
+image,kind,turned,should_be_sideways,aspect,sideways,correct,error,seconds
+ptbxl38_20261005_01.jpg,kit_photo,0,False,1.483,False,True,,0.14
+ptbxl38_20261005_01.jpg,kit_photo,1,True,0.674,True,True,,0.1
+ptbxl38_20261005_01.jpg,kit_photo,2,False,1.484,False,True,,0.1
+ptbxl38_20261005_01.jpg,kit_photo,3,True,0.674,True,True,,0.11
+ptbxl40_20260928_01.jpg,kit_photo,0,False,1.505,False,True,,0.1
+ptbxl40_20260928_01.jpg,kit_photo,1,True,0.664,True,True,,0.11
+ptbxl40_20260928_01.jpg,kit_photo,2,False,1.506,False,True,,0.1
+ptbxl40_20260928_01.jpg,kit_photo,3,True,0.664,True,True,,0.12
+ptbxl40_20260929_01.jpg,kit_photo,0,False,1.426,False,True,,0.1
+ptbxl40_20260929_01.jpg,kit_photo,1,True,0.701,True,True,,0.09
+ptbxl40_20260929_01.jpg,kit_photo,2,False,1.425,False,True,,0.1
+ptbxl40_20260929_01.jpg,kit_photo,3,True,0.702,True,True,,0.09
+ptbxl40_20260929_02.jpg,kit_photo,0,False,1.44,False,True,,0.11
+ptbxl40_20260929_02.jpg,kit_photo,1,True,0.694,True,True,,0.1
+ptbxl40_20260929_02.jpg,kit_photo,2,False,1.441,False,True,,0.1
+ptbxl40_20260929_02.jpg,kit_photo,3,True,0.694,True,True,,0.1
+ptbxl40_20260929_03.jpg,kit_photo,0,False,1.438,False,True,,0.1
+ptbxl40_20260929_03.jpg,kit_photo,1,True,0.695,True,True,,0.1
+ptbxl40_20260929_03.jpg,kit_photo,2,False,1.437,False,True,,0.1
+ptbxl40_20260929_03.jpg,kit_photo,3,True,0.696,True,True,,0.1
+ptbxl40_20260929_04.jpg,kit_photo,0,False,1.443,False,True,,0.12
+ptbxl40_20260929_04.jpg,kit_photo,1,True,0.693,True,True,,0.1
+ptbxl40_20260929_04.jpg,kit_photo,2,False,1.442,False,True,,0.11
+ptbxl40_20260929_04.jpg,kit_photo,3,True,0.693,True,True,,0.1
+ptbxl40_20260929_05.jpg,kit_photo,0,False,1.503,False,True,,0.1
+ptbxl40_20260929_05.jpg,kit_photo,1,True,0.665,True,True,,0.11
+ptbxl40_20260929_05.jpg,kit_photo,2,False,1.504,False,True,,0.1
+ptbxl40_20260929_05.jpg,kit_photo,3,True,0.665,True,True,,0.11
+ptbxl57_20261005_163206.jpg,kit_photo,0,False,1.407,False,True,,0.1
+ptbxl57_20261005_163206.jpg,kit_photo,1,True,0.649,True,True,,0.11
+ptbxl57_20261005_163206.jpg,kit_photo,2,False,1.402,False,True,,0.11
+ptbxl57_20261005_163206.jpg,kit_photo,3,True,0.713,True,True,,0.11
+ptbxl9_20261005_01.jpg,kit_photo,0,False,1.439,False,True,,0.1
+ptbxl9_20261005_01.jpg,kit_photo,1,True,0.695,True,True,,0.12
+ptbxl9_20261005_01.jpg,kit_photo,2,False,1.438,False,True,,0.11
+ptbxl9_20261005_01.jpg,kit_photo,3,True,0.696,True,True,,0.1
+eacg_20261008_122237.jpg,app_camera,0,False,1.326,False,True,,0.1
+eacg_20261008_122237.jpg,app_camera,1,True,0.762,True,True,,0.1
+eacg_20261008_122237.jpg,app_camera,2,False,1.315,False,True,,0.1
+eacg_20261008_122237.jpg,app_camera,3,True,0.753,True,True,,0.1
+eacg_20261008_122307.jpg,app_camera,0,False,1.398,False,True,,0.09
+eacg_20261008_122307.jpg,app_camera,1,True,0.715,True,True,,0.1
+eacg_20261008_122307.jpg,app_camera,2,False,1.398,False,True,,0.09
+eacg_20261008_122307.jpg,app_camera,3,True,0.716,True,True,,0.12
+eacg_20261009_125652.jpg,app_camera,0,False,1.554,False,True,,0.09
+eacg_20261009_125652.jpg,app_camera,1,True,0.642,True,True,,0.09
+eacg_20261009_125652.jpg,app_camera,2,False,1.554,False,True,,0.1
+eacg_20261009_125652.jpg,app_camera,3,True,0.645,True,True,,0.11
+eacg_20261009_125806.jpg,app_camera,0,False,1.702,False,True,,0.1
+eacg_20261009_125806.jpg,app_camera,1,True,0.59,True,True,,0.1
+eacg_20261009_125806.jpg,app_camera,2,False,1.693,False,True,,0.09
+eacg_20261009_125806.jpg,app_camera,3,True,0.588,True,True,,0.1
+eacg_20261009_125900.jpg,app_camera,0,False,1.567,False,True,,0.09
+eacg_20261009_125900.jpg,app_camera,1,True,0.638,True,True,,0.1
+eacg_20261009_125900.jpg,app_camera,2,False,1.569,False,True,,0.11
+eacg_20261009_125900.jpg,app_camera,3,True,0.638,True,True,,0.09
+eacg_20261009_130559.jpg,app_camera,0,False,1.849,False,True,,0.1
+eacg_20261009_130559.jpg,app_camera,1,True,0.541,True,True,,0.11
+eacg_20261009_130559.jpg,app_camera,2,False,1.85,False,True,,0.13
+eacg_20261009_130559.jpg,app_camera,3,True,0.542,True,True,,0.1
+eacg_20261009_130700.jpg,app_camera,0,False,,,,RuntimeError: coarse corners fall outside the photograph,0.1
+eacg_20261009_130700.jpg,app_camera,1,True,,,,RuntimeError: coarse corners fall outside the photograph,0.11
+eacg_20261009_130700.jpg,app_camera,2,False,,,,RuntimeError: coarse corners fall outside the photograph,0.11
+eacg_20261009_130700.jpg,app_camera,3,True,,,,RuntimeError: coarse corners fall outside the photograph,0.1
+eacg_20261009_130733.jpg,app_camera,0,False,,,,RuntimeError: coarse corners fall outside the photograph,0.1
+eacg_20261009_130733.jpg,app_camera,1,True,,,,RuntimeError: coarse corners fall outside the photograph,0.11
+eacg_20261009_130733.jpg,app_camera,2,False,,,,RuntimeError: coarse corners fall outside the photograph,0.1
+eacg_20261009_130733.jpg,app_camera,3,True,,,,RuntimeError: coarse corners fall outside the photograph,0.1
+eacg_20261009_130750.jpg,app_camera,0,False,1.184,False,True,,0.09
+eacg_20261009_130750.jpg,app_camera,1,True,0.842,True,True,,0.12
+eacg_20261009_130750.jpg,app_camera,2,False,1.185,False,True,,0.1
+eacg_20261009_130750.jpg,app_camera,3,True,0.85,True,True,,0.13
+eacg_20261009_130810.jpg,app_camera,0,False,,,,RuntimeError: coarse corners fall outside the photograph,0.1
+eacg_20261009_130810.jpg,app_camera,1,True,,,,RuntimeError: coarse corners fall outside the photograph,0.11
+eacg_20261009_130810.jpg,app_camera,2,False,,,,RuntimeError: coarse corners fall outside the photograph,0.1
+eacg_20261009_130810.jpg,app_camera,3,True,,,,RuntimeError: coarse corners fall outside the photograph,0.1
+eacg_20261009_131012.jpg,app_camera,0,False,1.649,False,True,,0.1
+eacg_20261009_131012.jpg,app_camera,1,True,0.626,True,True,,0.1
+eacg_20261009_131012.jpg,app_camera,2,False,1.594,False,True,,0.09
+eacg_20261009_131012.jpg,app_camera,3,True,0.607,True,True,,0.1
+ptbxl160_kit_500hz_300dpi.png,clean,0,False,,,,RuntimeError: no paper found,0.06
+ptbxl160_kit_500hz_300dpi.png,clean,1,True,,,,RuntimeError: no paper found,0.07
+ptbxl160_kit_500hz_300dpi.png,clean,2,False,,,,RuntimeError: no paper found,0.06
+ptbxl160_kit_500hz_300dpi.png,clean,3,True,,,,RuntimeError: no paper found,0.07
+ptbxl167_kit_500hz_300dpi.png,clean,0,False,,,,RuntimeError: no paper found,0.06
+ptbxl167_kit_500hz_300dpi.png,clean,1,True,,,,RuntimeError: no paper found,0.06
+ptbxl167_kit_500hz_300dpi.png,clean,2,False,,,,RuntimeError: no paper found,0.07
+ptbxl167_kit_500hz_300dpi.png,clean,3,True,,,,RuntimeError: no paper found,0.06
+ptbxl1737_kit_500hz_300dpi.png,clean,0,False,,,,RuntimeError: no paper found,0.06
+ptbxl1737_kit_500hz_300dpi.png,clean,1,True,,,,RuntimeError: no paper found,0.06
+ptbxl1737_kit_500hz_300dpi.png,clean,2,False,,,,RuntimeError: no paper found,0.06
+ptbxl1737_kit_500hz_300dpi.png,clean,3,True,,,,RuntimeError: no paper found,0.07
+ptbxl38_kit_500hz_300dpi.png,clean,0,False,,,,RuntimeError: no paper found,0.07
+ptbxl38_kit_500hz_300dpi.png,clean,1,True,,,,RuntimeError: no paper found,0.06
+ptbxl38_kit_500hz_300dpi.png,clean,2,False,,,,RuntimeError: no paper found,0.07
+ptbxl38_kit_500hz_300dpi.png,clean,3,True,,,,RuntimeError: no paper found,0.07
+ptbxl3908_kit_500hz_300dpi.png,clean,0,False,,,,RuntimeError: no paper found,0.06
+ptbxl3908_kit_500hz_300dpi.png,clean,1,True,,,,RuntimeError: no paper found,0.07
+ptbxl3908_kit_500hz_300dpi.png,clean,2,False,,,,RuntimeError: no paper found,0.07
+ptbxl3908_kit_500hz_300dpi.png,clean,3,True,,,,RuntimeError: no paper found,0.06
+ptbxl4016_kit_500hz_300dpi.png,clean,0,False,,,,RuntimeError: no paper found,0.06
+ptbxl4016_kit_500hz_300dpi.png,clean,1,True,,,,RuntimeError: no paper found,0.06
+ptbxl4016_kit_500hz_300dpi.png,clean,2,False,,,,RuntimeError: no paper found,0.07
+ptbxl4016_kit_500hz_300dpi.png,clean,3,True,,,,RuntimeError: no paper found,0.06
+ptbxl40_kit_500hz_300dpi.png,clean,0,False,,,,RuntimeError: no paper found,0.06
+ptbxl40_kit_500hz_300dpi.png,clean,1,True,,,,RuntimeError: no paper found,0.06
+ptbxl40_kit_500hz_300dpi.png,clean,2,False,,,,RuntimeError: no paper found,0.07
+ptbxl40_kit_500hz_300dpi.png,clean,3,True,,,,RuntimeError: no paper found,0.06
+ptbxl57_kit_500hz_300dpi.png,clean,0,False,1.469,False,True,,0.11
+ptbxl57_kit_500hz_300dpi.png,clean,1,True,0.681,True,True,,0.11
+ptbxl57_kit_500hz_300dpi.png,clean,2,False,1.49,False,True,,0.11
+ptbxl57_kit_500hz_300dpi.png,clean,3,True,0.669,True,True,,0.11
+ptbxl5830_kit_500hz_300dpi.png,clean,0,False,,,,RuntimeError: empty mask,0.07
+ptbxl5830_kit_500hz_300dpi.png,clean,1,True,,,,RuntimeError: empty mask,0.07
+ptbxl5830_kit_500hz_300dpi.png,clean,2,False,,,,RuntimeError: no paper found,0.06
+ptbxl5830_kit_500hz_300dpi.png,clean,3,True,,,,RuntimeError: no paper found,0.07
+ptbxl7916_kit_500hz_300dpi.png,clean,0,False,2.101,False,True,,0.11
+ptbxl7916_kit_500hz_300dpi.png,clean,1,True,0.476,True,True,,0.11
+ptbxl7916_kit_500hz_300dpi.png,clean,2,False,2.111,False,True,,0.11
+ptbxl7916_kit_500hz_300dpi.png,clean,3,True,0.474,True,True,,0.11
+ptbxl8504_kit_500hz_300dpi.png,clean,0,False,,,,RuntimeError: no paper found,0.06
+ptbxl8504_kit_500hz_300dpi.png,clean,1,True,,,,RuntimeError: no paper found,0.06
+ptbxl8504_kit_500hz_300dpi.png,clean,2,False,,,,RuntimeError: no paper found,0.07
+ptbxl8504_kit_500hz_300dpi.png,clean,3,True,,,,RuntimeError: no paper found,0.06
+ptbxl9_kit_500hz_300dpi.png,clean,0,False,,,,RuntimeError: no paper found,0.06
+ptbxl9_kit_500hz_300dpi.png,clean,1,True,,,,RuntimeError: no paper found,0.06
+ptbxl9_kit_500hz_300dpi.png,clean,2,False,,,,RuntimeError: no paper found,0.06
+ptbxl9_kit_500hz_300dpi.png,clean,3,True,,,,RuntimeError: no paper found,0.07

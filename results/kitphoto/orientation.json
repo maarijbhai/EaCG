@@ -1,0 +1,28 @@
+{
+  "generated_by": "python/run_orientation.py",
+  "utc": "2026-10-13T09:45:58+00:00",
+  "git_commit": "7ffc92f1477261e04a274ef5e834f3c5c2fee25b",
+  "git_dirty": false,
+  "params": {
+    "decode_px": 3200,
+    "sideways_below": 1.0,
+    "note": "clean PNGs are page-only (no margin): the corner finder needs paper around the grid, so they fail here; on the phone the clean images had a margin"
+  },
+  "summary": {
+    "correct": "76/76",
+    "corner_failures": 52,
+    "aspect_upright": [
+      1.184,
+      2.111
+    ],
+    "aspect_sideways": [
+      0.474,
+      0.85
+    ]
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "opencv": "5.0.0"
+  }
+}

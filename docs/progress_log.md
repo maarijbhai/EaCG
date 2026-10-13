@@ -769,6 +769,45 @@ separate tap's only in local_time and pair_id; Records and Diagnosis read it
 identically). JVM 122 -> 127, Python 113 -> 115, mutations 21/21 and 14/15
 (the documented survivor). Commit 4acea45. Device behaviour not yet seen.
 
+## 35. 2026-10-13 — Sideways camera photos: automatic quarter turn + Rotate
+
+**Problem (user):** landscape shots from the in-app camera come out wrongly
+oriented. The 11 in-app photos in `archive/` are all portrait shots (EXIF 6,
+5760 x 4312 -> 4312 x 5760 upright) with the landscape sheet using about
+half the frame; landscape would give ~30% more px/mm. Cause (inferred, not
+seen on a failing file): shooting straight down, the phone lies flat, the
+tilt sensor cannot tell up, and the EXIF tag keeps the last orientation
+(portrait), so a landscape shot arrives sideways.
+
+**Rule kept:** the printed sheet is landscape, so the corner outline taller
+than wide = a quarter turn (`ecgproto/orientation.py`, `SheetOrientation.kt`).
+`run_orientation.py` (7ffc92f; `results/kitphoto/orientation.*`): every kit
+photograph, in-app photograph and clean sheet turned 0/90/180/270 degrees:
+**76 / 76 right**, upright outlines 1.18-2.11, sideways 0.47-0.85 (52 corner
+failures: the 12 clean PNGs have no paper margin -- on the phone they did --
+and 3 in-app photos where the corner finder fails anyway; not orientation).
+
+**REJECTED -- up versus down from the image** (which quarter turn):
+(a) the number of calibration pulses `locate_sheet` finds on each candidate
+page: 20/36 on the kit photos -- on a coarse-corner page it finds 0-2 and
+sometimes "finds" one upside down; (b) the pulses' vertical strokes, the
+longest single-column ink run at each row's left vs right end: clean on
+some photos (9.6 vs 0.4 mm), but the 2x2 mask breaks the thin pulse strokes
+into 0.3-1 mm pieces on many (the known thin-trace problem). Neither is
+reliable enough to ship.
+
+**App:** in `ScanController.load`, a sideways sheet is turned a quarter
+round in the direction last confirmed (`AppSettings.sidewaysTurnClockwise`,
+default clockwise) and its corners found again. **Rotate** on Check corners
+turns 90 degrees clockwise and re-finds the corners. If an automatic turn had
+to be turned half round before Digitise, the remembered direction flips, so
+a consistent grip is right from then on. The CSV gets one additive header
+line `# photo_rotation: <deg> clockwise (auto .., user ..)` ONLY when the
+photo was turned; unturned photos' CSVs are unchanged. The pipeline's
+computation is untouched (the turned bitmap is simply its input; Records
+keep the turned photo). Tests: Python 117, JVM 130 (`SheetOrientationTest`
+shares the Python cases). Not yet tried on the phone.
+
 ---
 
 ## Open items (ordered)
