@@ -13,9 +13,7 @@ INPUTS  results/device/sheet_scores.csv (score_device_sheets.py), python/test_se
 OUTPUT  results/report/stats_sets_A_B.xlsx + .json
 
 Set A = set "clean" in the manifest (the 12 printed-sheet images, no camera);
-Set B = set "ideal" (24 photographs, 2 per sheet). One extra column is
-computed here and nowhere else: `rmse_mv_median_removed`, RMSE with each
-signal's median removed, as SNR already is (score_lead's RMSE is not; see README).
+Set B = set "ideal" (24 photographs, 2 per sheet).
 
     python make_stats_workbook.py        (from python/)
 """
@@ -38,7 +36,6 @@ REPO = HERE.parent
 sys.path.insert(0, str(HERE))
 
 import make_report_figures as R  # noqa: E402
-import run_photo as rp  # noqa: E402
 import score_device_sheets as SDS  # noqa: E402
 
 OUT = REPO / "results" / "report" / "stats_sets_A_B"
@@ -83,12 +80,8 @@ METHODS = [
     ("shifted_snr_db_asis", "The best SNR over integer shifts of -25..+25 samples (+-50 ms at 500 Hz), each scored "
                             "on the overlapping part only: the PhysioNet Challenge 2024 convention, which forgives a "
                             "small time offset."),
-    ("rmse_mv_asis", "sqrt(mean (truth - digitised)^2) in mV, AS THE SCORER COMPUTES IT: truth in its raw mV (its "
-                     "own baseline offset kept), digitised about its median. NOTE: this counts the truth window's "
-                     "baseline offset (median ~0.035 mV, up to 0.155) as error, which no digitiser could remove; "
-                     "SNR and the phone's own RMSE remove both medians. See rmse_mv_median_removed."),
-    ("rmse_mv_median_removed", "Computed in THIS workbook only: the same RMSE with both medians removed (consistent "
-                               "with SNR). The fair amplitude error."),
+    ("rmse_mv_asis", "sqrt(mean (truth - digitised)^2) in mV, both with their own median removed (as SNR; since "
+                     "2026-10-13 -- before, the truth's raw baseline offset counted as error; progress_log §37-38)."),
     ("gain_ratio", "Least-squares slope of digitised on truth: cov(truth, dig) / var(truth). 1.0 = amplitude right; "
                    "0.9 = 10% low. Intercept fitted, so a baseline error does not affect it."),
     ("r_ratio", "R-peak height ratio: truth peaks = local maxima above half the largest deflection (polarity taken "
@@ -134,22 +127,6 @@ def header(path: Path) -> dict:
         k, _, v = line[1:].partition(":")
         h[k.strip()] = v.strip()
     return h
-
-
-def rmse_median_removed(manifest: pd.DataFrame) -> pd.DataFrame:
-    rows = []
-    for _, r in manifest.iterrows():
-        p = SDS.find_export(r.export)
-        meta, cols = SDS.read_export(p)
-        for name, rhythm, _, _, sig, tr in SDS.export_leads(p, meta, cols):
-            if np.isfinite(sig).sum() < 50:
-                continue
-            s = rp.fill_nan(sig)
-            k = min(len(s), len(tr))
-            a, b = tr[:k] - np.median(tr[:k]), s[:k] - np.median(s[:k])
-            rows.append({"export": r.export, "lead": name, "rhythm": bool(rhythm),
-                         "rmse_mv_median_removed": round(float(np.sqrt(np.mean((a - b) ** 2))), 4)})
-    return pd.DataFrame(rows)
 
 
 def kit_labels() -> dict:
@@ -202,7 +179,7 @@ def summarise(df: pd.DataFrame, by: list[str]) -> pd.DataFrame:
                    pcc_median=sm["median"], pcc_q1=sm["q1"], pcc_q3=sm["q3"])
         lo, hi = R.cluster_ci(g, "pcc_asis")
         row.update(pcc_ci95_lo=lo, pcc_ci95_hi=hi)
-        for col in ("pcc_aligned", "snr_db_asis", "shifted_snr_db_asis", "rmse_mv_asis", "rmse_mv_median_removed",
+        for col in ("pcc_aligned", "snr_db_asis", "shifted_snr_db_asis", "rmse_mv_asis",
                     "gain_ratio", "r_ratio", "coverage"):
             v = pd.to_numeric(g[col], errors="coerce").dropna()
             row[f"{col}_median"] = float(v.median()) if len(v) else np.nan
@@ -218,7 +195,6 @@ def main() -> int:
     df, _ = R.load(R.SCORES, R.MANIFEST)          # the report's own join, types and tracer names
     df = df[df["set"].isin(SET_NAME)].copy()
     df["set_name"] = df["set"].map(SET_NAME)
-    df = df.merge(rmse_median_removed(manifest), on=["export", "lead", "rhythm"], how="left")
     df["lead_label"] = np.where(df["rhythm"], "II rhythm", df["lead"])
     labels = kit_labels()
     df["ptbxl_label"] = df["ecg_id"].map(labels)
@@ -246,7 +222,6 @@ def main() -> int:
                "snr_db_median_12": float(l12["snr_db_asis"].median()),
                "shifted_snr_db_median_12": float(l12["shifted_snr_db_asis"].median()),
                "rmse_mv_median_12": float(l12["rmse_mv_asis"].median()),
-               "rmse_mv_median_removed_median_12": float(l12["rmse_mv_median_removed"].median()),
                "gain_median_12": float(l12["gain_ratio"].median()),
                "pcc_rhythm": float(g.loc[g["rhythm"], "pcc_asis"].iloc[0]) if g["rhythm"].any() else np.nan,
                "pipeline_ms": int(sum(pipe.values())) if pipe else np.nan,
@@ -325,7 +300,7 @@ def main() -> int:
     xl = OUT.with_suffix(".xlsx")
     lead_cols = ["set_name", "ecg_id", "ptbxl_label", "photo_id", "tracer_kind", "export", "lead_label", "row", "col",
                  "coverage", "pcc_asis", "pcc_aligned", "snr_db_asis", "shifted_snr_db_asis", "rmse_mv_asis",
-                 "rmse_mv_median_removed", "gain_ratio", "r_ratio", "r_ratio_aligned", "align_scale_pct",
+                 "gain_ratio", "r_ratio", "r_ratio_aligned", "align_scale_pct",
                  "align_lag_ms", "align_overlap_s", "shift_ms", "shift_status", "quality", "warnings"]
     sheets = {
         "README": pd.DataFrame(METHODS, columns=["item", "what it is / how it is computed"]),

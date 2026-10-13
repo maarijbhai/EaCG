@@ -133,10 +133,15 @@ def score_lead(sig: np.ndarray, truth: np.ndarray, duration_s: float) -> dict:
     # (+-50 ms, evaluate_all's default).
     t0, s0 = truth - np.median(truth), sig_f - np.median(sig_f)
     shifted, _ = evaluate.shifted_snr_db(t0, s0, int(round(0.05 * FS)))
+    # RMSE on the same median-removed signals as SNR (2026-10-13). Before,
+    # it took the truth's raw mV, so the truth window's own baseline offset
+    # (median 0.035 mV, up to 0.155 on the test sheets) counted as error no
+    # digitiser could remove; the phone's SheetPipeline.score already removed
+    # both medians. progress_log §37-38.
     out.update({"pcc_asis": round(float(m.pcc), 4),
                 "snr_db_asis": round(float(evaluate.snr_db(t0, s0)), 3),
                 "shifted_snr_db_asis": round(float(shifted), 3),
-                "rmse_mv_asis": round(float(m.rmse_mv), 4),
+                "rmse_mv_asis": round(float(evaluate.rmse_mv(t0, s0)), 4),
                 "gain_ratio": round(float(m.gain_ratio), 4),
                 "r_ratio": round(evaluate.r_peak_ratio(truth, sig_f, FS)[0], 4)})
     if duration_s < segment.RECORDING_S:
