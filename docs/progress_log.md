@@ -855,6 +855,27 @@ exceed 5 degrees. Learned PCC falls with that tilt (Spearman rho -0.45,
 p = 0.03, n = 24); with frame fill rho +0.37 (p = 0.08). So "ideal" here
 is good light, but not square-on and not filling the frame.
 
+## 37. 2026-10-13 — Stats workbook for sets A and B; an RMSE inconsistency found
+
+`python/make_stats_workbook.py` (db24e46) -> `results/report/stats_sets_A_B.xlsx`:
+README (every metric's exact computation), summaries (12 leads, rhythm),
+tracer comparison, per photo (72 exports), per sheet, PCC and SNR by lead
+name, learned vs classical per photo, timing and memory per stage, Set B
+photo quality and its Spearman correlations with PCC, every lead (936 rows),
+and the Set B exclusions.
+
+**Found while writing the README -- not fixed, needs a decision:**
+`score_12lead.score_lead` computes SNR on median-removed signals but RMSE
+(`rmse_mv_asis`, via `evaluate_all`) on the truth's RAW mV against the
+digitised median-centred cell, so the truth window's baseline offset
+(median 0.035 mV, max 0.155) counts as error that no digitiser can remove.
+The phone's own RMSE (`SheetPipeline.score`) removes both medians. Medians
+over leads, as scored -> medians removed: learned clean 0.046 -> 0.018 mV,
+learned ideal 0.070 -> 0.049, classical clean 0.063 -> 0.036, classical
+ideal 0.141 -> 0.128. The workbook carries both (`rmse_mv_median_removed`
+computed there only); `sheet_scores.csv` and the report still carry the
+scorer's version.
+
 ---
 
 ## Open items (ordered)
