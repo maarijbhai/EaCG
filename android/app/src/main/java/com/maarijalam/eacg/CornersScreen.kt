@@ -111,6 +111,10 @@ fun CornersScreen(scan: ScanController, modifier: Modifier = Modifier) {
             }
             Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SecondaryButton("Retake", { scan.reset() }, Modifier.weight(1f), enabled = !scan.busy)
+                // A quarter turn clockwise, corners found again (upside-down or
+                // sideways photographs; SheetOrientation).
+                SecondaryButton("Rotate", { scan.rotate() }, Modifier.weight(1f),
+                    enabled = !scan.busy && !scan.loading && bmp != null)
                 PrimaryButton("Digitise", { scan.digitise() }, Modifier.weight(1f),
                     enabled = !scan.busy && corners != null)
             }

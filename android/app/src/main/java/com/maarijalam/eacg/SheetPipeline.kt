@@ -540,7 +540,9 @@ object SheetPipeline {
      * tests can supply it (android.os.Build is not available there).
      */
     fun csv(r: Result, photoLabel: String, targetName: String?, stamp: String,
-            pairId: String? = null, device: String = deviceLabel()): String = buildString {
+            pairId: String? = null, device: String = deviceLabel(),
+            /** SheetOrientation.label: how the photograph was turned before digitising; null = not turned. */
+            photoRotation: String? = null): String = buildString {
         fun meta(k: String, v: Any?) = append("# $k: ${v ?: ""}\n")
         fun f(fmt: String, v: Double) = String.format(java.util.Locale.US, fmt, v)
         meta("generated_by", "EaCG SheetPipeline")
@@ -573,6 +575,7 @@ object SheetPipeline {
             meta("diagnosis_model", it.model)
         } ?: r.diagnosisNote?.let { meta("diagnosis_note", it) }
         for (l in r.leads) l.pcc?.let { meta("pcc_asis_${l.name}${if (l.rhythm) "_rhythm" else ""}", f("%.4f", it)) }
+        photoRotation?.let { meta("photo_rotation", it) }
         pairId?.let { meta("pair_id", it) }
         val order = listOf("I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6")
         append("time_s," + order.joinToString(",") + ",II_rhythm\n")

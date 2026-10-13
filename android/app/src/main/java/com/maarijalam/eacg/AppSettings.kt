@@ -43,6 +43,19 @@ class AppSettings private constructor(private val context: Context) {
         prefs().edit().putBoolean(KEY_BOTH, on).apply()
     }
 
+    /**
+     * Which way to turn a photograph whose sheet came out sideways
+     * (SheetOrientation): clockwise unless the user's corrections said
+     * otherwise. Remembered, so a consistent grip is right every time.
+     */
+    var sidewaysTurnClockwise by mutableStateOf(prefs().getBoolean(KEY_TURN_CW, true))
+        private set
+
+    fun updateSidewaysTurnClockwise(cw: Boolean) {
+        sidewaysTurnClockwise = cw
+        prefs().edit().putBoolean(KEY_TURN_CW, cw).apply()
+    }
+
     fun updatePrototypeMode(on: Boolean) {
         prototypeMode = on
         prefs().edit().putBoolean(KEY_PROTOTYPE, on).apply()
@@ -55,6 +68,7 @@ class AppSettings private constructor(private val context: Context) {
         private const val KEY_PROTOTYPE = "prototype_mode"
         private const val KEY_TARGET = "benchmark_target"
         private const val KEY_BOTH = "both_tracers"
+        private const val KEY_TURN_CW = "sideways_turn_cw"
 
         @Volatile private var instance: AppSettings? = null
 

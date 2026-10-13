@@ -48,6 +48,9 @@ class ScanController(
     /** "picked" (gallery) or "camera": the CSV's `photo` label and the record. */
     var photoSource by mutableStateOf("picked"); private set
     var loading by mutableStateOf(false); private set
+    /** Quarter turns clockwise applied automatically (sheet found sideways) and by Rotate. */
+    var autoQuarters by mutableStateOf(0); private set
+    var userQuarters by mutableStateOf(0); private set
 
     // ---- research options (shown in prototype mode)
     var tracer by mutableStateOf(SheetPipeline.Tracer.MODEL)
@@ -147,14 +150,25 @@ class ScanController(
             status = "Loading and finding the sheet"
             result = null; saved = null; exported = null; saveError = null
             runCatching {
-                val bmp = UriSource(context, uri, maxDimension = SHEET_PHOTO_MAX_DIM).acquire()
+                val decoded = UriSource(context, uri, maxDimension = SHEET_PHOTO_MAX_DIM).acquire()
                 withContext(Dispatchers.Default) {
+                    // A sheet found sideways (outline taller than wide) is turned
+                    // a quarter round, the way this user's photos last needed.
+                    var bmp = decoded
+                    var found = runCatching { SheetCorners.find(bmp) }
+                    var turned = 0
+                    if (found.getOrNull()?.let { SheetOrientation.isSideways(it.corners) } == true) {
+                        turned = if (settings.sidewaysTurnClockwise) 1 else -1
+                        bmp = SheetOrientation.rotate(decoded, turned)
+                        decoded.recycle()
+                        found = runCatching { SheetCorners.find(bmp) }
+                    }
                     val m = ImageWarp.toMat(bmp)
                     val small = try { ImageWarp.previewBitmap(m, 1080) } finally { m.release() }
-                    val found = runCatching { SheetCorners.find(bmp) }
-                    Triple(bmp, small, found)
+                    Loaded(bmp, small, found, turned)
                 }
-            }.onSuccess { (bmp, small, found) ->
+            }.onSuccess { (bmp, small, found, turned) ->
+                autoQuarters = turned; userQuarters = 0
                 val f = found.getOrNull()
                 bitmap = bmp; preview = small
                 corners = f?.corners ?: CornerGeometry.initialCorners(bmp.width, bmp.height)
@@ -170,6 +184,40 @@ class ScanController(
             }
         }
     }
+
+    private data class Loaded(val bmp: Bitmap, val small: Bitmap, val found: Result<SheetCorners.Found>,
+                              val turned: Int)
+
+    /** Turn the photograph a quarter round clockwise and find the corners again. */
+    fun rotate() {
+        val bmp = bitmap ?: return
+        if (busy || loading) return
+        scope.launch {
+            loading = true
+            runCatching {
+                withContext(Dispatchers.Default) {
+                    val r = SheetOrientation.rotate(bmp, 1)
+                    val m = ImageWarp.toMat(r)
+                    val small = try { ImageWarp.previewBitmap(m, 1080) } finally { m.release() }
+                    Triple(r, small, runCatching { SheetCorners.find(r) })
+                }
+            }.onSuccess { (r, small, found) ->
+                val f = found.getOrNull()
+                // The old bitmap is left to the collector: the corner editor may
+                // still draw it for a frame, and a recycled bitmap crashes.
+                bitmap = r; preview = small
+                userQuarters += 1
+                corners = f?.corners ?: CornerGeometry.initialCorners(r.width, r.height)
+                cornersAuto = f != null; cornersFound = f != null; cornersRefined = f?.refined
+                cornerFailure = if (f == null) found.exceptionOrNull()?.message else null
+                result = null; saved = null; exported = null
+            }.onFailure { e -> status = "Could not rotate: ${e.message}" }
+            loading = false
+        }
+    }
+
+    /** The CSV's photo_rotation line (null: the photograph was not turned). */
+    private val rotationLabel get() = SheetOrientation.label(autoQuarters, userQuarters)
 
     fun moveCorners(c: DoubleArray) {
         corners = c
@@ -202,7 +250,7 @@ class ScanController(
         val pid = if (pairWithOwnStamp) stamp else pairId
         var csv = ""
         val meta = runCatching {
-            csv = SheetPipeline.csv(r, photoLabel(bmp), spec.target, stamp, pid)
+            csv = SheetPipeline.csv(r, photoLabel(bmp), spec.target, stamp, pid, photoRotation = rotationLabel)
             RecordStore.save(context, r, bmp, spec.target, csv, photoSource)
         }
         // runCatching would swallow a cancellation: a run cancelled at the very
@@ -229,6 +277,10 @@ class ScanController(
         val c = corners?.copyOf() ?: return
         val tg = effectiveTarget
         val both = effectiveBothTracers
+        // An automatic quarter turn the user had to turn half round: this grip
+        // needs the other direction from now on.
+        if (SheetOrientation.shouldFlipDirection(autoQuarters, userQuarters))
+            settings.updateSidewaysTurnClockwise(!settings.sidewaysTurnClockwise)
         val plan = ScanRuns.plan(RunSpec(effectiveTracer, c.toList(), cornersAuto, cornersRefined,
             if (effectiveGridFit) SheetPipeline.Geometry.GRID else SheetPipeline.Geometry.CORNERS, tg?.name), both)
         job?.cancel()
@@ -317,7 +369,7 @@ class ScanController(
             val stamp = Exporter.stamp()
             val name = exportName(tg?.name, r.tracer, stamp)
             exported = runCatching {
-                "Exported to " + Exporter.exportText(context, name, SheetPipeline.csv(r, photoLabel(bmp), tg?.name, stamp))
+                "Exported to " + Exporter.exportText(context, name, SheetPipeline.csv(r, photoLabel(bmp), tg?.name, stamp, photoRotation = rotationLabel))
             }.getOrElse { "Export failed: ${it.message}" }
         }
     }
@@ -328,7 +380,7 @@ class ScanController(
         val bmp = bitmap ?: return null
         val stamp = Exporter.stamp()
         return exportName(resultTarget?.name, r.tracer, stamp) to
-            SheetPipeline.csv(r, photoLabel(bmp), resultTarget?.name, stamp)
+            SheetPipeline.csv(r, photoLabel(bmp), resultTarget?.name, stamp, photoRotation = rotationLabel)
     }
 
     /** Rename the record this scan was saved as. */
