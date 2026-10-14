@@ -64,6 +64,9 @@ DEV_IDS = (9, 38, 40, 57)
 HELDOUT_IDS = (1737, 3908, 4016, 8504, 167, 160, 7916, 5830)
 SETS = ("clean", "ideal", "robustness")
 CONDITIONS = ("ideal", "side_light", "shadow", "tilt", "curl")
+#: How each set is named in captions.
+SET_LABEL = {"clean": "set A, clean images", "ideal": "set B, ideal photographs", "robustness": "robustness set"}
+
 LEADS12 = ("I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6")
 TRACERS = ("learned", "classical")
 COLOUR = {"learned": "#7A1F2B", "classical": "#808080", "truth": "#BBBBBB"}
@@ -432,8 +435,8 @@ def fig_pcc_by_set(out: Out, plt, df: pd.DataFrame, pcc_lim):
     out.sidecar("pcc_by_set", ["pcc_by_set.pdf", "pcc_by_set.csv"])
 
 
-def fig_pcc_by_lead(out: Out, plt, df: pd.DataFrame, pcc_lim):
-    d = leads12(df[df["set"] == "ideal"])
+def fig_pcc_by_lead(out: Out, plt, df: pd.DataFrame, pcc_lim, focus: str = "ideal"):
+    d = leads12(df[df["set"] == focus])
     fig, ax = plt.subplots(figsize=(FULL_W, 2.4))
     rows = []
     any_data = False
@@ -461,8 +464,8 @@ def fig_pcc_by_lead(out: Out, plt, df: pd.DataFrame, pcc_lim):
     out.sidecar("pcc_by_lead", ["pcc_by_lead.pdf", "pcc_by_lead.csv"])
 
 
-def fig_plain_vs_aligned(out: Out, plt, df: pd.DataFrame, pcc_lim):
-    d = leads12(df[(df["set"] == "ideal") & (df["tracer_kind"] == "learned")])
+def fig_plain_vs_aligned(out: Out, plt, df: pd.DataFrame, pcc_lim, focus: str = "ideal"):
+    d = leads12(df[(df["set"] == focus) & (df["tracer_kind"] == "learned")])
     both = d.dropna(subset=["pcc_asis", "pcc_aligned"])
     fig, ax = plt.subplots(figsize=(HALF_W, HALF_W))
     ax.plot(pcc_lim, pcc_lim, color="#BBBBBB", lw=0.8, zorder=0)
@@ -480,8 +483,8 @@ def fig_plain_vs_aligned(out: Out, plt, df: pd.DataFrame, pcc_lim):
                 {"n_points": int(len(both)), "n_aligned_not_measurable": int(d["pcc_aligned"].isna().sum())})
 
 
-def fig_pcc_by_quality(out: Out, plt, df: pd.DataFrame, pcc_lim):
-    d = leads12(df[df["set"].isin(["ideal", "robustness"]) & (df["tracer_kind"] == "learned")]).copy()
+def fig_pcc_by_quality(out: Out, plt, df: pd.DataFrame, pcc_lim, focus: str = "ideal"):
+    d = leads12(df[(df["set"] == focus) & (df["tracer_kind"] == "learned")]).copy()
     d["verdict"] = d["quality"].fillna("").replace("", "not recorded")
     order = ["ok", "check", "unreliable", "not recorded"]
     rng = np.random.default_rng(SEED)
@@ -575,8 +578,8 @@ def stage_order(pe: pd.DataFrame) -> list[str]:
     return order
 
 
-def fig_latency(out: Out, plt, pe: pd.DataFrame):
-    p = pe[pe["set"] == "ideal"]
+def fig_latency(out: Out, plt, pe: pd.DataFrame, focus: str = "ideal"):
+    p = pe[pe["set"] == focus]
     stages = stage_order(p)
     fig, ax = plt.subplots(figsize=(FULL_W, 1.6))
     cmap = plt.get_cmap("Greys")
@@ -652,6 +655,68 @@ def table_fidelity(out: Out, df: pd.DataFrame, set_name: str, wil: dict) -> dict
     return sums
 
 
+def median_diff_ci(a: pd.DataFrame, b: pd.DataFrame, col: str, n_boot: int = N_BOOT, seed: int = SEED) -> tuple:
+    """95% CI of median(b[col]) - median(a[col]), each set resampled by photo (cluster bootstrap)."""
+    def groups(d):
+        d = d[["photo_id", col]].dropna()
+        return [g[col].to_numpy() for _, g in d.groupby("photo_id")]
+    ga, gb = groups(a), groups(b)
+    if len(ga) < 2 or len(gb) < 2:
+        return float("nan"), float("nan")
+    rng = np.random.default_rng(seed)
+    diffs = np.empty(n_boot)
+    for i in range(n_boot):
+        pa = np.concatenate([ga[j] for j in rng.integers(0, len(ga), len(ga))])
+        pb = np.concatenate([gb[j] for j in rng.integers(0, len(gb), len(gb))])
+        diffs[i] = np.median(pb) - np.median(pa)
+    return float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))
+
+
+def table_compare_sets(out: Out, df: pd.DataFrame, sets: list[str]) -> pd.DataFrame:
+    """Every fidelity measure for each set side by side, per tracer, and the change from the
+    first set to each later one (median difference, 95% CI by photo-cluster bootstrap)."""
+    d = leads12(df)
+    csvrows = []
+    tex = [r"\begin{tabular}{@{}l" + "r" * (2 * len(sets) - 1) + "@{}}", r"\toprule",
+           r"\textbf{Measure} & " + " & ".join(
+               [rf"\textbf{{{SET_LABEL.get(s, s).split(',')[0].capitalize()}}}" for s in sets] +
+               [rf"\textbf{{$\Delta$ {SET_LABEL.get(s, s).split(',')[0][4:]} $-$ {SET_LABEL.get(sets[0], sets[0]).split(',')[0][4:]}}}"
+                for s in sets[1:]]) + r"\\"]
+    for tk in TRACERS:
+        tex += [r"\midrule", rf"\multicolumn{{{2 * len(sets)}}}{{@{{}}l}}{{\emph{{{tk.capitalize()} tracer}}}}\\"]
+        base = d[(d["set"] == sets[0]) & (d["tracer_kind"] == tk)]
+        for label, col, p in FIDELITY_ROWS:
+            cells, row = [], {"tracer": tk, "measure": label}
+            for st in sets:
+                sm = summary(d[(d["set"] == st) & (d["tracer_kind"] == tk)][col])
+                row[f"{st}_median"], row[f"{st}_q1"], row[f"{st}_q3"] = sm["median"], sm["q1"], sm["q3"]
+                cells.append(fmt(sm["median"], p))
+            for st in sets[1:]:
+                other = d[(d["set"] == st) & (d["tracer_kind"] == tk)]
+                delta = row[f"{st}_median"] - row[f"{sets[0]}_median"]
+                lo, hi = median_diff_ci(base, other, col)
+                row[f"delta_{st}"], row[f"delta_{st}_ci_lo"], row[f"delta_{st}_ci_hi"] = delta, lo, hi
+                cells.append("--" if not np.isfinite(delta) else
+                             f"{delta:+.{p}f} [{lo:+.{p}f}, {hi:+.{p}f}]" if np.isfinite(lo) else f"{delta:+.{p}f}")
+            csvrows.append(row)
+            tex.append(f"{label} & " + " & ".join(cells) + r"\\")
+        pct = []
+        for st in sets:
+            sm = summary(d[(d["set"] == st) & (d["tracer_kind"] == tk)]["pcc_asis"])
+            pct.append(f"{sm['pct_ge_09']:.0f}\\%" if sm["n"] else "--")
+        tex.append(r"Leads with PCC $\geq$ 0.9 & " + " & ".join(pct + [""] * (len(sets) - 1)) + r"\\")
+        nph = [str(int(d[(d["set"] == st) & (d["tracer_kind"] == tk)]["photo_id"].nunique())) for st in sets]
+        tex.append("Images & " + " & ".join(nph + [""] * (len(sets) - 1)) + r"\\")
+    tex += [r"\bottomrule", r"\end{tabular}", ""]
+    out.tex("compare_sets.tex", "\n".join(tex))
+    t = pd.DataFrame(csvrows)
+    out.csv("compare_sets.csv", t)
+    out.sidecar("compare_sets", ["compare_sets.tex", "compare_sets.csv"],
+                {"sets": sets, "delta": "median(later set) - median(first set); 95% CI: independent cluster "
+                                         "bootstrap over photos in each set, 2000 resamples"})
+    return t
+
+
 def table_robustness(out: Out, rob: pd.DataFrame):
     tex = [r"\begin{tabular}{@{}lrlrrr@{}}", r"\toprule",
            r"\textbf{Condition} & \textbf{Median PCC} & \textbf{$\Delta$ vs ideal [95\% CI]} & "
@@ -670,8 +735,8 @@ def table_robustness(out: Out, rob: pd.DataFrame):
     out.sidecar("robustness", ["robustness.pdf", "robustness.tex", "robustness.csv"])
 
 
-def table_on_device(out: Out, pe: pd.DataFrame) -> dict:
-    p = pe[(pe["set"] == "ideal") & (pe["tracer_kind"] == "learned")]
+def table_on_device(out: Out, pe: pd.DataFrame, focus: str = "ideal") -> dict:
+    p = pe[(pe["set"] == focus) & (pe["tracer_kind"] == "learned")]
     stages = stage_order(p)
     rows, csvrows = [], []
     for s in stages:
@@ -685,7 +750,8 @@ def table_on_device(out: Out, pe: pd.DataFrame) -> dict:
     peak = p["peak_native_mb"].dropna()
     harness = sorted({k for h in p["harness"] for k in h} | {k for h in p["legacy"] for k in h})
     n = len(p)
-    tex = [f"% caption: time and memory per sheet on the Galaxy A30s, learned tracer, ideal set (n = {n} exports);",
+    tex = [f"% caption: time and memory per sheet on the Galaxy A30s, learned tracer, {SET_LABEL.get(focus, focus)} "
+           f"(n = {n} exports);",
            "% harness stages excluded: " + (", ".join(harness) if harness else "none"),
            r"\begin{tabular}{@{}lrrr@{}}", r"\toprule",
            r"\textbf{Stage} & \textbf{Median (ms)} & \textbf{Range (ms)} & \textbf{Peak native (MB)}\\", r"\midrule"]
@@ -747,12 +813,21 @@ def main(argv=None) -> int:
     p.add_argument("--manifest", type=Path, default=MANIFEST)
     p.add_argument("--scores", type=Path, default=SCORES)
     p.add_argument("--out", type=Path, default=REPO / "results" / "report")
+    p.add_argument("--sets", nargs="+", choices=SETS, default=None,
+                   help="only these sets of the manifest. ONE set: that set's own figures and tables. "
+                        "SEVERAL (or none given): the comparison -- PCC by set, each set's fidelity table, "
+                        "the side-by-side table and, once it has photos, robustness")
     args = p.parse_args(argv)
     if args.draft_manifest:
         return draft_manifest(args.manifest, args.force)
 
     out_dir = args.out if args.out.is_absolute() else REPO / args.out
     df, rep = load(args.scores, args.manifest)
+    if args.sets:
+        df = df[df["set"].isin(args.sets)].copy()
+    sets = [x for x in SETS if x in set(df["set"])]
+    single = len(sets) == 1
+    focus = sets[0] if single else None
     for e in rep["skipped_not_in_manifest"]:
         print(f"  skipped (not in the manifest): {e}")
     for e in rep["in_manifest_without_scores"]:
@@ -760,7 +835,8 @@ def main(argv=None) -> int:
     params = {"scores": str(args.scores.relative_to(REPO)) if args.scores.is_relative_to(REPO) else str(args.scores),
               "manifest": str(args.manifest.relative_to(REPO)) if args.manifest.is_relative_to(REPO) else str(args.manifest),
               "manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),
-              "n_boot": N_BOOT, "seed": SEED, "good_pcc": GOOD, "dev_ids": DEV_IDS, "held_out_ids": HELDOUT_IDS}
+              "n_boot": N_BOOT, "seed": SEED, "good_pcc": GOOD, "dev_ids": DEV_IDS, "held_out_ids": HELDOUT_IDS,
+              "sets": sets, "mode": "single set" if single else "comparison"}
     out = Out(out_dir, params)
     plt = style()
 
@@ -768,21 +844,24 @@ def main(argv=None) -> int:
     lo = min(0.0, np.floor((allp.min() if len(allp) else 0.0) * 10) / 10)
     pcc_lim = (lo - 0.02, 1.02)
 
-    examples = {}
-    for s in ("clean", "ideal"):
-        examples[s] = fig_example(out, plt, df, s, pcc_lim)
-        if examples[s] is None:
-            print(f"  F1 example ({s}): no learned leads in this set -- not drawn")
-    fig_pcc_by_set(out, plt, df, pcc_lim)
-    fig_pcc_by_lead(out, plt, df, pcc_lim)
-    fig_plain_vs_aligned(out, plt, df, pcc_lim)
-    fig_pcc_by_quality(out, plt, df, pcc_lim)
-    rob = robustness_rows(df)
-    fig_robustness(out, plt, rob)
-    table_robustness(out, rob)
+    examples, device = {}, None
     pe = per_export(df)
-    fig_latency(out, plt, pe)
-    device = table_on_device(out, pe)
+    if single:
+        examples[focus] = fig_example(out, plt, df, focus, pcc_lim)
+        if examples[focus] is None:
+            print(f"  F1 example ({focus}): no learned leads in this set -- not drawn")
+        fig_pcc_by_lead(out, plt, df, pcc_lim, focus)
+        fig_plain_vs_aligned(out, plt, df, pcc_lim, focus)
+        fig_pcc_by_quality(out, plt, df, pcc_lim, focus)
+        fig_latency(out, plt, pe, focus)
+        device = table_on_device(out, pe, focus)
+    else:
+        fig_pcc_by_set(out, plt, df, pcc_lim)
+        table_compare_sets(out, df, sets)
+        if "robustness" in sets:
+            rob = robustness_rows(df)
+            fig_robustness(out, plt, rob)
+            table_robustness(out, rob)
 
     pairs, pair_rep = paired_tracers(df)
     for k, v in pair_rep.items():
@@ -811,10 +890,12 @@ def main(argv=None) -> int:
                                    "n_leads": sums[tk]["_pcc"]["n"], "n_unavailable": sums[tk]["_pcc"]["n_unavailable"],
                                    "n_photos": int(d["photo_id"].nunique()), "rhythm_median_pcc": rh["median"],
                                    "rhythm_n": rh["n"]}
-    lv = leads12(df[(df["set"] == "ideal") & (df["tracer_kind"] == "learned")])
-    gd = {g: summary(lv[lv["group"] == g]["pcc_asis"])["median"] for g in ("dev", "held_out")}
-    head["dev_vs_held_out"] = {"dev_median": gd["dev"], "held_out_median": gd["held_out"],
-                               "difference": (gd["held_out"] - gd["dev"]) if all(np.isfinite(v) for v in gd.values()) else None}
+    for st in sets:
+        lv = leads12(df[(df["set"] == st) & (df["tracer_kind"] == "learned")])
+        gd = {g: summary(lv[lv["group"] == g]["pcc_asis"])["median"] for g in ("dev", "held_out")}
+        head.setdefault("dev_vs_held_out", {})[st] = {
+            "dev_median": gd["dev"], "held_out_median": gd["held_out"],
+            "difference": (gd["held_out"] - gd["dev"]) if all(np.isfinite(v) for v in gd.values()) else None}
     (out.root / "headline.json").write_text(json.dumps(clean_json({**out.prov, "headline": head}), indent=2,
                                                        default=str, allow_nan=False), encoding="utf-8")
     print(f"wrote {len(out.written) + 1} files to {out.root}")

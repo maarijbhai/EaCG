@@ -10,12 +10,15 @@ INPUTS  results/device/sheet_scores.csv (score_device_sheets.py), python/test_se
         each export's own header (timings, memory, diagnosis, pair_id, photo_rotation),
         android/app/src/main/assets/ml/clf_kit_labels.txt (PTB-XL labels of the sheets),
         data/device_exports/Set B/_excluded/README.txt, and the Set B photographs.
-OUTPUT  results/report/stats_sets_A_B.xlsx + .json
+OUTPUT  --out (default results/report/compare_sets/stats_compare_sets.xlsx) + .json
 
 Set A = set "clean" in the manifest (the 12 printed-sheet images, no camera);
 Set B = set "ideal" (24 photographs, 2 per sheet).
 
-    python make_stats_workbook.py        (from python/)
+    python make_stats_workbook.py --sets clean --out results/report/set_A_clean/stats_set_A.xlsx
+    python make_stats_workbook.py --sets ideal --out results/report/set_B_ideal/stats_set_B.xlsx
+    python make_stats_workbook.py                       # both sets + the comparison sheets
+(from python/; make_results.py runs all three.)
 """
 
 from __future__ import annotations
@@ -38,7 +41,7 @@ sys.path.insert(0, str(HERE))
 import make_report_figures as R  # noqa: E402
 import score_device_sheets as SDS  # noqa: E402
 
-OUT = REPO / "results" / "report" / "stats_sets_A_B"
+OUT = REPO / "results" / "report" / "compare_sets" / "stats_compare_sets.xlsx"
 SET_NAME = {"clean": "A (clean images)", "ideal": "B (ideal photos)"}
 LEAD_ORDER = ["I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6", "II rhythm"]
 
@@ -189,11 +192,43 @@ def summarise(df: pd.DataFrame, by: list[str]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def main() -> int:
+def compare_sheets(df: pd.DataFrame, leads12: pd.DataFrame) -> dict:
+    """A against B: every measure, each sheet, each lead name -- B minus A."""
+    sets = [s for s in SET_NAME.values() if s in set(df["set_name"])]
+    a, b = sets[0], sets[-1]
+    meas = ["pcc_asis", "pcc_aligned", "snr_db_asis", "shifted_snr_db_asis", "rmse_mv_asis", "gain_ratio",
+            "r_ratio", "coverage"]
+    rows = []
+    for tk in ("learned", "classical"):
+        for m in meas:
+            va = pd.to_numeric(leads12[(leads12["set_name"] == a) & (leads12["tracer_kind"] == tk)][m], errors="coerce")
+            vb = pd.to_numeric(leads12[(leads12["set_name"] == b) & (leads12["tracer_kind"] == tk)][m], errors="coerce")
+            lo, hi = R.median_diff_ci(leads12[(leads12["set_name"] == a) & (leads12["tracer_kind"] == tk)].assign(**{m: va}),
+                                      leads12[(leads12["set_name"] == b) & (leads12["tracer_kind"] == tk)].assign(**{m: vb}), m)
+            rows.append({"tracer": tk, "measure": m, f"{a} median": va.median(), f"{b} median": vb.median(),
+                         "B minus A": vb.median() - va.median(), "95% CI lo": lo, "95% CI hi": hi})
+    per_sheet = (leads12.groupby(["ecg_id", "ptbxl_label", "tracer_kind", "set_name"])["pcc_asis"].median()
+                 .unstack("set_name").reset_index())
+    per_sheet["B minus A"] = per_sheet.get(b) - per_sheet.get(a)
+    per_lead = (leads12.groupby(["tracer_kind", "lead", "set_name"])["pcc_asis"].median().unstack("set_name")
+                .reset_index())
+    per_lead["lead"] = pd.Categorical(per_lead["lead"], LEAD_ORDER[:12], ordered=True)
+    per_lead = per_lead.sort_values(["tracer_kind", "lead"])
+    per_lead["B minus A"] = per_lead.get(b) - per_lead.get(a)
+    return {"A vs B (measures)": pd.DataFrame(rows), "A vs B (per sheet)": per_sheet, "A vs B (per lead)": per_lead}
+
+
+def main(argv=None) -> int:
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--sets", nargs="+", choices=list(SET_NAME), default=list(SET_NAME))
+    ap.add_argument("--out", type=Path, default=OUT, help="the .xlsx to write (relative to the repository)")
+    args = ap.parse_args(argv)
+    out = (args.out if args.out.is_absolute() else REPO / args.out).with_suffix("")
     manifest = pd.read_csv(R.MANIFEST)
-    manifest = manifest[manifest["set"].isin(SET_NAME)]
+    manifest = manifest[manifest["set"].isin(args.sets)]
     df, _ = R.load(R.SCORES, R.MANIFEST)          # the report's own join, types and tracer names
-    df = df[df["set"].isin(SET_NAME)].copy()
+    df = df[df["set"].isin(args.sets)].copy()
     df["set_name"] = df["set"].map(SET_NAME)
     df["lead_label"] = np.where(df["rhythm"], "II rhythm", df["lead"])
     labels = kit_labels()
@@ -292,12 +327,12 @@ def main() -> int:
         corr = pd.DataFrame()
 
     excl_file = REPO / "data" / "device_exports" / "Set B" / "_excluded" / "README.txt"
-    excl = (pd.DataFrame([l.split("\t", 1) for l in excl_file.read_text(encoding="utf-8").splitlines()
+    excl = pd.DataFrame() if "ideal" not in args.sets else (pd.DataFrame([l.split("\t", 1) for l in excl_file.read_text(encoding="utf-8").splitlines()
                           if l and not l.startswith("#")], columns=["file", "reason"]) if excl_file.exists() else pd.DataFrame())
 
     # ---- write
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    xl = OUT.with_suffix(".xlsx")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    xl = out.with_suffix(".xlsx")
     lead_cols = ["set_name", "ecg_id", "ptbxl_label", "photo_id", "tracer_kind", "export", "lead_label", "row", "col",
                  "coverage", "pcc_asis", "pcc_aligned", "snr_db_asis", "shifted_snr_db_asis", "rmse_mv_asis",
                  "gain_ratio", "r_ratio", "r_ratio_aligned", "align_scale_pct",
@@ -318,6 +353,13 @@ def main() -> int:
         "Per lead (all)": df[lead_cols].sort_values(["set_name", "ecg_id", "photo_id", "tracer_kind", "row", "col"]),
         "Excluded (Set B)": excl,
     }
+    if len(args.sets) > 1:
+        sheets = {**{k: v for k, v in sheets.items() if k in ("README", "Summary 12 leads", "Summary rhythm strip",
+                                                               "Tracer comparison")},
+                  **compare_sheets(df, leads12),
+                  **{k: v for k, v in sheets.items() if k not in ("README", "Summary 12 leads",
+                                                                   "Summary rhythm strip", "Tracer comparison")}}
+    sheets = {k: v for k, v in sheets.items() if len(v)}
     with pd.ExcelWriter(xl, engine="openpyxl") as wr:
         for name, d in sheets.items():
             d.to_excel(wr, sheet_name=name, index=False)
@@ -337,11 +379,12 @@ def main() -> int:
                     row[1].alignment = Alignment(wrap_text=True, vertical="top")
                     if row[0].value and not row[1].value:
                         row[0].font = Font(bold=True)
-    OUT.with_suffix(".json").write_text(json.dumps(R.clean_json({
+    out.with_suffix(".json").write_text(json.dumps(R.clean_json({
         "generated_by": "python/make_stats_workbook.py",
         "utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "git_commit": git("rev-parse", "HEAD"), "git_dirty": bool(git("status", "--porcelain", "--", "python")),
         "inputs": {"scores": str(R.SCORES.relative_to(REPO)), "manifest": str(R.MANIFEST.relative_to(REPO))},
+        "sets": args.sets,
         "sheets": {k: int(len(v)) for k, v in sheets.items()},
         "versions": {"python": platform.python_version(), "pandas": pd.__version__, "numpy": np.__version__},
     }), indent=2) + "\n", encoding="utf-8")
