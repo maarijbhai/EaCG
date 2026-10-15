@@ -202,7 +202,36 @@ def replay() -> list[dict]:
     return rows
 
 
-def whatif(tracer_name: str) -> list[dict]:
+#: The knife edge (progress_log §41): the same photograph flips between 8/9
+#: and 3/9 ticks with a few pixels of corner shift or a 1.5% resize, and the
+#: desktop decode is not the phone's. So each run is also replayed under small
+#: perturbations, fixed by seed: decode resized by -1.5 / +1.5%, and six
+#: corner jitters of up to +-3 px per coordinate.
+JITTER_SEED = 20261016
+CONDITIONS = [("exact", 1.0, None), ("resize -1.5%", 0.985, None), ("resize +1.5%", 1.015, None)] +              [(f"corners jitter {i + 1}", 1.0, i) for i in range(6)]
+
+
+def whatif_targets() -> list[tuple[str, Path, dict, str]]:
+    """The runs the guard fires on: by the phone's own scales (the 7 failed
+    Set C runs), and those where only the desktop replay fires (from
+    t0_guard_replay.csv), labelled so."""
+    desk_only = set()
+    rp = OUT / "t0_guard_replay.csv"
+    if rp.exists():
+        for r in csv.DictReader(rp.open(encoding="utf-8")):
+            if r.get("desk_fires") == "True" and r.get("phone_fires") == "False":
+                desk_only.add(r["export"])
+    out = []
+    for s, p, h in runs():
+        tick_ph, grid_ph, _ = phone_scales(h)
+        if segment.t0_guard_fires(tick_ph, grid_ph):
+            out.append((s, p, h, "phone fires"))
+        elif p.name in desk_only:
+            out.append((s, p, h, "desktop only"))
+    return out
+
+
+def whatif(tracer_name: str) -> tuple[list[dict], dict]:
     if tracer_name == "b3":
         sys.path.insert(0, str(REPO / "ml"))
         from export_tflite import TfliteTracer
@@ -211,47 +240,75 @@ def whatif(tracer_name: str) -> list[dict]:
         tracer = sheet.model_row_tracer(tfl, height)
     else:
         tracer = sheet.classical_row_tracer()
-    rows = []
-    for s, p, h in runs():
-        tick_ph, grid_ph, _ = phone_scales(h)
-        if not segment.t0_guard_fires(tick_ph, grid_ph):
-            continue
-        photo, cw, d = match_photo(s, p, h)
+    rng = np.random.default_rng(JITTER_SEED)
+    jitters = [rng.uniform(-3.0, 3.0, size=(4, 2)) for _ in range(6)]
+    rows, summary = [], {}
+    for s, p, h, why in whatif_targets():
+        photo, cw, _ = match_photo(s, p, h)
         if photo is None:
-            rows.append({"set": s, "export": p.name, "error": "photograph not identified"}); continue
-        corners = np.array([float(v) for v in h["corners_px"].split()]).reshape(4, 2)
+            rows.append({"set": s, "export": p.name, "error": "photograph not in the records"}); continue
+        corners0 = np.array([float(v) for v in h["corners_px"].split()]).reshape(4, 2)
         truth = S12.SheetTruth(skp.Target(h["target"]))
-        img = photo_bgr(photo, cw)
-        for when, on in (("before", False), ("after", True)):
-            res = sheet.digitise_sheet(img, tracer, corners, "grid", t0_guard=on)
-            cells, rh = [], {}
-            for (lead, rhythm), sig in res.leads.items():
-                sc = S12.score_lead(sig, truth.leads[(lead, rhythm)]["mv"],
-                                    segment.RECORDING_S if rhythm else segment.CELL_S)
-                if rhythm:
-                    rh = sc
-                else:
-                    cells.append(sc)
-            pcc = [c.get("pcc_asis", float("nan")) for c in cells]
-            pcc = [float(v) if v != "" else float("nan") for v in pcc]
-            med = lambda k: float(np.nanmedian([float(c[k]) if c.get(k, "") != "" else np.nan for c in cells]))
-            grid_px = res.grid_fit.px_per_mm if res.grid_fit is not None else float("nan")
-            rows.append({"set": s, "export": p.name, "photo": photo.name, "record": h["target"].split("_")[0],
-                         "tracer": tracer_name, "when": when, "geometry": res.geometry,
-                         "ticks_found": res.ticks_found, "t0_source": res.t0_source,
-                         "calibration": res.calibration, "px_per_mm": round(res.px_per_mm, 4),
-                         "grid_px": round(grid_px, 4),
-                         "disagree_pct": round(100 * (res.ticks.px_per_mm / grid_px - 1), 2)
-                         if res.ticks is not None and np.isfinite(res.ticks.px_per_mm) else "",
-                         "guard": res.t0_guard.line() if res.t0_guard else "",
-                         "median_pcc": round(float(np.nanmedian(pcc)), 4),
-                         "median_pcc_aligned": round(med("pcc_aligned"), 4),
-                         "median_snr_db": round(med("snr_db_asis"), 2),
-                         "median_shifted_snr_db": round(med("shifted_snr_db_asis"), 2),
-                         "leads_pcc_ge_0.9": int(np.sum(np.asarray(pcc) >= 0.9)),
-                         "rhythm_pcc": rh.get("pcc_asis", "")})
-            print(rows[-1], flush=True)
-    return rows
+        base = photo_bgr(photo, cw)
+        per = []
+        for cname, scale, j in CONDITIONS:
+            img = base if scale == 1.0 else cv2.resize(base, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+            corners = corners0 * scale + (jitters[j] if j is not None else 0.0)
+            pair = {}
+            for when, on in (("before", False), ("after", True)):
+                try:
+                    res = sheet.digitise_sheet(img, tracer, corners, "grid", t0_guard=on)
+                except (RuntimeError, ValueError) as e:
+                    rows.append({"set": s, "export": p.name, "why": why, "condition": cname, "when": when,
+                                 "error": f"{type(e).__name__}: {e}"})
+                    continue
+                cells, rh = [], {}
+                for (lead, rhythm), sig in res.leads.items():
+                    sc = S12.score_lead(sig, truth.leads[(lead, rhythm)]["mv"],
+                                        segment.RECORDING_S if rhythm else segment.CELL_S)
+                    if rhythm:
+                        rh = sc
+                    else:
+                        cells.append(sc)
+                val = lambda c, k: float(c[k]) if c.get(k, "") != "" else np.nan
+                pcc = np.array([val(c, "pcc_asis") for c in cells])
+                med = lambda k: float(np.nanmedian([val(c, k) for c in cells]))
+                grid_px = res.grid_fit.px_per_mm if res.grid_fit is not None else float("nan")
+                tick_px = res.ticks.px_per_mm if res.ticks is not None else float("nan")
+                row = {"set": s, "export": p.name, "photo": photo.name, "record": h["target"].split("_")[0],
+                       "why": why, "tracer": tracer_name, "condition": cname, "when": when,
+                       "geometry": res.geometry, "ticks_found": res.ticks_found, "t0_source": res.t0_source,
+                       "calibration": res.calibration, "px_per_mm": round(res.px_per_mm, 4),
+                       "grid_px": round(grid_px, 4),
+                       "disagree_pct": round(100 * (tick_px / grid_px - 1), 2) if np.isfinite(tick_px) else "",
+                       "fires": segment.t0_guard_fires(tick_px, grid_px) if when == "before" else "",
+                       "guard": res.t0_guard.line() if res.t0_guard else "",
+                       "median_pcc": round(float(np.nanmedian(pcc)), 4),
+                       "median_pcc_aligned": round(med("pcc_aligned"), 4),
+                       "median_snr_db": round(med("snr_db_asis"), 2),
+                       "median_shifted_snr_db": round(med("shifted_snr_db_asis"), 2),
+                       "leads_pcc_ge_0.9": int(np.sum(pcc >= 0.9)),
+                       "rhythm_pcc": rh.get("pcc_asis", "")}
+                rows.append(row)
+                pair[when] = row
+            if len(pair) == 2:
+                per.append(pair)
+            print(p.name[-19:-4], cname, {k: (v["ticks_found"], v["disagree_pct"], v["median_pcc"]) for k, v in pair.items()},
+                  flush=True)
+        fired = [x for x in per if x["before"]["fires"]]
+        summary[p.name] = {
+            "why": why, "photo": photo.name, "conditions": len(per), "fires_before": len(fired),
+            "guard_used": sum(1 for x in fired if x["after"]["guard"].startswith("fired, used")),
+            "median_pcc_before_all": round(float(np.median([x["before"]["median_pcc"] for x in per])), 4) if per else None,
+            "median_pcc_after_all": round(float(np.median([x["after"]["median_pcc"] for x in per])), 4) if per else None,
+            "median_pcc_before_fired": round(float(np.median([x["before"]["median_pcc"] for x in fired])), 4) if fired else None,
+            "median_pcc_after_fired": round(float(np.median([x["after"]["median_pcc"] for x in fired])), 4) if fired else None,
+            "leads_ge_0.9_before_fired": int(np.sum([x["before"]["leads_pcc_ge_0.9"] for x in fired])) if fired else None,
+            "leads_ge_0.9_after_fired": int(np.sum([x["after"]["leads_pcc_ge_0.9"] for x in fired])) if fired else None,
+            "unchanged_where_not_fired": all(x["before"]["median_pcc"] == x["after"]["median_pcc"]
+                                             for x in per if not x["before"]["fires"])}
+        print(p.name, summary[p.name], flush=True)
+    return rows, summary
 
 
 def main(argv=None) -> int:
@@ -260,8 +317,10 @@ def main(argv=None) -> int:
     ap.add_argument("--tracer", choices=("classical", "b3"), default="classical")
     a = ap.parse_args(argv)
     if a.whatif:
-        write(whatif(a.tracer), "t0_guard_whatif" + ("_b3" if a.tracer == "b3" else ""),
-              {"tracer": a.tracer, "in_sample": "the rule was chosen after seeing these failures"})
+        rows, summary = whatif(a.tracer)
+        write(rows, "t0_guard_whatif" + ("_b3" if a.tracer == "b3" else ""),
+              {"tracer": a.tracer, "conditions": [c[0] for c in CONDITIONS], "jitter_seed": JITTER_SEED,
+               "in_sample": "IN-SAMPLE: the rule was chosen after seeing these failures", "summary": summary})
     else:
         write(replay(), "t0_guard_replay", {})
     return 0
