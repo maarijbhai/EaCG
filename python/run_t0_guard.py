@@ -3,8 +3,9 @@
 
 Every learned export of Set A, Set B and Set C (Tilt, Shadow, Crumple; folders
 starting '_' skipped -- one export per run: the classical partner of a
-both-tracers run has the same photograph and corners) is matched to its
-photograph by its recorded corners, decoded as the phone decodes it (EXIF
+both-tracers run has the same photograph and corners) is paired with its
+photograph from the records (Set A by record, Set B python/test_set.csv, Set C
+the folders' READMEs), decoded as the phone decodes it (EXIF
 applied, 3,200 px long side), turned by its photo_rotation, and the desktop
 reference is run with the export's own corners up to the tick search, so the
 guard's decision is the reference's on the phone's input. The phone's own tick
@@ -49,7 +50,6 @@ PHOTOS = REPO / "data" / "kit_photos"
 SETS = {"Set A": "SetA_Clean", "Set B": "setB", "Set C Tilt": "SetC_Tilt",
         "Set C Shadow": "SetC_Shadow", "Set C Crumple": "SetC_Crumple"}
 OUT = REPO / "results" / "kitphoto"
-MATCH_PX = 3.0      # at least two corners within this of the phone's (photo identity)
 
 
 def git(*a) -> str:
@@ -87,31 +87,50 @@ def photo_bgr(path: Path, cw: int) -> np.ndarray:
     return _photo_cache[key]
 
 
-_corner_cache: dict = {}
+def photo_map() -> dict:
+    """export file name or pair_id -> photograph, from the authoritative records:
+    Set A by record (clean_ptbxl<id>.png), Set B from python/test_set.csv's
+    photo_path (progress_log §36), Set C from each folder's README table."""
+    import pandas as pd
+    out = {}
+    m = pd.read_csv(HERE / "test_set.csv")
+    for _, r in m.iterrows():
+        if isinstance(r["photo_path"], str) and r["photo_path"]:
+            out[r["export"]] = REPO / r["photo_path"]
+    for s in ("Set C Tilt", "Set C Shadow", "Set C Crumple"):
+        for line in (EXPORTS / s / "README.txt").read_text(encoding="utf-8").splitlines():
+            pid = re.match(r"\s*(\d{8}_\d{6})\s", line)
+            ph = re.search(r"(eacg_\d{8}_\d{6}(?:_\d+)?\.jpg)", line)
+            if pid and ph:
+                found = list((PHOTOS / SETS[s]).rglob(ph.group(1)))
+                if found:
+                    out[pid.group(1)] = found[0]
+    return out
 
 
-def match_photo(set_name: str, h: dict) -> tuple[Path | None, int, float]:
-    """(photograph, clockwise quarters, 2nd-smallest corner distance px)."""
+_MAP: dict = {}
+
+
+def match_photo(set_name: str, path: Path, h: dict) -> tuple[Path | None, int, float]:
+    """(photograph, clockwise quarters, 2nd-smallest corner distance px -- a cross-check)."""
+    if not _MAP:
+        _MAP.update(photo_map())
     rot = h.get("photo_rotation", "")
     cw = int(rot.split()[0]) // 90 % 4 if rot else 0
-    w, hh = map(int, h["photo"].split()[1].split("x"))
+    if set_name == "Set A":
+        photo = PHOTOS / SETS[set_name] / f"clean_{h['target'].split('_')[0]}.png"
+    else:
+        photo = _MAP.get(path.name) or _MAP.get(h.get("pair_id", "")) or _MAP.get(h.get("local_time", ""))
+    if photo is None or not photo.exists():
+        return None, cw, float("nan")
+    img = photo_bgr(photo, cw)
     c = np.array([float(v) for v in h["corners_px"].split()])
-    best = (None, cw, float("inf"))
-    for p in sorted(list((PHOTOS / SETS[set_name]).rglob("*.jpg")) + list((PHOTOS / SETS[set_name]).rglob("*.png"))):
-        key = (p, cw)
-        if key not in _corner_cache:
-            img = photo_bgr(p, cw)
-            try:
-                _corner_cache[key] = (img.shape[1], img.shape[0], page.find_sheet_corners(img).corners.reshape(-1))
-            except (RuntimeError, ValueError):
-                _corner_cache[key] = (img.shape[1], img.shape[0], None)
-        pw, ph, pc = _corner_cache[key]
-        if (pw, ph) != (w, hh) or pc is None:
-            continue
-        d = float(np.sort(np.hypot(*(pc - c).reshape(4, 2).T))[1])   # 2nd-best corner
-        if d < best[2]:
-            best = (p, cw, d)
-    return best
+    try:
+        pc = page.find_sheet_corners(img).corners.reshape(-1)
+        d = float(np.sort(np.hypot(*(pc - c).reshape(4, 2).T))[1])
+    except (RuntimeError, ValueError):
+        d = float("nan")
+    return photo, cw, d
 
 
 def phone_scales(h: dict) -> tuple[float, float, int]:
@@ -148,7 +167,7 @@ def write(rows: list[dict], name: str, params: dict) -> None:
         "git_commit": git("rev-parse", "HEAD"),
         "git_dirty": bool(git("status", "--porcelain", "--", "python/ecgproto", "python/run_t0_guard.py")),
         "params": {**params, "t0_guard_pct": segment.T0_GUARD_PCT, "decode_px": 3200,
-                   "sets": SETS, "photo_match": f"2nd-smallest corner distance <= {MATCH_PX} px"},
+                   "sets": SETS, "photo_match": "Set A by record; Set B python/test_set.csv; Set C the folders' README tables; match_px = the 2nd-smallest corner distance to the phone's (cross-check)"},
         "versions": {"python": platform.python_version(), "numpy": np.__version__, "opencv": cv2.__version__},
     }, indent=2) + "\n", encoding="utf-8")
     print(OUT / f"{name}.csv")
@@ -157,15 +176,15 @@ def write(rows: list[dict], name: str, params: dict) -> None:
 def replay() -> list[dict]:
     rows = []
     for s, p, h in runs():
-        photo, cw, d = match_photo(s, h)
+        photo, cw, d = match_photo(s, p, h)
         tick_ph, grid_ph, n_ph = phone_scales(h)
         row = {"set": s, "export": p.name, "pair_id": h.get("pair_id", ""), "photo": photo.name if photo else "",
                "cw": cw, "match_px": round(d, 2), "phone_ticks": n_ph, "phone_tick_px": tick_ph,
                "phone_grid_px": grid_ph,
                "phone_disagree_pct": round(100 * (tick_ph / grid_ph - 1), 2) if np.isfinite(tick_ph) else "",
                "phone_fires": segment.t0_guard_fires(tick_ph, grid_ph)}
-        if photo is None or d > MATCH_PX:
-            row["error"] = "photograph not identified"
+        if photo is None:
+            row["error"] = "photograph not in the records"
         else:
             corners = np.array([float(v) for v in h["corners_px"].split()]).reshape(4, 2)
             try:
@@ -197,8 +216,8 @@ def whatif(tracer_name: str) -> list[dict]:
         tick_ph, grid_ph, _ = phone_scales(h)
         if not segment.t0_guard_fires(tick_ph, grid_ph):
             continue
-        photo, cw, d = match_photo(s, h)
-        if photo is None or d > MATCH_PX:
+        photo, cw, d = match_photo(s, p, h)
+        if photo is None:
             rows.append({"set": s, "export": p.name, "error": "photograph not identified"}); continue
         corners = np.array([float(v) for v in h["corners_px"].split()]).reshape(4, 2)
         truth = S12.SheetTruth(skp.Target(h["target"]))
