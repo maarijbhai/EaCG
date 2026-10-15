@@ -1100,6 +1100,64 @@ Python 131, JVM 135 (one run of the wall-clock `SheetScoreTest` bound failed at
 from the gallery with this APK (the phone's own decode reproduces its own
 failures exactly) and compare with their committed exports.
 
+## 42. 2026-10-15 — The t0 guard on the phone: the failed Set C photographs re-run
+
+**Data.** The user re-ran the failed Set C photographs from the gallery with the
+guard APK (1cf4612), 15:31-15:55, both tracers. Each re-run reuses its original
+run's automatic corners exactly (0.0 px), so it is the same photograph and page
+(matched by corners; `data/device_exports/Crumple ResQ/README.txt`,
+`Tilt ResQ/README.txt`). Copied from the phone: the loose Download/EaCG exports
+(the classical partners 153340 / 154024 and the PTB-XL 9 runs), so every run has
+its pair.
+
+| original failed run | photograph | rescue run(s) |
+|---|---|---|
+| Crumple 124807 (12:47) | 124720 | 153336 / 153340 |
+| Crumple 124910 (12:48) | 124821 | 154119 / 154123 |
+| Crumple 125142 (12:50) | 125056 | 154211 / 154216 |
+| Crumple 125428 (12:53) | 125342 | 155451 / 155455; and 154533 / 154538, a second run with the TR corner placed by hand |
+| Tilt 122954 (10-14) | 122915 | 153108 / 153112 |
+
+Left out (`_excluded/`, with READMEs): 154020 / 154024 (duplicate of 153336 /
+153340: identical apart from time, timings, memory); 154310 / 154315 (benchmarked
+against PTB-XL 40 by mistake -- photograph 125342 is the PTB-XL 4016 sheet --
+superseded by the user's re-export 155451 / 155455, waveform rows identical);
+153453 / 153456 (duplicate of 153108 / 153112).
+
+**"Why does 125342 still fail with 8 ticks and the right scale?" It does not:
+it was scored against the wrong record.** Against PTB-XL 40 the 12:53 runs score
+median lead PCC 0.003 (learned); against PTB-XL 4016, 0.936 (7/12 >= 0.9). Rows,
+lead cut and orientation (auto 90 = the truth for 125342) were right. The
+second 12:53 run (154533 / 154538) has no re-export with the right target; it is
+scored against PTB-XL 4016 through `python/target_corrections.csv`
+(`score_device_set.py --targets`: the export files are untouched, the
+correction is listed in the sidecar).
+
+**Scores** (`python/score_device_set.py`, the unchanged scorer, 2121ff7):
+`results/device/sheet_scores_setC_crumple_rescue.csv`,
+`sheet_scores_setC_tilt_rescue.csv`; before/after
+(`python/rescue_before_after.py`, 49abccb):
+`results/device/setC_crumple_rescue_before_after.csv`. `sheet_scores.csv` and
+`results/report/` untouched.
+
+| photograph | ticks | tick vs grid | learned PCC (aligned) | classical PCC | leads >= 0.9 (learned) |
+|---|---|---|---|---|---|
+| 124720 | 3 -> 8 | +11.7 -> -0.5% | 0.126 -> **0.803** (0.29 -> 0.97) | 0.082 -> 0.493 | 0 -> 2 |
+| 124821 | 3 -> 8 | +18.3 -> -0.2% | -0.048 -> **0.800** (0.30 -> 0.97) | 0.026 -> 0.349 | 0 -> 2 |
+| 125056 | 3 -> 9 | +20.1 -> -0.2% | 0.022 -> **0.787** (0.29 -> 0.96) | 0.040 -> 0.626 | 0 -> 2 |
+| 125342 | 2 -> 8 | none -> 0.0% | 0.014 -> **0.936** (0.60 -> 0.97) | 0.025 -> 0.687 | 0 -> 7 |
+| 125342, hand corner (no guard) | 2 -> 8 | none -> +1.2% | 0.014 -> 0.935 | 0.025 -> 0.625 | 0 -> 9 |
+| Tilt 122915 (PTB-XL 9) | | | -0.06 (phone header) -> **-0.015** | -> 0.055 | still failed |
+
+So on the phone all four crumple failures are rescued (learned 0.79-0.94,
+against 0.83 for the crumple photograph that never failed, 124607); every
+rescued run is still "unreliable" (T0_GUARD), as designed. The Tilt failure is
+not rescued (the guard fired and was used; the run still fails -- consistent with
+the desktop what-if, §41). The hand-corner 12:53 run was rescued WITHOUT the
+guard: with one corner moved the true pulse was found -- the knife edge, and a
+reminder that a rescue by re-running is not by itself evidence for the guard.
+IN-SAMPLE: the guard was designed on these failures.
+
 ---
 
 ## Open items (ordered)
