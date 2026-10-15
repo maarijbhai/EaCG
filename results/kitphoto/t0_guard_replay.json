@@ -1,0 +1,23 @@
+{
+  "generated_by": "python/run_t0_guard.py",
+  "utc": "2026-10-15T12:21:48+00:00",
+  "git_commit": "c886bf9621156c7b1ae0375e93a600048646b508",
+  "git_dirty": false,
+  "params": {
+    "t0_guard_pct": 5.0,
+    "decode_px": 3200,
+    "sets": {
+      "Set A": "SetA_Clean",
+      "Set B": "setB",
+      "Set C Tilt": "SetC_Tilt",
+      "Set C Shadow": "SetC_Shadow",
+      "Set C Crumple": "SetC_Crumple"
+    },
+    "photo_match": "Set A by record; Set B python/test_set.csv; Set C the folders' README tables; match_px = the 2nd-smallest corner distance to the phone's (cross-check)"
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "opencv": "5.0.0"
+  }
+}
