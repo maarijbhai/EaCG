@@ -33,5 +33,40 @@ class Sideways(unittest.TestCase):
         self.assertAlmostEqual(O.outline_aspect(r), 1.0 / O.outline_aspect(c), places=9)
 
 
+M = O.Markers
+
+
+class UpsideDown(unittest.TestCase):
+    """The half-turn rule. Real cases: (pulses, ticks) on the grid page and on it
+    turned half round, from results/kitphoto/orientation_sessions.csv."""
+
+    def test_many_ticks_decide(self):
+        # setB 134308: upright, 1 pulse / 9 ticks against 2 / 2 turned -- the pulses
+        # alone would turn it; more than MAX_TICKS_TURNED ticks cannot be a turned page.
+        self.assertFalse(O.upside_down(M(1, 9), M(2, 2)))
+        # setB 115219: sideways, the clockwise quarter was the wrong one.
+        self.assertTrue(O.upside_down(M(1, 6), M(2, 9)))
+
+    def test_pulses_decide_when_neither_page_has_many_ticks(self):
+        # setB 103050: upright, 1 / 3 against 0 / 6 (a turned page reaches 6 ticks).
+        self.assertFalse(O.upside_down(M(1, 3), M(0, 6)))
+        # setB 104100: sideways, the clockwise quarter was the wrong one.
+        self.assertTrue(O.upside_down(M(0, 1), M(1, 0)))
+
+    def test_ticks_then_a_tie_keeps_the_page(self):
+        self.assertTrue(O.upside_down(M(0, 2), M(0, 5)))
+        self.assertFalse(O.upside_down(M(0, 0), M(0, 0)))
+        self.assertFalse(O.upside_down(M(1, 2), M(1, 2)))
+
+    def test_the_rule_is_antisymmetric_off_ties(self):
+        for a in [M(p, t) for p in range(5) for t in range(10)]:
+            for b in [M(p, t) for p in range(5) for t in range(10)]:
+                if a != b:
+                    self.assertNotEqual(O.upside_down(a, b), O.upside_down(b, a), (a, b))
+
+    def test_max_ticks_turned_is_two_rows_of_ticks(self):
+        self.assertEqual(O.MAX_TICKS_TURNED, 2 * 3)
+
+
 if __name__ == "__main__":
     unittest.main()

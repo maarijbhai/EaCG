@@ -1,0 +1,614 @@
+{
+ "about": "Which clockwise quarter turn makes each session photograph upright, after the phone's decode (EXIF applied). Where the classical tracer reads the sheet (grid fit, median lead PCC >= 0.3 against the best of the 12 printed records, and well above the half-turned candidate), that decides; otherwise the photograph was inspected (rectified page, left third: the 1 mV pulses stand at the left of each row, rising; the labels and '25mm/s' read upright). Made 2026-10-15 for run_orientation_sessions.py (progress_log \u00a739).",
+ "photos": {
+  "eacg_20261013_103050.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left of each row, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "0": 0.05,
+    "2": 0.046
+   }
+  },
+  "eacg_20261013_104041.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.942 against ptbxl1737, the turned page did not digitise",
+   "pcc_by_cw": {
+    "0": 0.942,
+    "2": null
+   }
+  },
+  "eacg_20261013_104100.jpg": {
+   "folder": "setB",
+   "upright_cw": 3,
+   "how": "visual: sideways; row starts (pulses) at the top, rhythm strip at the left: a quarter counter-clockwise",
+   "pcc_by_cw": {
+    "3": 0.127,
+    "1": 0.101
+   }
+  },
+  "eacg_20261013_104404.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.848 against ptbxl1737, 0.115 turned half round",
+   "pcc_by_cw": {
+    "0": 0.848,
+    "2": 0.115
+   }
+  },
+  "eacg_20261013_104521.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.809 against ptbxl1737, 0.092 turned half round",
+   "pcc_by_cw": {
+    "0": 0.809,
+    "2": 0.092
+   }
+  },
+  "eacg_20261013_104556.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.428 against ptbxl1737, the turned page did not digitise",
+   "pcc_by_cw": {
+    "0": 0.428,
+    "2": null
+   }
+  },
+  "eacg_20261013_104801.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "0": 0.077,
+    "2": 0.057
+   }
+  },
+  "eacg_20261013_104915.jpg": {
+   "folder": "setB",
+   "upright_cw": 1,
+   "how": "classical, grid fit: median lead PCC 0.669 against ptbxl1737, 0.067 turned half round",
+   "pcc_by_cw": {
+    "1": 0.669,
+    "3": 0.067
+   }
+  },
+  "eacg_20261013_104932.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "0": 0.204,
+    "2": 0.081
+   }
+  },
+  "eacg_20261013_110920.jpg": {
+   "folder": "setB",
+   "upright_cw": 3,
+   "how": "classical, grid fit: median lead PCC 0.890 against ptbxl9, 0.066 turned half round",
+   "pcc_by_cw": {
+    "3": 0.89,
+    "1": 0.066
+   }
+  },
+  "eacg_20261013_111050.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.706 against ptbxl9, 0.159 turned half round",
+   "pcc_by_cw": {
+    "0": 0.706,
+    "2": 0.159
+   }
+  },
+  "eacg_20261013_111202.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.820 against ptbxl9, 0.117 turned half round",
+   "pcc_by_cw": {
+    "0": 0.82,
+    "2": 0.117
+   }
+  },
+  "eacg_20261013_112807.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.619 against ptbxl9, 0.065 turned half round",
+   "pcc_by_cw": {
+    "0": 0.619,
+    "2": 0.065
+   }
+  },
+  "eacg_20261013_113202.jpg": {
+   "folder": "setB",
+   "upright_cw": 3,
+   "how": "visual: the quarter-clockwise candidate shows the lead labels upside down",
+   "pcc_by_cw": {
+    "3": 0.079,
+    "1": 0.066
+   }
+  },
+  "eacg_20261013_113431.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.615 against ptbxl9, 0.058 turned half round",
+   "pcc_by_cw": {
+    "0": 0.615,
+    "2": 0.058
+   }
+  },
+  "eacg_20261013_113507.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.321 against ptbxl9, 0.058 turned half round",
+   "pcc_by_cw": {
+    "0": 0.321,
+    "2": 0.058
+   }
+  },
+  "eacg_20261013_115101.jpg": {
+   "folder": "setB",
+   "upright_cw": 3,
+   "how": "classical, grid fit: median lead PCC 0.948 against ptbxl38, 0.089 turned half round",
+   "pcc_by_cw": {
+    "3": 0.948,
+    "1": 0.089
+   }
+  },
+  "eacg_20261013_115219.jpg": {
+   "folder": "setB",
+   "upright_cw": 3,
+   "how": "classical, grid fit: median lead PCC 0.949 against ptbxl38, 0.073 turned half round",
+   "pcc_by_cw": {
+    "3": 0.949,
+    "1": 0.073
+   }
+  },
+  "eacg_20261013_115347.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.949 against ptbxl38, 0.085 turned half round",
+   "pcc_by_cw": {
+    "0": 0.949,
+    "2": 0.085
+   }
+  },
+  "eacg_20261013_115407.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.845 against ptbxl38, 0.072 turned half round",
+   "pcc_by_cw": {
+    "0": 0.845,
+    "2": 0.072
+   }
+  },
+  "eacg_20261013_115513.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.751 against ptbxl38, the turned page did not digitise",
+   "pcc_by_cw": {
+    "0": 0.751,
+    "2": null
+   }
+  },
+  "eacg_20261013_132630.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.923 against ptbxl40, 0.089 turned half round",
+   "pcc_by_cw": {
+    "0": 0.923,
+    "2": 0.089
+   }
+  },
+  "eacg_20261013_132702.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.813 against ptbxl40, 0.058 turned half round",
+   "pcc_by_cw": {
+    "0": 0.813,
+    "2": 0.058
+   }
+  },
+  "eacg_20261013_132719.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.847 against ptbxl40, 0.046 turned half round",
+   "pcc_by_cw": {
+    "0": 0.847,
+    "2": 0.046
+   }
+  },
+  "eacg_20261013_133023.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.945 against ptbxl40, 0.082 turned half round",
+   "pcc_by_cw": {
+    "0": 0.945,
+    "2": 0.082
+   }
+  },
+  "eacg_20261013_133534.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.745 against ptbxl57, 0.091 turned half round",
+   "pcc_by_cw": {
+    "0": 0.745,
+    "2": 0.091
+   }
+  },
+  "eacg_20261013_133728.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.750 against ptbxl57, 0.094 turned half round",
+   "pcc_by_cw": {
+    "0": 0.75,
+    "2": 0.094
+   }
+  },
+  "eacg_20261013_133810.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "0": -1.0,
+    "2": null
+   }
+  },
+  "eacg_20261013_134006.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.627 against ptbxl1737, 0.062 turned half round",
+   "pcc_by_cw": {
+    "0": 0.627,
+    "2": 0.062
+   }
+  },
+  "eacg_20261013_134159.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.831 against ptbxl1737, 0.044 turned half round",
+   "pcc_by_cw": {
+    "0": 0.831,
+    "2": 0.044
+   }
+  },
+  "eacg_20261013_134308.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.945 against ptbxl3908, 0.082 turned half round",
+   "pcc_by_cw": {
+    "0": 0.945,
+    "2": 0.082
+   }
+  },
+  "eacg_20261013_134510.jpg": {
+   "folder": "setB",
+   "upright_cw": 3,
+   "how": "classical, grid fit: median lead PCC 0.966 against ptbxl3908, 0.064 turned half round",
+   "pcc_by_cw": {
+    "3": 0.966,
+    "1": 0.064
+   }
+  },
+  "eacg_20261013_134642.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.948 against ptbxl3908, 0.074 turned half round",
+   "pcc_by_cw": {
+    "0": 0.948,
+    "2": 0.074
+   }
+  },
+  "eacg_20261013_143255.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.885 against ptbxl4016, -9.000 turned half round",
+   "pcc_by_cw": {
+    "0": 0.885,
+    "2": -9.0
+   }
+  },
+  "eacg_20261013_143616.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "2": 0.078,
+    "0": 0.076
+   }
+  },
+  "eacg_20261013_143647.jpg": {
+   "folder": "setB",
+   "upright_cw": 3,
+   "how": "visual: the quarter-clockwise candidate shows the lead labels upside down",
+   "pcc_by_cw": {
+    "1": 0.103,
+    "3": 0.061
+   }
+  },
+  "eacg_20261013_143832.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "0": 0.15,
+    "2": 0.083
+   }
+  },
+  "eacg_20261013_143941.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.941 against ptbxl4016, 0.059 turned half round",
+   "pcc_by_cw": {
+    "0": 0.941,
+    "2": 0.059
+   }
+  },
+  "eacg_20261013_144103.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.830 against ptbxl4016, 0.065 turned half round",
+   "pcc_by_cw": {
+    "0": 0.83,
+    "2": 0.065
+   }
+  },
+  "eacg_20261013_144355.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.582 against ptbxl167, 0.032 turned half round",
+   "pcc_by_cw": {
+    "0": 0.582,
+    "2": 0.032
+   }
+  },
+  "eacg_20261013_144556.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.468 against ptbxl167, 0.070 turned half round",
+   "pcc_by_cw": {
+    "0": 0.468,
+    "2": 0.07
+   }
+  },
+  "eacg_20261013_144637.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.827 against ptbxl167, 0.072 turned half round",
+   "pcc_by_cw": {
+    "0": 0.827,
+    "2": 0.072
+   }
+  },
+  "eacg_20261013_144935.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "0": 0.107,
+    "2": 0.068
+   }
+  },
+  "eacg_20261013_145006.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.768 against ptbxl167, 0.100 turned half round",
+   "pcc_by_cw": {
+    "0": 0.768,
+    "2": 0.1
+   }
+  },
+  "eacg_20261013_145217.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.577 against ptbxl160, 0.054 turned half round",
+   "pcc_by_cw": {
+    "0": 0.577,
+    "2": 0.054
+   }
+  },
+  "eacg_20261013_145357.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.887 against ptbxl160, 0.107 turned half round",
+   "pcc_by_cw": {
+    "0": 0.887,
+    "2": 0.107
+   }
+  },
+  "eacg_20261013_161839.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "0": 0.157,
+    "2": null
+   }
+  },
+  "eacg_20261013_161907.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.908 against ptbxl8504, 0.058 turned half round",
+   "pcc_by_cw": {
+    "0": 0.908,
+    "2": 0.058
+   }
+  },
+  "eacg_20261013_162108.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.896 against ptbxl8504, 0.111 turned half round",
+   "pcc_by_cw": {
+    "0": 0.896,
+    "2": 0.111
+   }
+  },
+  "eacg_20261013_162135.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.855 against ptbxl8504, 0.104 turned half round",
+   "pcc_by_cw": {
+    "0": 0.855,
+    "2": 0.104
+   }
+  },
+  "eacg_20261013_162400.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.648 against ptbxl7916, 0.107 turned half round",
+   "pcc_by_cw": {
+    "0": 0.648,
+    "2": 0.107
+   }
+  },
+  "eacg_20261013_162511.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.330 against ptbxl7916, 0.135 turned half round",
+   "pcc_by_cw": {
+    "0": 0.33,
+    "2": 0.135
+   }
+  },
+  "eacg_20261013_162629.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.342 against ptbxl5830, the turned page did not digitise",
+   "pcc_by_cw": {
+    "0": 0.342,
+    "2": null
+   }
+  },
+  "eacg_20261013_162743.jpg": {
+   "folder": "setB",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.785 against ptbxl5830, -1.000 turned half round",
+   "pcc_by_cw": {
+    "0": 0.785,
+    "2": -1.0
+   }
+  },
+  "eacg_20261014_122915.jpg": {
+   "folder": "setC_tilt",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "0": 0.093,
+    "2": null
+   }
+  },
+  "eacg_20261014_123006.jpg": {
+   "folder": "setC_tilt",
+   "upright_cw": 0,
+   "how": "visual: sheet turned ~35 degrees in the page plane, pulses at the lower left: nearest quarter turn 0 (corners are not found on this photo)",
+   "pcc_by_cw": {}
+  },
+  "eacg_20261014_123024.jpg": {
+   "folder": "setC_tilt",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.825 against ptbxl9, 0.076 turned half round",
+   "pcc_by_cw": {
+    "0": 0.825,
+    "2": 0.076
+   }
+  },
+  "eacg_20261014_123942.jpg": {
+   "folder": "setC_tilt",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.783 against ptbxl9, 0.102 turned half round",
+   "pcc_by_cw": {
+    "0": 0.783,
+    "2": 0.102
+   }
+  },
+  "eacg_20261014_124523.jpg": {
+   "folder": "setC_tilt",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "2": 0.051,
+    "0": -1.0
+   }
+  },
+  "eacg_20261014_124603.jpg": {
+   "folder": "setC_tilt",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.512 against ptbxl1737, 0.086 turned half round",
+   "pcc_by_cw": {
+    "0": 0.512,
+    "2": 0.086
+   }
+  },
+  "eacg_20261014_124637.jpg": {
+   "folder": "setC_tilt",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.663 against ptbxl1737, the turned page did not digitise",
+   "pcc_by_cw": {
+    "0": 0.663,
+    "2": null
+   }
+  },
+  "eacg_20261014_124801.jpg": {
+   "folder": "setC_tilt",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "0": 0.028,
+    "2": null
+   }
+  },
+  "eacg_20261014_124851.jpg": {
+   "folder": "setC_tilt",
+   "upright_cw": 0,
+   "how": "classical, grid fit: median lead PCC 0.693 against ptbxl40, 0.048 turned half round",
+   "pcc_by_cw": {
+    "0": 0.693,
+    "2": 0.048
+   }
+  },
+  "eacg_20261014_124946.jpg": {
+   "folder": "setC_tilt",
+   "upright_cw": 0,
+   "how": "visual: pulses at the left, '25mm/s' bottom left",
+   "pcc_by_cw": {
+    "0": null,
+    "2": null
+   }
+  },
+  "eacg_20261014_231610.jpg": {
+   "folder": "SetC_Shadow",
+   "upright_cw": 0,
+   "how": "visual: landscape sheet upright in the frame",
+   "pcc_by_cw": {
+    "3": 0.141,
+    "0": -9.0
+   }
+  },
+  "eacg_20261014_232033.jpg": {
+   "folder": "SetC_Shadow",
+   "upright_cw": 1,
+   "how": "visual: sideways; row starts at the bottom, rhythm strip at the right: a quarter clockwise",
+   "pcc_by_cw": {
+    "0": -1.0,
+    "2": null
+   }
+  },
+  "eacg_20261014_234710_40.jpg": {
+   "folder": "SetC_Shadow",
+   "upright_cw": 2,
+   "how": "visual: landscape sheet upside down: labels and '25mm/s' inverted at the top",
+   "pcc_by_cw": {
+    "1": 0.32,
+    "3": -1.0
+   }
+  },
+  "eacg_20261014_235259_40.jpg": {
+   "folder": "SetC_Shadow",
+   "upright_cw": 0,
+   "how": "visual: close-up of the lower left; rhythm strip 'II', its pulse and '25mm/s' upright",
+   "pcc_by_cw": {
+    "1": 0.099,
+    "3": 0.075
+   }
+  }
+ }
+}
