@@ -77,16 +77,19 @@ def upside_down(up: Markers, turned: Markers) -> bool:
 
     1. ticks: more than MAX_TICKS_TURNED on one page only -- a turned page
        cannot show that many, so that page is upright;
-    2. pulses: more found on one page (they are at the rows' left);
-    3. ticks: more found on one page.
-    A tie keeps the page as it is (the Rotate button is the override).
+    2. pulses: more found on one page (they stand at the rows' left).
+    Otherwise the page is kept as it is (the Rotate button is the override).
+
+    Tick counts at or below MAX_TICKS_TURNED say nothing about up or down: a
+    page turned half round reaches six by symmetry. A third step "more ticks
+    wins" was measured and rejected (results/kitphoto/
+    orientation_sessions_rule_v1.csv: it turned five upright photographs
+    over, e.g. 1 tick upright against 6 turned).
     """
     many_up, many_turned = up.ticks > MAX_TICKS_TURNED, turned.ticks > MAX_TICKS_TURNED
     if many_up != many_turned:
         return many_turned
-    if up.pulses != turned.pulses:
-        return turned.pulses > up.pulses
-    return turned.ticks > up.ticks
+    return turned.pulses > up.pulses
 
 
 def page_markers(page: np.ndarray, scale_hint: float | None) -> Markers:
@@ -147,7 +150,11 @@ def quarter_turns(photo: np.ndarray, find_corners) -> tuple[int, dict]:
         except (RuntimeError, ValueError) as e:
             info["error"] = f"corners after the quarter turn: {e}"
             return q, info
-    up, turned, used = half_turn_markers(photo, c)
+    try:
+        up, turned, used = half_turn_markers(photo, c)
+    except (RuntimeError, ValueError) as e:          # a quad too small to rectify
+        info["error"] = f"markers: {e}"
+        return q, info
     info.update(up=up, turned=turned, geometry=used)
     if upside_down(up, turned):
         q += 2
