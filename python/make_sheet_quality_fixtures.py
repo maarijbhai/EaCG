@@ -93,6 +93,10 @@ def cases():
     out.append(("leads", base(leads=lv)))
     out.append(("everything", base(grid_used=False, grid_px_per_mm=float("nan"),
                                    ticks_found=4, t0_source="rhythm_locator", leads=lv)))
+    # The guarded time-zero fallback, used (progress_log §41): severe either way;
+    # no NO_PULSE for t0 from the ticks; SCALE_DISAGREE gone (scales now agree).
+    out.append(("t0_guard_crumple_124910", base(t0_source="ticks", t0_guard_pct=8.7)))
+    out.append(("t0_guard_no_tick_scale", base(t0_source="ticks", t0_guard_pct=float("nan"))))
     return out
 
 
@@ -120,6 +124,8 @@ def main() -> int:
         lines.append(f"{p}.scales {fmt(kw['grid_px_per_mm'])} {fmt(kw['px_per_mm'])}")
         lines.append(f"{p}.ticks " + " ".join(f"{r} {k} {fmt(x)}" for r, k, x in kw["tick_positions"]))
         lines.append(f"{p}.rows " + " ".join(str(y) for y in kw["rows"]))
+        g = kw.get("t0_guard_pct")
+        lines.append(f"{p}.t0_guard " + ("none" if g is None else fmt(g)))
         lines.append(f"{p}.rejected " + " ".join(f"{r} {k} {fmt(x)}" for r, k, x in kw["tick_rejected"]))
         for n in NAMES:
             lines.append(f"{p}.lead.{n} " + " ".join(fmt(v) for v in kw["leads"][n]))

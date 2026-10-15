@@ -67,7 +67,15 @@ object SheetQuality {
                tickPositions: List<Triple<Int, Int, Double>>, t0Source: String,
                leads: Map<String, DoubleArray>,
                tickRejected: List<Triple<Int, Int, Double>> = emptyList(),
-               rows: IntArray? = null): List<Warning> {
+               rows: IntArray? = null,
+               /**
+                * `t0_guard_pct`: null unless the guarded time-zero fallback was USED
+                * ([SheetLayout.guardTimeZero]); then the disagreement (%) that made it
+                * fire, NaN if there was no tick scale. Always SEVERE: afterwards the
+                * ticks agree with the grid by construction, and a time zero re-read
+                * from the ticks can still be a whole cell out.
+                */
+               t0GuardPct: Double? = null): List<Warning> {
         val out = ArrayList<Warning>()
         if (rows != null && rows.size == 4 && SheetLayout.rowGapRatio(rows) > SheetLayout.ROW_SPACING_MAX_RATIO) {
             val s = rows.sortedArray()
@@ -118,7 +126,15 @@ object SheetQuality {
                         "the same tick in the other rows was used instead.", tickLeads(r, k))
             }
         }
-        if (t0Source != "pulses") out += Warning("NO_PULSE", Severity.WARN,
+        if (t0GuardPct != null) {
+            val why = if (t0GuardPct.isFinite())
+                "the ticks and the grid disagreed by ${String.format(java.util.Locale.US, "%+.1f", t0GuardPct)}%"
+                else "no tick scale was found"
+            out += Warning("T0_GUARD", Severity.SEVERE,
+                "The calibration pulse was not trusted ($why); time zero was re-read from the " +
+                    "lead-separator ticks. Check the timing on the page overlay.")
+        }
+        if (t0Source != "pulses" && t0Source != "ticks") out += Warning("NO_PULSE", Severity.WARN,
             "No calibration pulse found; time zero is estimated from the start of the rhythm strip.")
         for ((name, mv) in leads) {
             val (cov, pp) = leadStats(mv)

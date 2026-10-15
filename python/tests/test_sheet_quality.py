@@ -49,6 +49,21 @@ class SheetQualityTest(unittest.TestCase):
         self.assertEqual(ws, [])
         self.assertEqual(Q.verdict(ws), "ok")
 
+    def test_t0_guard_keeps_the_sheet_unreliable(self):
+        """After the guarded fallback the ticks agree with the grid by
+        construction, so SCALE_DISAGREE cannot fire; a time zero re-read from
+        the ticks can still be a cell out (Set C Tilt 124846). T0_GUARD is
+        severe, and NO_PULSE (a pulse WAS found, then rejected) is not raised."""
+        ws = Q.assess(**kw(t0_source="ticks", t0_guard_pct=8.7))
+        self.assertEqual(codes(ws), ["T0_GUARD"])
+        self.assertEqual(Q.verdict(ws), "unreliable")
+        self.assertIn("+8.7%", ws[0].message)
+        ws = Q.assess(**kw(t0_source="ticks", t0_guard_pct=float("nan")))
+        self.assertIn("no tick scale", ws[0].message)
+        # Not used: nothing new (and the rhythm-locator fallback still warns NO_PULSE).
+        self.assertEqual(Q.assess(**kw()), [])
+        self.assertEqual(codes(Q.assess(**kw(t0_source="rhythm_locator"))), ["NO_PULSE"])
+
     def test_grid_refused(self):
         ws = Q.assess(**kw(grid_used=False, grid_px_per_mm=float("nan")))
         self.assertEqual(codes(ws), ["GRID_REFUSED"])

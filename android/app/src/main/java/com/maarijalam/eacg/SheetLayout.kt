@@ -549,4 +549,72 @@ object SheetLayout {
         val mv = DoubleArray(rs.size) { -(rs[it] - med) / (pxPerMmY * MM_PER_MV) }
         return DoubleArray(n) { interp(it / FS, t, mv, Double.NaN, Double.NaN) }
     }
+
+    // ------------------------------------------------- guarded time zero
+
+    /**
+     * `segment.T0_GUARD_PCT`: above this disagreement (%) between the tick
+     * time scale and the grid fit's, time zero is not trusted. A tick's scale
+     * is (x - t0) / (k * 62.5 mm), so a false calibration pulse inflates it:
+     * +11.7 to +29.3% on the seven failed Set C runs, at most 1.2% on every
+     * other phone run (progress_log §41).
+     */
+    const val T0_GUARD_PCT = 5.0
+
+    /** `segment.t0_guard_fires`: only with a grid fit; no tick scale, or one > T0_GUARD_PCT from the grid's. */
+    fun t0GuardFires(tickPxPerMm: Double, gridPxPerMm: Double?): Boolean {
+        if (gridPxPerMm == null || !gridPxPerMm.isFinite()) return false
+        if (!tickPxPerMm.isFinite()) return true
+        return abs(tickPxPerMm / gridPxPerMm - 1.0) * 100.0 > T0_GUARD_PCT
+    }
+
+    /** `segment.t0_from_ticks`: median over the ticks of x - k * 2.5 s * 25 mm/s * px/mm; NaN without ticks. */
+    fun t0FromTicks(positions: List<Triple<Int, Int, Double>>, gridPxPerMm: Double): Double {
+        if (positions.isEmpty()) return Double.NaN
+        val cellPx = CELL_S * MM_PER_S * gridPxPerMm
+        return median(DoubleArray(positions.size) { positions[it].third - positions[it].second * cellPx })
+    }
+
+    /** `segment.T0Guard`: what the fallback did (it ran only if [t0GuardFires]). */
+    class T0Guard(val accepted: Boolean, val t0Before: Double, val t0After: Double,
+                  val ticksBefore: Int, val ticksAfter: Int,
+                  val disagreeBeforePct: Double, val disagreeAfterPct: Double, val reason: String) {
+        /** The CSV header's `t0_guard` value, as `T0Guard.line`. */
+        fun line(): String {
+            fun f(v: Double, fmt: String) = if (!v.isFinite()) "nan" else String.format(java.util.Locale.US, fmt, v)
+            return (if (accepted) "fired, used" else "fired, not used") +
+                ": t0 x ${f(t0Before, "%.1f")} -> ${f(t0After, "%.1f")}, ticks $ticksBefore -> $ticksAfter, " +
+                "tick vs grid ${f(disagreeBeforePct, "%+.1f")}% -> ${f(disagreeAfterPct, "%+.1f")}% ($reason)"
+        }
+    }
+
+    /** The guard's answer: the time zero, its source and the ticks to use from here on. */
+    class Guarded(val t0: Double, val t0Source: String, val ticks: TickScale, val guard: T0Guard)
+
+    /**
+     * `segment.guard_time_zero` on the locate mask: null (nothing changes)
+     * unless [t0GuardFires]; otherwise the ticks are searched again from the
+     * rhythm locator's time zero ([rhythmT0X], already less the mask offset)
+     * at the grid's scale, time zero is read back from them ([t0FromTicks]) and
+     * the ticks searched once more from it; used only if that tick scale is
+     * within T0_GUARD_PCT of the grid's, else the inputs come back unchanged.
+     */
+    fun guardTimeZero(mask: TraceExtractor.Mask, rows: IntArray, t0: Double, t0Source: String,
+                      ticks: TickScale, rhythmT0X: Double, gridPxPerMm: Double?,
+                      offsetPx: Double): Guarded? {
+        if (!t0GuardFires(ticks.pxPerMm, gridPxPerMm)) return null
+        val g = gridPxPerMm!!
+        fun pct(px: Double) = if (px.isFinite()) 100.0 * (px / g - 1.0) else Double.NaN
+        val seeded = tickScale(mask, rows, rhythmT0X, g, offsetPx)
+        val t0t = t0FromTicks(seeded.positions, g)
+        if (seeded.nFound < TICK_MIN_FOUND || !t0t.isFinite())
+            return Guarded(t0, t0Source, ticks, T0Guard(false, t0, Double.NaN, ticks.nFound, seeded.nFound,
+                pct(ticks.pxPerMm), Double.NaN, "${seeded.nFound} ticks from the rhythm locator's t0"))
+        val tk = tickScale(mask, rows, t0t, g, offsetPx)
+        if (t0GuardFires(tk.pxPerMm, g))
+            return Guarded(t0, t0Source, ticks, T0Guard(false, t0, Double.NaN, ticks.nFound, tk.nFound,
+                pct(ticks.pxPerMm), pct(tk.pxPerMm), "the ticks still disagree with the grid"))
+        return Guarded(t0t, "ticks", tk, T0Guard(true, t0, t0t, ticks.nFound, tk.nFound,
+            pct(ticks.pxPerMm), pct(tk.pxPerMm), "t0 from the ticks"))
+    }
 }

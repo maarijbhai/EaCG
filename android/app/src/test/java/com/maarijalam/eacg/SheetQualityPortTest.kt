@@ -57,7 +57,8 @@ class SheetQualityPortTest {
                 gridRequested = fl[0] == "1", gridUsed = fl[1] == "1", gridPxPerMm = d(sc[0]),
                 calibration = fl[2], pxPerMm = d(sc[1]), ticksFound = fl[3].toInt(),
                 tickPositions = ticks, t0Source = fl[4], leads = leads, tickRejected = rejected,
-                rows = rows.getValue("$p.rows").map { it.toInt() }.toIntArray())
+                rows = rows.getValue("$p.rows").map { it.toInt() }.toIntArray(),
+                t0GuardPct = rows.getValue("$p.t0_guard")[0].let { if (it == "none") null else d(it) })
             val want = (0 until rows.getValue("$p.n")[0].toInt()).map {
                 rows.getValue("$p.w.$it").joinToString(" ")
             }

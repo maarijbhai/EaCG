@@ -98,8 +98,16 @@ def _tick_leads(row: int, k: int) -> tuple[str, ...]:
 def assess(*, grid_requested: bool, grid_used: bool, grid_px_per_mm: float,
            calibration: str, px_per_mm: float, ticks_found: int,
            tick_positions, t0_source: str, leads: dict,
-           tick_rejected=(), rows=None) -> list[Warning]:
+           tick_rejected=(), rows=None, t0_guard_pct: float | None = None) -> list[Warning]:
     """Warnings for one digitised sheet.
+
+    `t0_guard_pct`: None unless the guarded time-zero fallback was USED
+    (segment.guard_time_zero, progress_log §41); then the tick-vs-grid
+    disagreement (%) that made it fire, NaN if there was no tick scale. It is
+    always SEVERE: after the fallback the ticks agree with the grid by
+    construction, so SCALE_DISAGREE no longer fires, and a time zero re-read
+    from the ticks can still be a whole cell out (62.5 mm apart; measured on
+    Set C Tilt) -- the verdict must not read better than before.
 
     `tick_positions`: (row, k, x) per tick kept (TickScale.positions);
     `tick_rejected`: (row, k, x) per tick rejected as an outlier
@@ -157,7 +165,13 @@ def assess(*, grid_requested: bool, grid_used: bool, grid_px_per_mm: float,
                                f"Row {r + 1}'s {2.5 * k:.1f} s tick was out of line{off}; "
                                "the same tick in the other rows was used instead.",
                                _tick_leads(r, k)))
-    if t0_source != "pulses":
+    if t0_guard_pct is not None:
+        why = (f"the ticks and the grid disagreed by {t0_guard_pct:+.1f}%" if np.isfinite(t0_guard_pct)
+               else "no tick scale was found")
+        out.append(Warning("T0_GUARD", SEVERE,
+                           f"The calibration pulse was not trusted ({why}); time zero was re-read "
+                           "from the lead-separator ticks. Check the timing on the page overlay."))
+    if t0_source not in ("pulses", "ticks"):
         out.append(Warning("NO_PULSE", WARN,
                            "No calibration pulse found; time zero is estimated "
                            "from the start of the rhythm strip."))
@@ -185,4 +199,7 @@ def assess_result(res, grid_requested: bool) -> list[Warning]:
                   tick_positions=res.ticks.positions if res.ticks is not None else (),
                   t0_source=res.t0_source, leads=leads,
                   tick_rejected=res.ticks.rejected if res.ticks is not None else (),
-                  rows=res.location.rows if res.location is not None else None)
+                  rows=res.location.rows if res.location is not None else None,
+                  t0_guard_pct=(res.t0_guard.disagree_before_pct
+                                if getattr(res, "t0_guard", None) is not None and res.t0_guard.accepted
+                                else None))

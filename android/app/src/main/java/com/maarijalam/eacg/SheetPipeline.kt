@@ -106,7 +106,9 @@ object SheetPipeline {
         /** The diagnosis classifier's output ([Classifier]); null if it could not run. */
         val diagnosis: Diagnosis? = null,
         /** Why there is no [diagnosis], when there is none. */
-        val diagnosisNote: String? = null
+        val diagnosisNote: String? = null,
+        /** The guarded time-zero fallback, if it fired ([SheetLayout.guardTimeZero]); null otherwise. */
+        val t0Guard: SheetLayout.T0Guard? = null
     ) {
         /** "ok", "check" or "unreliable" ([SheetQuality.verdict]). */
         val quality: String get() = SheetQuality.verdict(warnings)
@@ -467,16 +469,25 @@ object SheetPipeline {
                 val m2 = located.m2
                 val rows = located.rows
                 val pulseT0 = located.pulseT0
-                val t0 = located.t0
                 val anchor = located.anchor
                 lap("locate", "${rows.size} rows · ${located.edges.count { it.isFinite() }} pulses")
                 if (onProgress != null) notify(Progress.Rows(rows.copyOf()))
                 // The tick search is placed with the grid's scale when there is
                 // one (SheetLocation.search_px_per_mm); the duration anchor stays
                 // the calibration's fallback.
-                val ticks = SheetLayout.tickScale(
-                    if (OPEN_LOCATE == OPEN_TRACE) m2 else mask(rect, OPEN_TRACE), rows, t0,
+                val tickMask = if (OPEN_LOCATE == OPEN_TRACE) m2 else mask(rect, OPEN_TRACE)
+                val ticksLocated = SheetLayout.tickScale(tickMask, rows, located.t0,
                     fit?.pxPerMm ?: anchor, SheetLayout.maskOffsetPx(OPEN_TRACE))
+                // A false pulse (segment.guard_time_zero, progress_log §41): only
+                // when the ticks and the grid disagree; otherwise null and
+                // everything below is exactly as before.
+                val guarded = SheetLayout.guardTimeZero(tickMask, rows, located.t0,
+                    if (pulseT0.isFinite()) "pulses" else "rhythm_locator", ticksLocated,
+                    located.loc.t0X - SheetLayout.maskOffsetPx(OPEN_LOCATE), fit?.pxPerMm,
+                    SheetLayout.maskOffsetPx(OPEN_TRACE))
+                val t0 = guarded?.t0 ?: located.t0
+                val ticks = guarded?.ticks ?: ticksLocated
+                val t0Source = guarded?.t0Source ?: if (pulseT0.isFinite()) "pulses" else "rhythm_locator"
                 val useTicks = ticks.pxPerMm.isFinite()
                 val px = if (useTicks) ticks.pxPerMm else anchor
                 val layout = SheetLayout.segmentLeads(rect.rows(), rows, t0, px, if (useTicks) ticks else null)
@@ -528,10 +539,11 @@ object SheetPipeline {
                     gridPxPerMm = fit?.pxPerMm ?: Double.NaN,
                     calibration = if (useTicks) "ticks" else "duration", pxPerMm = px,
                     ticksFound = ticks.nFound, tickPositions = ticks.positions,
-                    t0Source = if (pulseT0.isFinite()) "pulses" else "rhythm_locator",
+                    t0Source = t0Source,
                     leads = layout.cells.zip(sigs).associate { (c, s) ->
                         (if (c.rhythm) "II_rhythm" else c.name) to s },
-                    tickRejected = ticks.rejected, rows = rows)
+                    tickRejected = ticks.rejected, rows = rows,
+                    t0GuardPct = guarded?.guard?.takeIf { it.accepted }?.disagreeBeforePct)
                 lap("quality")
                     for ((cell, sig) in layout.cells.zip(sigs)) {
                         val tr = truth12?.get(cell.name)?.let {
@@ -559,14 +571,14 @@ object SheetPipeline {
                 val jpeg = runCatching { encodeJpeg(rect) }.getOrNull()
                 Result(tracer, c, cornersAuto, refined, rect.cols(), rect.rows(), px,
                     if (useTicks) "ticks" else "duration", ticks.nFound,
-                    if (pulseT0.isFinite()) "pulses" else "rhythm_locator", leads, t,
+                    t0Source, leads, t,
                     ImageWarp.previewBitmap(rect), jpeg, rowTraces,
                     if (fit != null) "grid" else "corners", fit, gridNote,
                     mem.baseline, mem.peaks(), runCatching { pssMb() }.getOrNull(), warnings,
                     t0X = t0, rowY = rows.toList(), tickPositions = ticks.positions,
                     ticksRejected = ticks.rejected,
                     cells = layout.cells.map { CellBox(it.name, it.rhythm, it.x0, it.x1, it.y0, it.y1) },
-                    diagnosis = diagnosis, diagnosisNote = diagnosisNote)
+                    diagnosis = diagnosis, diagnosisNote = diagnosisNote, t0Guard = guarded?.guard)
             } finally {
                 rect.release()
             }
@@ -630,6 +642,7 @@ object SheetPipeline {
                 "${f("%.4f", it.pxPerMm)} px/mm, inliers ${f("%.3f", it.inlierFraction)})"
         } ?: ("corners" + (r.gridNote?.let { " -- $it" } ?: "")))
         meta("calibration", "${r.calibration} ${f("%.4f", r.pxPerMm)} px/mm, ${r.ticksFound}/9 ticks, t0 from ${r.t0Source}")
+        r.t0Guard?.let { meta("t0_guard", it.line()) }   // only when it fired (additive)
         meta("timings_ms", r.timingsMs.entries.joinToString(" ") { "${it.key}=${it.value}" })
         // native/java MB, absolute; see StageMemory for what each one counts.
         r.memoryBaseline?.let { meta("memory_peak_mb", StageMemory.format(it, r.memoryPeaks)) }
