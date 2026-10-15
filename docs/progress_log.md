@@ -981,6 +981,57 @@ run on the A30s**: the orient time there is to be read from the next exports'
 `orient_ms`. On the desktop the whole decision (corner finding included)
 took 0.2-3.2 s per photograph, median 1.3 s (`seconds` in the CSV).
 
+## 40. 2026-10-15 — Set C Crumple: 7 photographs x 2 tracers, scored
+
+**Data.** Crumpled printed sheets of PTB-XL 40 and 4016, 2026-10-15 12:46-12:55,
+in-app camera, the app at 593a269 (§39), "Run both tracers". 9 photographs, 7
+digitised (14 exports); 125035 and 125520 never digitised
+(`data/kit_photos/SetC_Crumple/_not_digitised/`). Every run matched to its
+photograph by its recorded corners (at least two corners within 0-2 px; every
+other photograph >= 15 px off on all four; the one run with a hand-placed
+corner matches on its other three) -- the table is in
+`data/kit_photos/SetC_Crumple/README.txt`.
+
+**Scoring without touching the committed results.** `python/score_device_set.py
+"Set C Crumple"` runs the unchanged `score_device_sheets.main` on that folder only
+into `results/device/sheet_scores_setC_crumple.csv` (bda8b38); `sheet_scores.csv`
+and `results/report/` are unchanged (git status clean). `python/summarise_crumple.py`
+-> `results/device/setC_crumple_runs.csv` and `setC_crumple_summary.csv` (c917196);
+Set B is read from the committed scores (it reproduces §36: learned 0.947,
+classical 0.646).
+
+**Results** (the lead is the unit; 84 leads per tracer):
+
+| | learned | classical |
+|---|---|---|
+| C crumple: PCC median [IQR] | 0.211 [0.000, 0.888] | 0.183 [0.026, 0.495] |
+| aligned PCC | 0.806 [0.299, 0.967] | 0.353 [0.228, 0.739] |
+| SNR / shifted (dB) | -1.3 / -0.7 | -0.9 / -0.7 |
+| leads PCC >= 0.9 | 21% | 5% |
+| B ideal, same two records: PCC | 0.972 | 0.836 |
+
+**The set splits in two, by the time references, not by the tracer.**
+3 runs keep 8-9 of 9 ticks (124607, 125242, 125545): learned PCC 0.83 / 0.93
+/ 0.93, aligned 0.96-0.98, R 0.89-0.97 -- close to Set B. 4 runs find only 2-3
+ticks (124720, 124821, 125056, 125342): PCC about 0 for BOTH tracers (learned
+-0.05 to 0.13), the tick scale 12-20% above the grid's (SCALE_DISAGREE) or the
+duration anchor used. The grid fit's inlier fraction drops on every crumpled
+sheet (0.54-0.80 against 0.91-0.96 on the flat sheets of 2026-10-15) -- one
+homography cannot flatten a crumpled page -- but it overlaps between the two
+groups (good 0.66-0.80, failed 0.54-0.68); the tick count separates them. The
+app's verdict is "unreliable" on 6 of 7 (two of the three good runs included,
+through SCALE_DISAGREE at > 1%) and "check" on 1 (125242, good): no failed run
+was passed as ok.
+
+Orientation (§39, first use on the phone): the final orientation is right on
+all 7; automatic on 6 of 7 (125545, sideways and crumpled, needed the user's
+180). Orientation is not what failed: the 4 failures were oriented correctly.
+`orient_ms` on the A30s: 3,330-4,491 ms (7 runs).
+
+Limits: 7 photographs of 2 records; the crumple was not controlled or
+measured; the classical control shares the learned tracer's time references,
+so this measures the layout and geometry steps more than tracing.
+
 ---
 
 ## Open items (ordered)
