@@ -1032,6 +1032,74 @@ Limits: 7 photographs of 2 records; the crumple was not controlled or
 measured; the classical control shares the learned tracer's time references,
 so this measures the layout and geometry steps more than tracing.
 
+## 41. 2026-10-15 — Guarded time-zero fallback (false pulses)
+
+**Failure (diagnosed by the user on Set C):** a crease or grid fragment 5-14
+mm before the real calibration pulse passes the pulse test; time zero is early;
+a tick's scale estimate is (x - t0) / (k x 62.5 mm), so the tick scale comes out
+too large, the 5.0 / 7.5 s tick windows miss, and every lead is mistimed. A
+knife edge: a few pixels of corner or a 1.5% resize flips a photograph between
+8/9 and 3/9 ticks.
+
+**Rule** (`segment.guard_time_zero`, `SheetLayout.guardTimeZero`): only with a
+grid fit, and only when the tick scale disagrees with the grid's by more than
+`T0_GUARD_PCT` = 5% or there is none: the ticks are searched again from the
+rhythm locator's time zero at the grid's scale, time zero is read back from
+them (median of x - k x 62.5 mm x grid px/mm; ONE t0 for the sheet, as
+`segment_leads` takes one), and the ticks searched once more from it. Used only
+if that tick scale is within 5% of the grid's; otherwise everything is as
+before. Below the trigger nothing runs. "Time zero from the ticks" as an
+always-on rule stays rejected (§5).
+
+**Where it fires** (`python/run_t0_guard.py`, `results/kitphoto/t0_guard_replay.csv`,
+c886bf9): by the PHONE's own header scales, on exactly the 7 failed Set C runs
+(Tilt 122954 +29.3%, 124846 +21.9%; Shadow 234838 no tick scale; Crumple
+124807 +11.7%, 124910 +18.3%, 125142 +20.1%, 125428 no tick scale) and on none
+of the other 46 (Set A 0/12, Set B 0/24, good Set C 0/10; largest disagreement
+1.2%). So no result already reported is touched. The desktop reference with
+the export's own corners agrees on Sets A and B (0/36, <= 0.5%) but NOT on the
+knife-edge photographs: it reproduces only 2 of the 7 failures (234838, 124910)
+and fails on 2 good Set C runs instead (Tilt 124927, Crumple 125332: no tick
+scale on the desktop) -- the desktop decode is not the phone's.
+
+**What-if, IN-SAMPLE** (the rule was chosen after seeing these failures;
+`results/kitphoto/t0_guard_whatif.csv` classical, `t0_guard_whatif_b3.csv` b3,
+6f95f09): the 9 firing runs under 9 conditions each (exact; decode resized
+-1.5 / +1.5%; six seeded corner jitters <= 3 px), before (t0_guard=False) and
+after. b3, 80 conditions:
+- Crumple: rescued wherever the fallback was used -- 124807 7/7 (~0.2 -> 0.79-0.84
+  median lead PCC), 124910 7/7 (~0 -> 0.78-0.81), 125428 2/2 used (-> 0.93-0.94;
+  2 more fired, not used), desktop-only 125332 6/6 (-> 0.93-0.94). Classical:
+  ~0-0.2 -> 0.33-0.74.
+- Tilt 122954 and Shadow 234838: never helped (the fallback finds no agreeing
+  ticks; nothing changes). Tilt 124846: used twice and still wrong (PCC ~0): the
+  re-read time zero was a whole cell out -- the ticks are 62.5 mm apart, and a
+  rhythm-locator t0 that far off labels the 5.0 s bar as the 2.5 s one.
+- 3 failing conditions it cannot see (the scales agree); 125142's failure never
+  reproduced on the desktop (untested).
+- Made worse: 0 of 80; where it did not fire, identical.
+
+**Quality:** after the fallback the ticks agree with the grid by construction,
+so SCALE_DISAGREE no longer fires; a time zero re-read from the ticks can still
+be a cell out (124846). So a used fallback raises **T0_GUARD (severe)**, quoting
+the disagreement that made it fire: the verdict never reads better than
+before (the user's choice). NO_PULSE is not raised for t0 from the ticks (a
+pulse was found, then rejected; that t0_source never occurred before, so no
+earlier verdict moves). The CSV gains `# t0_guard: fired, used|not used: t0 x
+.. -> .., ticks n -> m, tick vs grid ..% -> ..% (reason)` (only when it fires),
+and `t0 from ticks` in the calibration line.
+
+**Port:** golden vectors from two real grid-fit pages (Crumple 124910: the
+reference fires and moves t0 126.8 -> 176.2 px, ~5 mm, ticks 3 -> 8, +8.7% ->
+-0.2%; Crumple 124711: quiet) plus trigger and t0-from-ticks cases
+(`python/make_t0_guard_fixtures.py`); `T0GuardPortTest` fails 1 of 3 with the
+guard removed. Quality fixtures: two cases added at the end, none moved.
+Python 131, JVM 135 (one run of the wall-clock `SheetScoreTest` bound failed at
+1.14 s while the APK built in the same Gradle call; 135/135 alone). APK built.
+**Not yet run on the A30s.** The real test: re-run the 7 failed photographs
+from the gallery with this APK (the phone's own decode reproduces its own
+failures exactly) and compare with their committed exports.
+
 ---
 
 ## Open items (ordered)
