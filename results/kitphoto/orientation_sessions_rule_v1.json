@@ -1,0 +1,46 @@
+{
+  "generated_by": "python/run_orientation_sessions.py",
+  "utc": "2026-10-15T10:11:43+00:00",
+  "git_commit": "3a6f4d0dde8aed6d70f9828b9cc7a96ec03edc6b",
+  "git_dirty": false,
+  "params": {
+    "decode_px": 3200,
+    "folders": [
+      "setB",
+      "setC_tilt",
+      "SetC_Shadow"
+    ],
+    "sideways_below": 1.0,
+    "max_ticks_turned": 6,
+    "truth": "python/orientation_truth.json"
+  },
+  "summary": {
+    "photos": 68,
+    "new_correct": 59,
+    "old_cw_correct": 58,
+    "old_ccw_correct": 64,
+    "new_wrong": [
+      "eacg_20261013_104041.jpg (truth 0, got 2)",
+      "eacg_20261013_104100.jpg (truth 3, got 1)",
+      "eacg_20261013_133810.jpg (truth 0, got 2)",
+      "eacg_20261014_124603.jpg (truth 0, got 2)",
+      "eacg_20261014_124801.jpg (truth 0, got 2)",
+      "eacg_20261014_231610.jpg (truth 0, got 2)",
+      "eacg_20261014_232033.jpg (truth 1, got 0)",
+      "eacg_20261014_234710_40.jpg (truth 2, got 1)",
+      "eacg_20261014_235259_40.jpg (truth 0, got 1)"
+    ],
+    "truth_by_cw": {
+      "0": 58,
+      "1": 2,
+      "2": 1,
+      "3": 7
+    }
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "opencv": "5.0.0"
+  },
+  "note": "REJECTED rule (3a6f4d0): step 3 'more ticks wins' with neither page above MAX_TICKS_TURNED. A page turned half round reaches 6 ticks by symmetry, so at <= 6 ticks the count carries no up/down information; it turned 5 upright photographs over (104041, 133810, 124603, 124801, 231610). Superseded by orientation_sessions.csv (progress_log \u00a739)."
+}
