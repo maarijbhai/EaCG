@@ -895,6 +895,92 @@ RMSE from them.
 **Set B kept as the ideal set** (the user, 2026-10-13): portrait,
 hand-held, good light. Reported as such, with the photo-quality table.
 
+## 39. 2026-10-15 — Orientation from the page, not from memory
+
+**Problem (user):** in the sessions the app kept turning photographs wrongly
+(so most of Set B was shot portrait as a workaround). The rule of §35 turned a
+sideways sheet the way the user LAST confirmed and never by a half turn.
+
+**What the sessions show** (the exports' `photo_rotation` lines, Set B, Set
+C tilt, Set C Shadow; a run's re-exports counted once): 5 runs were turned at
+all. Auto right: 2 (Set B 134604, 143737 -- the quarter counter-clockwise,
+after the memory had flipped). Auto wrong: 2 -- Set B
+115325 "auto 90, user 180" (the memory still said clockwise; the sheet wanted
+the other quarter), Set C Shadow 234838 "auto 270, user 270" (an upside-down
+LANDSCAPE sheet whose corner quad came out sideways; the old rule has no half
+turn). Missed: 1 -- Set C Shadow 232541 "user 90" (sideways sheet in a hand
+shadow; the corner quad came out landscape). So the failures were: the wrong
+remembered direction after a change of grip, and corner quads gone wrong in
+shadow -- not landscape shots as such (a landscape shot whose EXIF was right
+arrives upright and is never turned).
+
+**Truth** (`python/orientation_truth.json`, 68 photographs, setB +
+setC_tilt + SetC_Shadow, decoded as the phone does): for 48, the classical
+tracer on the grid-fit page, median lead PCC against the best of the 12
+records (0.32-0.97 upright, <= 0.16 turned half round); for 20 where it reads
+neither way, inspection of the rectified page (pulses at the rows' left,
+labels and '25mm/s' upright). Upright 58, quarter clockwise 2, half 1,
+quarter counter-clockwise 7.
+
+**Cue, on the page:** the pipeline's own lead markers on the GRID-FIT page and
+on it turned half round (`orientation.half_turn_markers`; one grid fit serves
+both). The pulses stand at the rows' left; and a page turned half round shows
+at most 6 of the 9 ticks (`MAX_TICKS_TURNED`), because one of the three rows
+the tick search reads is then the rhythm strip. Rule (`upside_down`): more
+than 6 ticks on one page only -> that page; else more pulses -> that page;
+else keep. The sideways test is unchanged; the quarter is always clockwise
+and the markers then decide the half.
+
+**Measured** (`python/run_orientation_sessions.py`,
+`results/kitphoto/orientation_sessions.csv`, at e554819): **64 / 68 right**;
+old rule 58 / 68 remembering clockwise, 64 / 68 remembering counter-clockwise
+-- the new one needs no memory and is never worse than the old one's best
+case. No upright photograph is turned over. The 4 misses: 232033 and
+234710_40 and 235259_40 (Set C Shadow: the corner quad is wrong -- on the
+desk, or on part of the sheet in a close-up -- so the sideways test itself is
+wrong), 104100 (sideways; 0 pulses / 1 tick against 0 / 0: no evidence, kept).
+One photograph (123006, ~35 deg in-plane) has no corners at all.
+
+**Rejected on the way** (each measured on these photographs, scratch runs):
+- the vertical ink centroid of the corner page (rows sit low on the sheet):
+  fails on tightly framed photographs, whose quad cuts off the empty top
+  margin (centroid 0.49-0.53 on upright pages);
+- matched filters for the pulse shape on red-channel darkness, with and
+  without the grid removed by line openings: the 5 mm grid squares are
+  pulse-shaped too (margins 0.001-0.03 NCC);
+- the longest vertical ink run at each row's two ends (no opening, a small
+  closing): clean +/-10 mm on many pages, ~0 on others, where grid fragments
+  survive any threshold -- the known "no pixel rule separates trace from grid"
+  (ml_plan §0);
+- **the first rule as committed (3a6f4d0)** had a third step, "more ticks
+  wins", with neither page above 6: 59 / 68, five upright photographs turned
+  over (e.g. 133810: 1 tick upright against 6 turned) -- a turned page reaches 6
+  by symmetry, so at <= 6 the count says nothing.
+  `results/kitphoto/orientation_sessions_rule_v1.csv` keeps that run. **The
+  step was dropped after seeing these photographs**: the 64 / 68 is measured
+  on the data the rule was revised on, not on held-out photographs.
+- An early harness bug: the scratch runs fed RGB to the pipeline (cv2 is BGR),
+  so the grid fit found no rules; caught, all numbers above are from BGR.
+
+**App:** `ScanController.load`: corners; sideways -> a quarter clockwise and
+corners again; then `SheetPipeline.halfTurnMarkers` (rectify, grid fit,
+locate, tick search, as `run` does them; a new function, `run` untouched) and
+`SheetOrientation.upsideDown`; upside down -> a half turn and corners again.
+The remembered direction (`AppSettings.sidewaysTurnClockwise`,
+`shouldFlipDirection`) is gone. Rotate is unchanged (the manual override).
+The half-turn check is timed and memory-sampled as **orient** and written on
+two header lines of their own, `# orient_ms:` and `# orient_memory_peak_mb:`
+(`baseline=... orient=native/java`) -- not in `timings_ms`/`memory_peak_mb`, so
+every stage and total read from those lines stays comparable with Sets A/B
+(the user's choice). `photo_rotation` keeps its format. Golden vectors:
+`python/make_orientation_fixtures.py` -> `orientation_fixtures.txt` (the 67
+measured cases + every marker count, 5,067 cases); `SheetOrientationTest`
+fails 2 of 5 with the old rule put back (no half turn, clockwise). No
+pipeline golden vector changed. Python 125, JVM 132; APK builds. **Not yet
+run on the A30s**: the orient time there is to be read from the next exports'
+`orient_ms`. On the desktop the whole decision (corner finding included)
+took 0.2-3.2 s per photograph, median 1.3 s (`seconds` in the CSV).
+
 ---
 
 ## Open items (ordered)

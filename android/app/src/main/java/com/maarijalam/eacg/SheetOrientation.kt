@@ -5,17 +5,28 @@ import android.graphics.Matrix
 import kotlin.math.hypot
 
 /**
- * Is the sheet in a photograph sideways? Port of `python/ecgproto/orientation.py`
- * (SheetOrientationTest shares its cases).
+ * Which way up is the sheet in a photograph? Port of `python/ecgproto/orientation.py`
+ * (SheetOrientationTest: golden vectors from make_orientation_fixtures.py).
  *
  * A photograph taken looking straight down at a sheet on a table carries
  * whatever orientation the phone last knew (the tilt sensor cannot tell
  * which way is up when the phone lies flat), so a landscape shot can arrive
- * sideways. The printed sheet is landscape (277 x 190 mm): the corner
- * outline taller than wide means a quarter turn. Measured 76 / 76 right
- * (results/kitphoto/orientation.csv). WHICH quarter turn is not decided from
- * the image (two cues were measured and rejected, progress_log §35): the
- * app turns the way the user last confirmed, and offers Rotate.
+ * sideways or upside down. Two cues:
+ *
+ *  - sideways: the printed sheet is landscape (277 x 190 mm), so a corner
+ *    outline taller than wide means a quarter turn (76 / 76 right,
+ *    results/kitphoto/orientation.csv); the quarter is taken clockwise;
+ *  - up or down, from the page: the pipeline's own lead markers on the
+ *    grid-fit page and on it turned half round ([SheetPipeline.halfTurnMarkers]).
+ *    The pulses stand at the rows' left; a page turned half round shows at
+ *    most [MAX_TICKS_TURNED] ticks, because one of the three rows the tick
+ *    search reads is then the rhythm strip. [upsideDown] weighs the two.
+ *
+ * Replaced (progress_log §39): turning the way the user last confirmed,
+ * which failed whenever the grip changed and never caught a sheet upside
+ * down. Measured on the 68 session photographs
+ * (results/kitphoto/orientation_sessions.csv): 64 right, against 58 or 64
+ * for the old rule depending on the direction it remembered.
  */
 object SheetOrientation {
     const val SIDEWAYS_BELOW = 1.0
@@ -49,9 +60,31 @@ object SheetOrientation {
     }
 
     /**
-     * After an automatic quarter turn, did the user have to turn the photograph
-     * half round? Then the automatic direction was wrong for this grip: flip it.
+     * The most ticks a page turned half round can show: the tick search reads
+     * the top three rows, and on a turned page one of them is the rhythm
+     * strip, which carries none (3 rows x 3 ticks, less one row).
      */
-    fun shouldFlipDirection(autoQuarters: Int, userQuarters: Int): Boolean =
-        autoQuarters != 0 && Math.floorMod(userQuarters, 4) == 2
+    const val MAX_TICKS_TURNED = 6
+
+    /** What the pipeline's own marker searches find on one candidate page. */
+    data class Markers(val pulses: Int, val ticks: Int)
+
+    /**
+     * Is the page turned half round the upright one? (orientation.upside_down)
+     * 1. more than [MAX_TICKS_TURNED] ticks on one page only: that page is upright;
+     * 2. otherwise more pulses on one page: that page is upright;
+     * otherwise the page is kept (Rotate is the override). Tick counts at or
+     * below six say nothing about up or down; "more ticks wins" was measured
+     * and rejected (orientation_sessions_rule_v1.csv).
+     */
+    fun upsideDown(up: Markers, turned: Markers): Boolean {
+        val manyUp = up.ticks > MAX_TICKS_TURNED
+        val manyTurned = turned.ticks > MAX_TICKS_TURNED
+        if (manyUp != manyTurned) return manyTurned
+        return turned.pulses > up.pulses
+    }
+
+    /** Clockwise quarter turns applied automatically: a quarter if sideways, a half more if upside down. */
+    fun autoQuarters(sideways: Boolean, upsideDown: Boolean): Int =
+        Math.floorMod((if (sideways) 1 else 0) + (if (upsideDown) 2 else 0), 4)
 }

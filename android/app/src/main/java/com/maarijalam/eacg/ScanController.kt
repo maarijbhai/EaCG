@@ -52,6 +52,10 @@ class ScanController(
     var autoQuarters by mutableStateOf(0); private set
     var userQuarters by mutableStateOf(0); private set
 
+    /** The load's half-turn check: its time (ms) and peak memory (StageMemory format); null = not run. */
+    private var orientMs: Long? = null
+    private var orientMemory: String? = null
+
     // ---- research options (shown in prototype mode)
     var tracer by mutableStateOf(SheetPipeline.Tracer.MODEL)
     var gridFit by mutableStateOf(true)
@@ -152,23 +156,46 @@ class ScanController(
             runCatching {
                 val decoded = UriSource(context, uri, maxDimension = SHEET_PHOTO_MAX_DIM).acquire()
                 withContext(Dispatchers.Default) {
-                    // A sheet found sideways (outline taller than wide) is turned
-                    // a quarter round, the way this user's photos last needed.
+                    // Which way up (SheetOrientation, orientation.quarter_turns): a sheet
+                    // found sideways (outline taller than wide) is turned a quarter
+                    // clockwise; then the lead markers on the grid-fit page and on it
+                    // turned half round decide up from down. No memory of earlier scans.
                     var bmp = decoded
                     var found = runCatching { SheetCorners.find(bmp) }
-                    var turned = 0
-                    if (found.getOrNull()?.let { SheetOrientation.isSideways(it.corners) } == true) {
-                        turned = if (settings.sidewaysTurnClockwise) 1 else -1
-                        bmp = SheetOrientation.rotate(decoded, turned)
+                    val sideways = found.getOrNull()?.let { SheetOrientation.isSideways(it.corners) } == true
+                    if (sideways) {
+                        bmp = SheetOrientation.rotate(decoded, 1)
                         decoded.recycle()
                         found = runCatching { SheetCorners.find(bmp) }
                     }
+                    // The half-turn check, timed and memory-sampled as 'orient' (its
+                    // own CSV lines): before the pipeline, outside its stages.
+                    var down = false
+                    var oMs: Long? = null
+                    var oMem: String? = null
+                    found.getOrNull()?.let { f ->
+                        val t0 = System.nanoTime()
+                        val (pair, mem) = SheetPipeline.withStageMemory("orient") {
+                            val d = runCatching { SheetPipeline.halfTurnMarkers(bmp, f.corners) }.getOrNull()
+                                ?.let { (up, turned) -> SheetOrientation.upsideDown(up, turned) } ?: false
+                            if (!d) d to null else {
+                                val b2 = SheetOrientation.rotate(bmp, 2)
+                                true to (b2 to runCatching { SheetCorners.find(b2) })
+                            }
+                        }
+                        down = pair.first
+                        pair.second?.let { (b2, f2) -> bmp.recycle(); bmp = b2; found = f2 }
+                        oMs = (System.nanoTime() - t0) / 1_000_000
+                        oMem = mem
+                    }
+                    val turned = SheetOrientation.autoQuarters(sideways, down)
                     val m = ImageWarp.toMat(bmp)
                     val small = try { ImageWarp.previewBitmap(m, 1080) } finally { m.release() }
-                    Loaded(bmp, small, found, turned)
+                    Loaded(bmp, small, found, turned, oMs, oMem)
                 }
-            }.onSuccess { (bmp, small, found, turned) ->
+            }.onSuccess { (bmp, small, found, turned, oMs, oMem) ->
                 autoQuarters = turned; userQuarters = 0
+                orientMs = oMs; orientMemory = oMem
                 val f = found.getOrNull()
                 bitmap = bmp; preview = small
                 corners = f?.corners ?: CornerGeometry.initialCorners(bmp.width, bmp.height)
@@ -186,7 +213,7 @@ class ScanController(
     }
 
     private data class Loaded(val bmp: Bitmap, val small: Bitmap, val found: Result<SheetCorners.Found>,
-                              val turned: Int)
+                              val turned: Int, val orientMs: Long?, val orientMemory: String?)
 
     /** Turn the photograph a quarter round clockwise and find the corners again. */
     fun rotate() {
@@ -250,7 +277,8 @@ class ScanController(
         val pid = if (pairWithOwnStamp) stamp else pairId
         var csv = ""
         val meta = runCatching {
-            csv = SheetPipeline.csv(r, photoLabel(bmp), spec.target, stamp, pid, photoRotation = rotationLabel)
+            csv = SheetPipeline.csv(r, photoLabel(bmp), spec.target, stamp, pid, photoRotation = rotationLabel,
+                orientMs = orientMs, orientMemory = orientMemory)
             RecordStore.save(context, r, bmp, spec.target, csv, photoSource)
         }
         // runCatching would swallow a cancellation: a run cancelled at the very
@@ -277,10 +305,6 @@ class ScanController(
         val c = corners?.copyOf() ?: return
         val tg = effectiveTarget
         val both = effectiveBothTracers
-        // An automatic quarter turn the user had to turn half round: this grip
-        // needs the other direction from now on.
-        if (SheetOrientation.shouldFlipDirection(autoQuarters, userQuarters))
-            settings.updateSidewaysTurnClockwise(!settings.sidewaysTurnClockwise)
         val plan = ScanRuns.plan(RunSpec(effectiveTracer, c.toList(), cornersAuto, cornersRefined,
             if (effectiveGridFit) SheetPipeline.Geometry.GRID else SheetPipeline.Geometry.CORNERS, tg?.name), both)
         job?.cancel()
@@ -369,7 +393,8 @@ class ScanController(
             val stamp = Exporter.stamp()
             val name = exportName(tg?.name, r.tracer, stamp)
             exported = runCatching {
-                "Exported to " + Exporter.exportText(context, name, SheetPipeline.csv(r, photoLabel(bmp), tg?.name, stamp, photoRotation = rotationLabel))
+                "Exported to " + Exporter.exportText(context, name, SheetPipeline.csv(r, photoLabel(bmp), tg?.name, stamp, photoRotation = rotationLabel,
+                orientMs = orientMs, orientMemory = orientMemory))
             }.getOrElse { "Export failed: ${it.message}" }
         }
     }
@@ -380,7 +405,8 @@ class ScanController(
         val bmp = bitmap ?: return null
         val stamp = Exporter.stamp()
         return exportName(resultTarget?.name, r.tracer, stamp) to
-            SheetPipeline.csv(r, photoLabel(bmp), resultTarget?.name, stamp, photoRotation = rotationLabel)
+            SheetPipeline.csv(r, photoLabel(bmp), resultTarget?.name, stamp, photoRotation = rotationLabel,
+                orientMs = orientMs, orientMemory = orientMemory)
     }
 
     /** Rename the record this scan was saved as. */

@@ -906,7 +906,7 @@ The unit tests — the port-fidelity suite included — need no device:
 java -Dorg.gradle.appname=gradlew -jar gradle/wrapper/gradle-wrapper.jar testDebugUnitTest
 ```
 
-130 JVM tests as of 2026-10-13 (UI redesign §16-24; rows by layout §27; classifier §32; both tracers §34; orientation §35). After changing `segment.py`, `page.py` or the
+132 JVM tests as of 2026-10-15 (UI redesign §16-24; rows by layout §27; classifier §32; both tracers §34; orientation §35, §39). After changing `segment.py`, `page.py` or the
 digitise functions the photo path uses, regenerate the golden vectors with
 `python make_photo_port_fixtures.py` (from `python/`) and port the change to
 Kotlin in the same commit; each new rule gets a fixture case checked to
@@ -917,7 +917,7 @@ FAIL under the old rule.
 From `python/`. There is no pytest dependency and no reason to add one.
 
 ```
-python -m unittest discover -s tests     # 120 tests
+python -m unittest discover -s tests     # 125 tests
 python tests/mutate_timemap.py           # 21 of 21 mutations caught
 python tests/mutate_quality.py           # 14 of 15 mutations caught
 ```

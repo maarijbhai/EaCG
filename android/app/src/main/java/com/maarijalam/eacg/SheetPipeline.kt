@@ -177,6 +177,70 @@ object SheetPipeline {
         return Located(m2, rows, loc, edges, pulseT0, t0, anchor)
     }
 
+    /**
+     * Orientation, not part of [run]: the lead markers (pulses found, ticks
+     * found) on the page as photographed and on it turned half round --
+     * `orientation.half_turn_markers`. The page is made as [run] makes it
+     * with Geometry.GRID (corner rectification, the grid fit, the corner
+     * page if the fit is refused); the grid page turned half round is the
+     * page the photograph turned half round would give, so one fit serves
+     * both. Returns (up, turned).
+     */
+    fun halfTurnMarkers(photo: Bitmap, c: DoubleArray): Pair<SheetOrientation.Markers, SheetOrientation.Markers> {
+        val src = ImageWarp.toMat(photo)
+        var rect: Mat
+        var hint: Double? = null
+        try {
+            rect = rectify(src, c)
+            try {
+                val f = GridFit.fit(GridFit.redness(rect), locate(rect, null).anchor)
+                val page = GridFit.regularise(src, c, rect.cols(), rect.rows(), f)
+                rect.release()
+                rect = page
+                hint = f.pxPerMm
+            } catch (e: Exception) {
+                // the fit refused: the corner page, as run does
+            }
+        } finally {
+            src.release()
+        }
+        val turned = Mat()
+        try {
+            org.opencv.core.Core.rotate(rect, turned, org.opencv.core.Core.ROTATE_180)
+            return pageMarkers(rect, hint) to pageMarkers(turned, hint)
+        } finally {
+            turned.release()
+            rect.release()
+        }
+    }
+
+    /** `orientation.page_markers`: locate + tick search as [run] calls them; unreadable = none. */
+    private fun pageMarkers(page: Mat, scaleHint: Double?): SheetOrientation.Markers = try {
+        val l = locate(page, scaleHint)
+        val ticks = SheetLayout.tickScale(
+            if (OPEN_LOCATE == OPEN_TRACE) l.m2 else mask(page, OPEN_TRACE), l.rows, l.t0,
+            scaleHint ?: l.anchor, SheetLayout.maskOffsetPx(OPEN_TRACE))
+        SheetOrientation.Markers(l.edges.count { it.isFinite() }, ticks.nFound)
+    } catch (e: Exception) {
+        SheetOrientation.Markers(0, 0)
+    }
+
+    /** Peak native/java memory while [block] runs, sampled as [run] samples its stages; `orient=` format. */
+    fun <T> withStageMemory(stage: String, block: () -> T): Pair<T, String> {
+        val mem = StageMemory(::readMemory)
+        val stop = java.util.concurrent.atomic.AtomicBoolean(false)
+        val sampler = Thread {
+            while (!stop.get()) { mem.sample(); Thread.sleep(MEMORY_SAMPLE_MS) }
+        }.apply { isDaemon = true; start() }
+        try {
+            val v = block()
+            mem.close(stage)
+            return v to StageMemory.format(mem.baseline, mem.peaks())
+        } finally {
+            stop.set(true); sampler.join(200)
+        }
+    }
+
     /** One printed row's trace in page pixels: pos[i] is the row at column x0 + i. */
     class RowTrace(val x0: Int, val pos: DoubleArray)
 
@@ -542,7 +606,14 @@ object SheetPipeline {
     fun csv(r: Result, photoLabel: String, targetName: String?, stamp: String,
             pairId: String? = null, device: String = deviceLabel(),
             /** SheetOrientation.label: how the photograph was turned before digitising; null = not turned. */
-            photoRotation: String? = null): String = buildString {
+            photoRotation: String? = null,
+            /**
+             * The orientation check before the run (ScanController.load):
+             * its time and its peak memory (`baseline=... orient=native/java`).
+             * Lines of their own, so timings_ms and memory_peak_mb -- and every
+             * total read from them -- stay as they were; null = not written.
+             */
+            orientMs: Long? = null, orientMemory: String? = null): String = buildString {
         fun meta(k: String, v: Any?) = append("# $k: ${v ?: ""}\n")
         fun f(fmt: String, v: Double) = String.format(java.util.Locale.US, fmt, v)
         meta("generated_by", "EaCG SheetPipeline")
@@ -576,6 +647,8 @@ object SheetPipeline {
         } ?: r.diagnosisNote?.let { meta("diagnosis_note", it) }
         for (l in r.leads) l.pcc?.let { meta("pcc_asis_${l.name}${if (l.rhythm) "_rhythm" else ""}", f("%.4f", it)) }
         photoRotation?.let { meta("photo_rotation", it) }
+        orientMs?.let { meta("orient_ms", it) }
+        orientMemory?.let { meta("orient_memory_peak_mb", it) }
         pairId?.let { meta("pair_id", it) }
         val order = listOf("I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6")
         append("time_s," + order.joinToString(",") + ",II_rhythm\n")
