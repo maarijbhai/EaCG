@@ -8,8 +8,11 @@ new session can be scored without regenerating -- or changing a single value
 of -- the committed sheet_scores.csv.
 
     python score_device_set.py "Set C Crumple"      (from python/)
-
--> results/device/sheet_scores_setC_crumple.csv
+        -> results/device/sheet_scores_setC_crumple.csv
+    python score_device_set.py "Crumple ResQ" --name setC_crumple_rescue --targets target_corrections.csv
+        -> results/device/sheet_scores_setC_crumple_rescue.csv; the exports listed in
+           target_corrections.csv (benchmarked against the wrong record) scored
+           against the true one
 """
 
 from __future__ import annotations
@@ -33,20 +36,46 @@ def slug(folder: str) -> str:
 
 
 def main(argv=None) -> int:
-    argv = sys.argv[1:] if argv is None else argv
-    if len(argv) != 1:
-        print(__doc__)
-        return 2
-    folder = SDS.EXPORTS / argv[0]
+    import argparse
+    import csv
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("folder", help="a session folder under data/device_exports, e.g. 'Set C Crumple'")
+    ap.add_argument("--name", help="output slug: results/device/sheet_scores_<name>.csv (default from the folder)")
+    ap.add_argument("--targets", help="CSV (export, labelled_target, true_target, evidence): exports benchmarked "
+                                      "against the wrong record, scored against the true one; the export files "
+                                      "are not changed, and every correction is listed in the sidecar")
+    a = ap.parse_args(sys.argv[1:] if argv is None else argv)
+    folder = SDS.EXPORTS / a.folder
     if not folder.is_dir():
         raise SystemExit(f"no such folder: {folder}")
+    fixes = {}
+    if a.targets:
+        with open(a.targets, encoding="utf-8") as f:
+            fixes = {r["export"]: r for r in csv.DictReader(f)}
+        read = SDS.read_export
+
+        def read_fixed(path):
+            meta, cols = read(path)
+            r = fixes.get(Path(path).name)
+            if r is not None:
+                if meta.get("target") != r["labelled_target"]:
+                    raise SystemExit(f"{path.name}: header target {meta.get('target')!r}, the table says "
+                                     f"{r['labelled_target']!r}")
+                meta["target"] = r["true_target"]
+            return meta, cols
+        SDS.read_export = read_fixed
     SDS.EXPORTS = folder                                       # export_files() reads this root
-    SDS.OUT = SDS.REPO / "results" / "device" / f"sheet_scores_{slug(argv[0])}"
+    SDS.OUT = SDS.REPO / "results" / "device" / f"sheet_scores_{a.name or slug(a.folder)}"
     SDS.main()
     side = SDS.OUT.with_suffix(".json")
     d = json.loads(side.read_text(encoding="utf-8"))
     d["generated_by"] = "python/score_device_set.py (score_device_sheets.main, unchanged)"
     d["params"]["exports"] = f"{folder.relative_to(SDS.REPO).as_posix()}/eacg_sheet_*.csv"
+    if fixes:
+        d["params"]["target_corrections"] = {
+            "table": Path(a.targets).resolve().relative_to(SDS.REPO).as_posix(),
+            "exports": {k: {"labelled": v["labelled_target"], "scored_against": v["true_target"],
+                            "evidence": v["evidence"]} for k, v in fixes.items()}}
     side.write_text(json.dumps(d, indent=2), encoding="utf-8")
     return 0
 
