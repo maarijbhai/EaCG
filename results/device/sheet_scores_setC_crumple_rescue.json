@@ -1,0 +1,31 @@
+{
+  "generated_by": "python/score_device_set.py (score_device_sheets.main, unchanged)",
+  "utc": "2026-10-15T14:12:23+00:00",
+  "git_commit": "2121ff7c4935b02ce5224a65c27533179d58b54a",
+  "git_dirty": false,
+  "params": {
+    "exports": "data/device_exports/Crumple ResQ/eacg_sheet_*.csv",
+    "fs": 500.0,
+    "max_shift_s": 0.2,
+    "min_pcc": 0.5,
+    "target_corrections": {
+      "table": "python/target_corrections.csv",
+      "exports": {
+        "eacg_sheet_ptbxl40_kit_500hz_300dpi_model_20261015_154533.csv": {
+          "labelled": "ptbxl40_kit_500hz_300dpi",
+          "scored_against": "ptbxl4016_kit_500hz_300dpi",
+          "evidence": "photograph eacg_20261015_125342.jpg (3 corners = 125428's, TR by hand); 0.016 vs ptbxl40, 0.935 vs ptbxl4016"
+        },
+        "eacg_sheet_ptbxl40_kit_500hz_300dpi_classical_20261015_154538.csv": {
+          "labelled": "ptbxl40_kit_500hz_300dpi",
+          "scored_against": "ptbxl4016_kit_500hz_300dpi",
+          "evidence": "pair of 154533; 0.001 vs ptbxl40, 0.625 vs ptbxl4016"
+        }
+      }
+    }
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2"
+  }
+}
