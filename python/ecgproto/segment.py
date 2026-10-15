@@ -1118,3 +1118,97 @@ def tick_scale(image: np.ndarray, sheet: SheetLocation,
     e = np.asarray(est)
     med = float(np.median(e))
     return TickScale(med, len(e), float(100 * np.ptp(e) / med), tuple(pos), rej)
+
+
+# --------------------------------------------------------------------------
+# Guarded time-zero fallback: a false pulse
+# --------------------------------------------------------------------------
+
+#: Above this disagreement between the tick time scale and the grid fit's
+#: scale (%), time zero is not trusted. A tick's scale estimate is
+#: (x - t0) / (k * 62.5 mm), so a false calibration pulse -- a crease or a grid
+#: fragment 5-14 mm before the real one passes the pulse test -- inflates it:
+#: +11.7 to +29.3% on the seven failed Set C runs, against at most 1.2% on
+#: every other phone run of Sets A, B and C (53 runs, progress_log §41).
+T0_GUARD_PCT = 5.0
+
+
+def t0_guard_fires(tick_px_per_mm: float, grid_px_per_mm: float | None) -> bool:
+    """Is time zero suspect? Only with a grid fit (an independent ruler): no
+    tick scale at all, or one more than T0_GUARD_PCT from the grid's."""
+    if grid_px_per_mm is None or not np.isfinite(grid_px_per_mm):
+        return False
+    if not np.isfinite(tick_px_per_mm):
+        return True
+    return abs(tick_px_per_mm / grid_px_per_mm - 1.0) * 100.0 > T0_GUARD_PCT
+
+
+def t0_from_ticks(positions, grid_px_per_mm: float) -> float:
+    """Time zero read back from the ticks at the grid's scale: the median over
+    the ticks of x - k * 2.5 s * 25 mm/s * px/mm (NaN without ticks). One t0 for
+    the sheet, as `segment_leads` takes one (the standard layout starts every
+    row at the same column)."""
+    if not positions:
+        return float("nan")
+    cell_px = CELL_S * dig.MM_PER_S * grid_px_per_mm
+    return float(np.median([x - k * cell_px for _, k, x in positions]))
+
+
+@dataclass(frozen=True)
+class T0Guard:
+    """What the guarded fallback did (it ran only if `t0_guard_fires`)."""
+    accepted: bool
+    t0_before: float
+    t0_after: float               # NaN if not accepted
+    ticks_before: int
+    ticks_after: int              # of the accepted search; 0 if none
+    disagree_before_pct: float    # NaN without a tick scale
+    disagree_after_pct: float     # NaN if not accepted
+    reason: str
+
+    def line(self) -> str:
+        """The CSV header's `t0_guard` value."""
+        f = lambda v, fmt: "nan" if not np.isfinite(v) else fmt.format(v)
+        return (f"{'fired, used' if self.accepted else 'fired, not used'}: t0 x {f(self.t0_before, '{:.1f}')}"
+                f" -> {f(self.t0_after, '{:.1f}')}, ticks {self.ticks_before} -> {self.ticks_after}, tick vs grid "
+                f"{f(self.disagree_before_pct, '{:+.1f}')}% -> {f(self.disagree_after_pct, '{:+.1f}')}% ({self.reason})")
+
+
+def guard_time_zero(image: np.ndarray, sheet: SheetLocation, ticks: TickScale,
+                    grid_px_per_mm: float | None) -> tuple[SheetLocation, TickScale, T0Guard] | None:
+    """The guarded time-zero fallback. None (nothing changes) unless
+    `t0_guard_fires`; otherwise the pulse time zero is dropped, the ticks are
+    searched again from the rhythm locator's time zero at the grid's scale,
+    time zero is read back from them (`t0_from_ticks`) and the ticks searched
+    once more from it. Used only if that gives a tick scale within
+    T0_GUARD_PCT of the grid's; else the original location and ticks are
+    returned unchanged with the reason. `sheet.scale_hint` must be the grid's
+    px/mm (as `sheet.digitise_sheet` passes it), so both searches are placed at
+    the grid's scale.
+
+    "Time zero from the ticks" as an ALWAYS-ON rule was measured and rejected
+    (progress_log §5: 30 leads worse, 38 better); this replaces time zero only
+    when the ticks and the grid already disagree.
+    """
+    from dataclasses import replace
+    if not t0_guard_fires(ticks.px_per_mm, grid_px_per_mm):
+        return None
+    pct = lambda px: 100.0 * (px / grid_px_per_mm - 1.0) if np.isfinite(px) else float("nan")
+    before = dict(t0_before=float(sheet.t0_x), ticks_before=ticks.n_found,
+                  disagree_before_pct=pct(ticks.px_per_mm))
+    off = mask_offset_px(LOCATE_OPEN_KERNEL)
+    seed = replace(sheet, t0_x=float(sheet.rhythm.t0_x) - off, t0_source="rhythm_locator")
+    seeded = tick_scale(image, seed)
+    t0 = t0_from_ticks(seeded.positions, grid_px_per_mm)
+    if seeded.n_found < TICK_MIN_FOUND or not np.isfinite(t0):
+        return sheet, ticks, T0Guard(False, t0_after=float("nan"), ticks_after=seeded.n_found,
+                                     disagree_after_pct=float("nan"),
+                                     reason=f"{seeded.n_found} ticks from the rhythm locator's t0", **before)
+    loc = replace(sheet, t0_x=t0, t0_source="ticks")
+    tk = tick_scale(image, loc)
+    if t0_guard_fires(tk.px_per_mm, grid_px_per_mm):
+        return sheet, ticks, T0Guard(False, t0_after=float("nan"), ticks_after=tk.n_found,
+                                     disagree_after_pct=pct(tk.px_per_mm),
+                                     reason="the ticks still disagree with the grid", **before)
+    return loc, tk, T0Guard(True, t0_after=t0, ticks_after=tk.n_found,
+                            disagree_after_pct=pct(tk.px_per_mm), reason="t0 from the ticks", **before)

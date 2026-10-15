@@ -216,6 +216,74 @@ class TickOutlierIsReplaced(unittest.TestCase):
         self.assertEqual((keep, drop), ([0, 1], []))
 
 
+class FalsePulseIsCaughtByTheGuard(unittest.TestCase):
+    """Set C (progress_log §41): a crease 5-14 mm before the real calibration
+    pulse passed the pulse test, so time zero was early; a tick's scale is
+    (x - t0) / (k * 62.5 mm), the tick scale came out +12-29% against the
+    grid's, the 5.0 / 7.5 s ticks fell outside their windows, every lead was
+    mistimed. Here: ticks drawn at the true t0, the pulse time zero 10 mm early,
+    the rhythm locator's t0 right. Under the old rule (no guard) the sheet
+    keeps 3 ticks and the +16% scale."""
+
+    PX = PX_PER_MM
+    T0 = 160.0
+
+    def _sheet(self, pulse_t0: float):
+        px = self.PX
+        img = np.full((900, 2400, 3), 245, np.uint8)
+        rows = (200, 420, 640, 820)
+        for y in rows[:3]:
+            img[y - 1:y + 2, 60:2300] = 20
+            for k in (1, 2, 3):
+                xc = int(self.T0 + k * segment.CELL_S * 25 * px)
+                img[y - int(3 * px):y + int(3 * px), xc - 3:xc + 3] = 20
+        loc = segment.StripLocation(x0=60, y0=780, x1=2300, y1=860, row_peaks=rows,
+                                    pulse_x1=None, t0_x=self.T0 + 1.0)   # + the mask's 1 px
+        sl = segment.SheetLocation(rows=rows, t0_x=pulse_t0, t0_per_row=(pulse_t0,) * 4, x_end=2300,
+                                   rhythm=loc, t0_source="pulses", scale_hint=px)
+        return img, sl
+
+    def test_a_false_pulse_10mm_early_is_replaced_by_the_ticks(self):
+        img, sl = self._sheet(self.T0 - 10 * self.PX)
+        tk = segment.tick_scale(img, sl)
+        self.assertEqual(tk.n_found, 3)                                  # the failure, reproduced
+        self.assertGreater(tk.px_per_mm / self.PX - 1, 0.10)
+        out = segment.guard_time_zero(img, sl, tk, self.PX)
+        self.assertIsNotNone(out)
+        loc, tk2, g = out
+        self.assertTrue(g.accepted, g)
+        self.assertEqual(tk2.n_found, 9)
+        self.assertEqual(loc.t0_source, "ticks")
+        self.assertAlmostEqual(loc.t0_x, self.T0, delta=1.5)
+        self.assertLess(abs(tk2.px_per_mm / self.PX - 1), 0.01)
+        self.assertEqual((g.ticks_before, g.ticks_after), (3, 9))
+
+    def test_a_right_pulse_changes_nothing(self):
+        img, sl = self._sheet(self.T0)
+        tk = segment.tick_scale(img, sl)
+        self.assertEqual(tk.n_found, 9)
+        self.assertIsNone(segment.guard_time_zero(img, sl, tk, self.PX))
+
+    def test_no_grid_fit_never_fires(self):
+        img, sl = self._sheet(self.T0 - 10 * self.PX)
+        tk = segment.tick_scale(img, sl)
+        self.assertIsNone(segment.guard_time_zero(img, sl, tk, None))
+
+    def test_trigger_both_sides_of_5_percent(self):
+        f = segment.t0_guard_fires
+        self.assertFalse(f(10.49, 10.0)); self.assertTrue(f(10.51, 10.0))
+        self.assertFalse(f(9.51, 10.0)); self.assertTrue(f(9.49, 10.0))
+        self.assertTrue(f(float("nan"), 10.0))                           # no tick scale
+        self.assertFalse(f(float("nan"), None)); self.assertFalse(f(12.0, float("nan")))
+        self.assertEqual(segment.T0_GUARD_PCT, 5.0)
+
+    def test_t0_from_ticks_is_the_median_at_the_grid_scale(self):
+        px, cell = 10.0, segment.CELL_S * 25 * 10.0
+        pos = [(0, 1, 100 + cell), (1, 2, 102 + 2 * cell), (2, 3, 140 + 3 * cell)]   # one outlier
+        self.assertAlmostEqual(segment.t0_from_ticks(pos, px), 102.0)
+        self.assertTrue(np.isnan(segment.t0_from_ticks([], px)))
+
+
 class RowsFollowTheLayout(unittest.TestCase):
     """A shadow across the top of a sheet (eacg_photo_20261008_111150)
     binarised as ink and made the tallest row-profile peak by far; the four

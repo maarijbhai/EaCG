@@ -166,6 +166,8 @@ class SheetResult:
     location: segment.SheetLocation | None = field(default=None, repr=False)
     ticks: segment.TickScale | None = field(default=None, repr=False)
     rows: dict | None = field(default=None, repr=False)
+    #: The guarded time-zero fallback, if it fired (segment.guard_time_zero); None otherwise.
+    t0_guard: segment.T0Guard | None = None
 
 
 def cut_leads(rows: dict, layout: segment.LeadLayout, px: float) -> dict:
@@ -203,12 +205,14 @@ def retime(res: SheetResult, mode: str) -> SheetResult:
 
 
 def digitise_sheet(photo: np.ndarray, tracer, corners: np.ndarray | None = None,
-                   geometry: str = "corners", time_map: str = "ticks") -> SheetResult:
+                   geometry: str = "corners", time_map: str = "ticks",
+                   t0_guard: bool = True) -> SheetResult:
     """Photograph of a 3x4 + rhythm printout -> every lead in mV at 500 Hz.
 
     geometry="grid" regularises the page on its printed 5 mm grid after the
     corner rectification; if the fit is refused the corner page is kept and
-    `SheetResult.geometry` says "corners".
+    `SheetResult.geometry` says "corners". `t0_guard=False` skips the guarded
+    time-zero fallback (segment.guard_time_zero), for before/after comparisons.
     """
     refined = None
     if corners is None:
@@ -225,9 +229,14 @@ def digitise_sheet(photo: np.ndarray, tracer, corners: np.ndarray | None = None,
             fit = None
     elif geometry != "corners":
         raise ValueError(f"geometry must be 'corners' or 'grid', got {geometry!r}")
-    sl = segment.locate_sheet(rect, fit.px_per_mm if fit is not None and used == "grid"
-                              else None)
+    grid_px = fit.px_per_mm if fit is not None and used == "grid" else None
+    sl = segment.locate_sheet(rect, grid_px)
     ticks = segment.tick_scale(rect, sl)
+    # A false pulse (progress_log §41): only when the ticks and the grid
+    # disagree; otherwise guard is None and nothing below changes.
+    guard = segment.guard_time_zero(rect, sl, ticks, grid_px) if t0_guard else None
+    if guard is not None:
+        sl, ticks, guard = guard
     if np.isfinite(ticks.px_per_mm):
         px, cal, tk = ticks.px_per_mm, "ticks", ticks
     else:
@@ -238,5 +247,6 @@ def digitise_sheet(photo: np.ndarray, tracer, corners: np.ndarray | None = None,
     rows = {r: on_sheet_columns(*tracer(rect, layout, r)) for r in range(4)}
     res = SheetResult(cut_leads(rows, layout, px), np.asarray(corners, np.float64),
                       refined, rect.shape[:2], float(px), cal, ticks.n_found,
-                      sl.t0_source, layout, used, fit, "ticks", {}, rect, sl, ticks, rows)
+                      sl.t0_source, layout, used, fit, "ticks", {}, rect, sl, ticks, rows,
+                      t0_guard=guard)
     return retime(res, time_map)

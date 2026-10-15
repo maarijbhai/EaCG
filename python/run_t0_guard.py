@@ -1,0 +1,252 @@
+#!/usr/bin/env python3
+"""The guarded time-zero fallback (segment.guard_time_zero), replayed on every phone run.
+
+Every learned export of Set A, Set B and Set C (Tilt, Shadow, Crumple; folders
+starting '_' skipped -- one export per run: the classical partner of a
+both-tracers run has the same photograph and corners) is matched to its
+photograph by its recorded corners, decoded as the phone decodes it (EXIF
+applied, 3,200 px long side), turned by its photo_rotation, and the desktop
+reference is run with the export's own corners up to the tick search, so the
+guard's decision is the reference's on the phone's input. The phone's own tick
+and grid scales (header) are recorded beside it.
+
+    python run_t0_guard.py                  -> results/kitphoto/t0_guard_replay.csv + .json
+    python run_t0_guard.py --whatif [--tracer classical|b3]
+        the runs where the guard fires, digitised before (t0_guard=False) and
+        after, every lead scored against its truth (score_12lead.score_lead)
+        -> results/kitphoto/t0_guard_whatif[_b3].csv + .json
+        (b3 needs TensorFlow: run in WSL, ml/wsl_run.sh)
+
+Nothing here writes results/device/sheet_scores.csv or results/report/.
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import platform
+import re
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+import cv2
+import numpy as np
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parent
+sys.path.insert(0, str(HERE))
+
+import score_12lead as S12  # noqa: E402
+import score_kit_photo as skp  # noqa: E402
+from ecgproto import gridfit, page, segment, sheet  # noqa: E402
+from run_orientation import load  # noqa: E402
+
+EXPORTS = REPO / "data" / "device_exports"
+PHOTOS = REPO / "data" / "kit_photos"
+SETS = {"Set A": "SetA_Clean", "Set B": "setB", "Set C Tilt": "SetC_Tilt",
+        "Set C Shadow": "SetC_Shadow", "Set C Crumple": "SetC_Crumple"}
+OUT = REPO / "results" / "kitphoto"
+MATCH_PX = 3.0      # at least two corners within this of the phone's (photo identity)
+
+
+def git(*a) -> str:
+    return subprocess.run(["git", *a], cwd=REPO, capture_output=True, text=True).stdout.strip()
+
+
+def header(path: Path) -> dict:
+    h = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("#"):
+            break
+        k, _, v = line[1:].partition(":")
+        h[k.strip()] = v.strip()
+    return h
+
+
+def runs() -> list[tuple[str, Path, dict]]:
+    out = []
+    for s in SETS:
+        for p in sorted((EXPORTS / s).rglob("eacg_sheet_*_model_*.csv")):
+            if any(part.startswith("_") for part in p.relative_to(EXPORTS / s).parts[:-1]):
+                continue
+            out.append((s, p, header(p)))
+    return out
+
+
+_photo_cache: dict = {}
+
+
+def photo_bgr(path: Path, cw: int) -> np.ndarray:
+    key = (path, cw)
+    if key not in _photo_cache:
+        _photo_cache.clear()                     # one photograph in memory at a time
+        _photo_cache[key] = np.ascontiguousarray(np.rot90(load(path), -cw)[:, :, ::-1])
+    return _photo_cache[key]
+
+
+_corner_cache: dict = {}
+
+
+def match_photo(set_name: str, h: dict) -> tuple[Path | None, int, float]:
+    """(photograph, clockwise quarters, 2nd-smallest corner distance px)."""
+    rot = h.get("photo_rotation", "")
+    cw = int(rot.split()[0]) // 90 % 4 if rot else 0
+    w, hh = map(int, h["photo"].split()[1].split("x"))
+    c = np.array([float(v) for v in h["corners_px"].split()])
+    best = (None, cw, float("inf"))
+    for p in sorted(list((PHOTOS / SETS[set_name]).rglob("*.jpg")) + list((PHOTOS / SETS[set_name]).rglob("*.png"))):
+        key = (p, cw)
+        if key not in _corner_cache:
+            img = photo_bgr(p, cw)
+            try:
+                _corner_cache[key] = (img.shape[1], img.shape[0], page.find_sheet_corners(img).corners.reshape(-1))
+            except (RuntimeError, ValueError):
+                _corner_cache[key] = (img.shape[1], img.shape[0], None)
+        pw, ph, pc = _corner_cache[key]
+        if (pw, ph) != (w, hh) or pc is None:
+            continue
+        d = float(np.sort(np.hypot(*(pc - c).reshape(4, 2).T))[1])   # 2nd-best corner
+        if d < best[2]:
+            best = (p, cw, d)
+    return best
+
+
+def phone_scales(h: dict) -> tuple[float, float, int]:
+    g = re.search(r"grid \(.*?([\d.]+) px/mm", h.get("geometry", ""))
+    t = re.match(r"ticks ([\d.]+) px/mm", h.get("calibration", ""))
+    n = re.search(r"(\d+)/9 ticks", h.get("calibration", ""))
+    return (float(t.group(1)) if t else float("nan"), float(g.group(1)) if g else float("nan"),
+            int(n.group(1)) if n else -1)
+
+
+def to_ticks(img: np.ndarray, corners: np.ndarray) -> dict:
+    """digitise_sheet's geometry, locate and tick search (grid), and the guard."""
+    rect, _ = sheet.rectify(img, corners)
+    fit = gridfit.fit_grid(rect, segment.locate_sheet(rect).anchor_px_per_mm)
+    rect, _ = gridfit.regularise(img, corners, rect.shape, fit)
+    sl = segment.locate_sheet(rect, fit.px_per_mm)
+    tk = segment.tick_scale(rect, sl)
+    g = segment.guard_time_zero(rect, sl, tk, fit.px_per_mm)
+    return {"grid_px": fit.px_per_mm, "tick_px": tk.px_per_mm, "ticks": tk.n_found, "t0_source": sl.t0_source,
+            "fires": g is not None, "guard": g[2] if g is not None else None}
+
+
+def write(rows: list[dict], name: str, params: dict) -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    keys = []
+    for r in rows:
+        keys += [k for k in r if k not in keys]
+    with (OUT / f"{name}.csv").open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=keys, lineterminator="\n")
+        w.writeheader(); w.writerows(rows)
+    (OUT / f"{name}.json").write_text(json.dumps({
+        "generated_by": "python/run_t0_guard.py",
+        "utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "git_commit": git("rev-parse", "HEAD"),
+        "git_dirty": bool(git("status", "--porcelain", "--", "python/ecgproto", "python/run_t0_guard.py")),
+        "params": {**params, "t0_guard_pct": segment.T0_GUARD_PCT, "decode_px": 3200,
+                   "sets": SETS, "photo_match": f"2nd-smallest corner distance <= {MATCH_PX} px"},
+        "versions": {"python": platform.python_version(), "numpy": np.__version__, "opencv": cv2.__version__},
+    }, indent=2) + "\n", encoding="utf-8")
+    print(OUT / f"{name}.csv")
+
+
+def replay() -> list[dict]:
+    rows = []
+    for s, p, h in runs():
+        photo, cw, d = match_photo(s, h)
+        tick_ph, grid_ph, n_ph = phone_scales(h)
+        row = {"set": s, "export": p.name, "pair_id": h.get("pair_id", ""), "photo": photo.name if photo else "",
+               "cw": cw, "match_px": round(d, 2), "phone_ticks": n_ph, "phone_tick_px": tick_ph,
+               "phone_grid_px": grid_ph,
+               "phone_disagree_pct": round(100 * (tick_ph / grid_ph - 1), 2) if np.isfinite(tick_ph) else "",
+               "phone_fires": segment.t0_guard_fires(tick_ph, grid_ph)}
+        if photo is None or d > MATCH_PX:
+            row["error"] = "photograph not identified"
+        else:
+            corners = np.array([float(v) for v in h["corners_px"].split()]).reshape(4, 2)
+            try:
+                r = to_ticks(photo_bgr(photo, cw), corners)
+                row.update(desk_ticks=r["ticks"], desk_tick_px=round(r["tick_px"], 4) if np.isfinite(r["tick_px"]) else "",
+                           desk_grid_px=round(r["grid_px"], 4),
+                           desk_disagree_pct=round(100 * (r["tick_px"] / r["grid_px"] - 1), 2) if np.isfinite(r["tick_px"]) else "",
+                           desk_t0_source=r["t0_source"], desk_fires=r["fires"],
+                           desk_guard=r["guard"].line() if r["guard"] else "")
+            except (RuntimeError, ValueError) as e:
+                row["error"] = f"{type(e).__name__}: {e}"
+        rows.append(row)
+        print({k: row.get(k) for k in ("set", "export", "photo", "match_px", "phone_fires", "desk_fires",
+                                       "phone_disagree_pct", "desk_disagree_pct", "error")}, flush=True)
+    return rows
+
+
+def whatif(tracer_name: str) -> list[dict]:
+    if tracer_name == "b3":
+        sys.path.insert(0, str(REPO / "ml"))
+        from export_tflite import TfliteTracer
+        tfl = TfliteTracer(REPO / "android" / "app" / "src" / "main" / "assets" / "ml" / "b3_512x1024_fp16.tflite")
+        height = int(tfl.run.get_input_details()[tfl.in_name]["shape"][1])
+        tracer = sheet.model_row_tracer(tfl, height)
+    else:
+        tracer = sheet.classical_row_tracer()
+    rows = []
+    for s, p, h in runs():
+        tick_ph, grid_ph, _ = phone_scales(h)
+        if not segment.t0_guard_fires(tick_ph, grid_ph):
+            continue
+        photo, cw, d = match_photo(s, h)
+        if photo is None or d > MATCH_PX:
+            rows.append({"set": s, "export": p.name, "error": "photograph not identified"}); continue
+        corners = np.array([float(v) for v in h["corners_px"].split()]).reshape(4, 2)
+        truth = S12.SheetTruth(skp.Target(h["target"]))
+        img = photo_bgr(photo, cw)
+        for when, on in (("before", False), ("after", True)):
+            res = sheet.digitise_sheet(img, tracer, corners, "grid", t0_guard=on)
+            cells, rh = [], {}
+            for (lead, rhythm), sig in res.leads.items():
+                sc = S12.score_lead(sig, truth.leads[(lead, rhythm)]["mv"],
+                                    segment.RECORDING_S if rhythm else segment.CELL_S)
+                if rhythm:
+                    rh = sc
+                else:
+                    cells.append(sc)
+            pcc = [c.get("pcc_asis", float("nan")) for c in cells]
+            pcc = [float(v) if v != "" else float("nan") for v in pcc]
+            med = lambda k: float(np.nanmedian([float(c[k]) if c.get(k, "") != "" else np.nan for c in cells]))
+            grid_px = res.grid_fit.px_per_mm if res.grid_fit is not None else float("nan")
+            rows.append({"set": s, "export": p.name, "photo": photo.name, "record": h["target"].split("_")[0],
+                         "tracer": tracer_name, "when": when, "geometry": res.geometry,
+                         "ticks_found": res.ticks_found, "t0_source": res.t0_source,
+                         "calibration": res.calibration, "px_per_mm": round(res.px_per_mm, 4),
+                         "grid_px": round(grid_px, 4),
+                         "disagree_pct": round(100 * (res.ticks.px_per_mm / grid_px - 1), 2)
+                         if res.ticks is not None and np.isfinite(res.ticks.px_per_mm) else "",
+                         "guard": res.t0_guard.line() if res.t0_guard else "",
+                         "median_pcc": round(float(np.nanmedian(pcc)), 4),
+                         "median_pcc_aligned": round(med("pcc_aligned"), 4),
+                         "median_snr_db": round(med("snr_db_asis"), 2),
+                         "median_shifted_snr_db": round(med("shifted_snr_db_asis"), 2),
+                         "leads_pcc_ge_0.9": int(np.sum(np.asarray(pcc) >= 0.9)),
+                         "rhythm_pcc": rh.get("pcc_asis", "")})
+            print(rows[-1], flush=True)
+    return rows
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--whatif", action="store_true")
+    ap.add_argument("--tracer", choices=("classical", "b3"), default="classical")
+    a = ap.parse_args(argv)
+    if a.whatif:
+        write(whatif(a.tracer), "t0_guard_whatif" + ("_b3" if a.tracer == "b3" else ""),
+              {"tracer": a.tracer, "in_sample": "the rule was chosen after seeing these failures"})
+    else:
+        write(replay(), "t0_guard_replay", {})
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
