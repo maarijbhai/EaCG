@@ -1,0 +1,16 @@
+{
+  "generated_by": "python/summarise_crumple.py",
+  "utc": "2026-10-15T11:14:42+00:00",
+  "git_commit": "c917196f59e7293076fa0ef99234f9edc76b469d",
+  "git_dirty": false,
+  "params": {
+    "unit": "lead (12 per run; rhythm strip excluded)",
+    "crumple": "results/device/sheet_scores_setC_crumple.csv",
+    "set_B": "results/device/sheet_scores.csv x python/test_set.csv set=ideal"
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "pandas": "3.0.2"
+  }
+}
