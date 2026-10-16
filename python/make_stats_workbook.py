@@ -42,7 +42,7 @@ import make_report_figures as R  # noqa: E402
 import score_device_sheets as SDS  # noqa: E402
 
 OUT = REPO / "results" / "report" / "compare_sets" / "stats_compare_sets.xlsx"
-SET_NAME = {"clean": "A (clean images)", "ideal": "B (ideal photos)"}
+SET_NAME = {"clean": "A (clean images)", "ideal": "B (ideal photos)", "robustness": "C (robustness)"}
 LEAD_ORDER = ["I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6", "II rhythm"]
 
 METHODS = [
@@ -116,6 +116,12 @@ METHODS = [
                               "smoothed luma; 1 = perfectly even), sharpness (variance of the Laplacian), clipped "
                               "fraction (pixels >= 250)."),
 ]
+
+METHODS.insert(3, ("Set C", "Robustness: the printed sheets photographed under tilt (phone ~25-35 deg from parallel), "
+                   "hard shadow (one warm lamp) and crumpling, digitised on the A30s, both tracers where run (three "
+                   "failed runs are learned-only). Runs -> photographs: the README in each data/device_exports/Set C "
+                   "folder. Scored by the same scorer (score_device_set.py); the same statistics as A and B. The rescue "
+                   "re-runs with the t0 guard are NOT in this set (in-sample; results/device/setC_crumple_rescue_before_after.csv)."))
 
 
 def git(*a) -> str:
@@ -221,9 +227,13 @@ def compare_sheets(df: pd.DataFrame, leads12: pd.DataFrame) -> dict:
 def main(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--sets", nargs="+", choices=list(SET_NAME), default=list(SET_NAME))
+    ap.add_argument("--sets", nargs="+", choices=list(SET_NAME), default=["clean", "ideal"])
     ap.add_argument("--out", type=Path, default=OUT, help="the .xlsx to write (relative to the repository)")
+    ap.add_argument("--scores", type=Path, default=R.SCORES, help="scores file (default: sheet_scores.csv)")
+    ap.add_argument("--manifest", type=Path, default=R.MANIFEST, help="manifest (default: python/test_set.csv)")
     args = ap.parse_args(argv)
+    R.SCORES = args.scores if args.scores.is_absolute() else REPO / args.scores
+    R.MANIFEST = args.manifest if args.manifest.is_absolute() else REPO / args.manifest
     out = (args.out if args.out.is_absolute() else REPO / args.out).with_suffix("")
     manifest = pd.read_csv(R.MANIFEST)
     manifest = manifest[manifest["set"].isin(args.sets)]
@@ -294,6 +304,9 @@ def main(argv=None) -> int:
 
     # ---- views
     summary = summarise(leads12, ["set_name", "tracer_kind"])
+    rob12 = leads12[leads12["set"] == "robustness"]
+    by_condition = (summarise(rob12, ["set_name", "condition", "tracer_kind"])
+                    .sort_values(["condition", "tracer_kind"]) if len(rob12) else pd.DataFrame())
     rhythm = summarise(df[df["rhythm"]], ["set_name", "tracer_kind"])
     per_sheet = summarise(leads12, ["set_name", "ecg_id", "tracer_kind"]).sort_values(["set_name", "ecg_id", "tracer_kind"])
     per_sheet.insert(2, "ptbxl_label", per_sheet["ecg_id"].map(labels))
@@ -341,6 +354,7 @@ def main(argv=None) -> int:
         "README": pd.DataFrame(METHODS, columns=["item", "what it is / how it is computed"]),
         "Summary 12 leads": summary,
         "Summary rhythm strip": rhythm,
+        "Summary by condition (C)": by_condition,
         "Tracer comparison": pd.DataFrame([{"set": s, **v} for s, v in w.items()]),
         "Per photo": per,
         "Per sheet": per_sheet,
@@ -354,11 +368,10 @@ def main(argv=None) -> int:
         "Excluded (Set B)": excl,
     }
     if len(args.sets) > 1:
-        sheets = {**{k: v for k, v in sheets.items() if k in ("README", "Summary 12 leads", "Summary rhythm strip",
-                                                               "Tracer comparison")},
+        head = ("README", "Summary 12 leads", "Summary rhythm strip", "Summary by condition (C)", "Tracer comparison")
+        sheets = {**{k: v for k, v in sheets.items() if k in head},
                   **compare_sheets(df, leads12),
-                  **{k: v for k, v in sheets.items() if k not in ("README", "Summary 12 leads",
-                                                                   "Summary rhythm strip", "Tracer comparison")}}
+                  **{k: v for k, v in sheets.items() if k not in head}}
     sheets = {k: v for k, v in sheets.items() if len(v)}
     with pd.ExcelWriter(xl, engine="openpyxl") as wr:
         for name, d in sheets.items():

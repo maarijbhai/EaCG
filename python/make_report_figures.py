@@ -10,7 +10,7 @@ INPUTS
   results/device/sheet_scores.csv   score_device_sheets.py: one row per lead per export
   python/test_set.csv               the manifest: export, photo_id, set, condition, photo_path
                                     set in {clean, ideal, robustness}; condition in {clean,
-                                    ideal, side_light, shadow, tilt, curl}; photo_id shared by
+                                    ideal, side_light, shadow, tilt, curl, crumple}; photo_id shared by
                                     the learned and classical exports of ONE photograph (the
                                     pairing for the tracer comparison). Exports not in the
                                     manifest are reported and skipped, never guessed.
@@ -63,7 +63,7 @@ EXPORTS = REPO / "data" / "device_exports"
 DEV_IDS = (9, 38, 40, 57)
 HELDOUT_IDS = (1737, 3908, 4016, 8504, 167, 160, 7916, 5830)
 SETS = ("clean", "ideal", "robustness")
-CONDITIONS = ("ideal", "side_light", "shadow", "tilt", "curl")
+CONDITIONS = ("ideal", "side_light", "shadow", "tilt", "curl", "crumple")
 #: How each set is named in captions.
 SET_LABEL = {"clean": "set A, clean images", "ideal": "set B, ideal photographs", "robustness": "robustness set"}
 
