@@ -300,7 +300,7 @@ def main(argv=None) -> int:
           .reset_index())
     pp["set"] = pp["photo_id"].map(leads12.drop_duplicates("photo_id").set_index("photo_id")["set_name"])
     w = {s: R.wilcoxon(pairs[pairs["photo_id"].isin(leads12.loc[leads12["set_name"] == s, "photo_id"])])
-         for s in SET_NAME.values()}
+         for s in (SET_NAME[x] for x in args.sets)}
 
     # ---- views
     summary = summarise(leads12, ["set_name", "tracer_kind"])
