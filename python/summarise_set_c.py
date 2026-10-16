@@ -198,11 +198,11 @@ def main() -> int:
         "score_device_set.py)", git("rev-parse", "--short", "HEAD")]})
     xl = DEV / "stats_set_C.xlsx"
     with pd.ExcelWriter(xl, engine="openpyxl") as wr:
-        readme.to_excel(wr, "README", index=False)
-        pd.DataFrame(rows).to_excel(wr, "summary", index=False)
-        R.to_excel(wr, "runs", index=False)
-        L.to_excel(wr, "leads", index=False)
-        ba.to_excel(wr, "rescue_before_after", index=False)
+        readme.to_excel(wr, sheet_name="README", index=False)
+        pd.DataFrame(rows).to_excel(wr, sheet_name="summary", index=False)
+        R.to_excel(wr, sheet_name="runs", index=False)
+        L.to_excel(wr, sheet_name="leads", index=False)
+        ba.to_excel(wr, sheet_name="rescue_before_after", index=False)
         for ws in wr.book.worksheets:
             for col in ws.columns:
                 ws.column_dimensions[col[0].column_letter].width = min(60, max(10, max(len(str(c.value or ""))
