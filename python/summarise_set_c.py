@@ -16,7 +16,12 @@ designed on these failures) and are not pooled with the conditions.
 
     python summarise_set_c.py          (from python/)
 
-Writes results/device/setC_runs.csv, setC_summary.csv (+ .json each) and stats_set_C.xlsx.
+Writes results/device/setC_runs.csv (+ .json): one row per export -- facts per run.
+The STATISTICS for Set C (median [IQR], cluster-bootstrap CIs, Wilcoxon, the paired
+robustness table) come from the same scripts as Sets A and B, on the combined inputs
+of make_setC_inputs.py: results/report_set_C/ (progress_log §44). An earlier summary
+here (setC_summary.csv, stats_set_C.xlsx: medians and IQR only, no CIs) was retired
+for that reason.
 """
 
 from __future__ import annotations
@@ -164,55 +169,6 @@ def main() -> int:
     write_csv(R.to_dict("records"), "setC_runs", {"sources": {k: v[0] for k, v in SOURCES.items()},
                                                   "failed": f"median lead PCC < {FAIL_BELOW}"})
 
-    L = pd.concat(leads, ignore_index=True)
-    cells = L[~L["rhythm"].astype(bool)]
-    rows = []
-    pooled = [c for c, v in SOURCES.items() if v[3]]
-    for cond in SOURCES:
-        rows += summarise(cells[cells["condition"] == cond], f"C {cond}", R[R["condition"] == cond])
-    rows += summarise(cells[cells["condition"].isin(pooled)], "C all conditions (tilt + shadow + crumple)",
-                      R[R["condition"].isin(pooled)])
-    m = pd.read_csv(HERE / "test_set.csv")
-    a = pd.read_csv(DEV / "sheet_scores.csv")
-    a = a[~a["rhythm"].astype(bool)]
-    rows += summarise(a[a["export"].isin(set(m.loc[m["set"] == "ideal", "export"]))], "B ideal (reference)")
-    rows += summarise(a[a["export"].isin(set(m.loc[m["set"] == "clean", "export"]))], "A clean (reference)")
-    write_csv(rows, "setC_summary", {"unit": "lead (12 per run; rhythm strip excluded)",
-                                     "pooled": pooled, "failed": f"median lead PCC < {FAIL_BELOW}",
-                                     "reference": "results/device/sheet_scores.csv x python/test_set.csv"})
-
-    ba = pd.read_csv(DEV / "setC_crumple_rescue_before_after.csv")
-    readme = pd.DataFrame({"item": [
-        "What", "Conditions", "Unit", "Failed run", "Rescue rows", "Sheets",
-        "Sources", "Made by", "Commit"], "value": [
-        "Set C (robustness): photographs of the printed sheets under tilt, shadow and crumpling, "
-        "digitised on the Galaxy A30s, both tracers, scored against the PTB-XL truth.",
-        "; ".join(f"{k}: {v[2]}" for k, v in SOURCES.items()),
-        "The lead (12 per run; the rhythm strip separately in 'runs'). Medians [IQR] over leads.",
-        f"Median lead PCC below {FAIL_BELOW}.",
-        "IN-SAMPLE: the t0 guard was designed after seeing these failures (progress_log §41-42); "
-        "not pooled with the conditions.",
-        "summary = per condition and tracer, with Set B and Set A for reference; runs = one row per "
-        "export; leads = every lead scored; rescue_before_after = the four crumple failures before "
-        "and after the guard.",
-        "; ".join(v[0] for v in SOURCES.values()) + "; sheet_scores.csv x test_set.csv (A, B); "
-        "setC_crumple_rescue_before_after.csv",
-        "python/summarise_set_c.py (reads the committed scores; scores by score_device_sheets via "
-        "score_device_set.py)", git("rev-parse", "--short", "HEAD")]})
-    xl = DEV / "stats_set_C.xlsx"
-    with pd.ExcelWriter(xl, engine="openpyxl") as wr:
-        readme.to_excel(wr, sheet_name="README", index=False)
-        pd.DataFrame(rows).to_excel(wr, sheet_name="summary", index=False)
-        R.to_excel(wr, sheet_name="runs", index=False)
-        L.to_excel(wr, sheet_name="leads", index=False)
-        ba.to_excel(wr, sheet_name="rescue_before_after", index=False)
-        for ws in wr.book.worksheets:
-            for col in ws.columns:
-                ws.column_dimensions[col[0].column_letter].width = min(60, max(10, max(len(str(c.value or ""))
-                                                                                       for c in col[:50]) + 2))
-    (DEV / "stats_set_C.json").write_text(json.dumps(sidecar({"workbook": "stats_set_C.xlsx"}), indent=2) + "\n",
-                                          encoding="utf-8")
-    print(xl)
     return 0
 
 
