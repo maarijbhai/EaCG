@@ -1,0 +1,52 @@
+{
+  "generated_by": "python/make_report_figures.py",
+  "utc": "2026-10-16T10:52:37+00:00",
+  "git_commit": "2e85ddb6861313b73c70c55333fe5d1f076e1565",
+  "git_dirty": false,
+  "params": {
+    "scores": "..\\results\\device\\sheet_scores_all_sets.csv",
+    "manifest": "test_set_all.csv",
+    "manifest_sha256": "e6bf448a68f2b135acd29fba2adb79c8d955b94fee049ad647387b66a341ffc3",
+    "n_boot": 2000,
+    "seed": 20261012,
+    "good_pcc": 0.9,
+    "dev_ids": [
+      9,
+      38,
+      40,
+      57
+    ],
+    "held_out_ids": [
+      1737,
+      3908,
+      4016,
+      8504,
+      167,
+      160,
+      7916,
+      5830
+    ],
+    "sets": [
+      "clean",
+      "ideal",
+      "robustness"
+    ],
+    "mode": "comparison"
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "pandas": "3.0.2",
+    "matplotlib": "3.10.5"
+  },
+  "files": [
+    "fidelity_clean.tex",
+    "fidelity_clean.csv"
+  ],
+  "wilcoxon": {
+    "n_pairs": 144,
+    "statistic": 306.0,
+    "p": 1.1251263473404584e-22,
+    "median_diff": 0.019950000000000023
+  }
+}

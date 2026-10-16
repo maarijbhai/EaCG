@@ -1,0 +1,15 @@
+set,condition,tracer,n,n_unavailable,pct_ge_09,median,q1,q3
+clean,clean,learned,144,0,98.61111111111111,0.994,0.990625,0.9966250000000001
+clean,clean,classical,144,0,93.05555555555556,0.9712000000000001,0.95225,0.9844250000000001
+ideal,ideal,learned,288,0,79.86111111111111,0.94725,0.908825,0.9729
+ideal,ideal,classical,288,14,20.833333333333332,0.6460999999999999,0.392625,0.8843000000000001
+robustness,side_light,learned,0,0,,,,
+robustness,side_light,classical,0,0,,,,
+robustness,shadow,learned,48,3,50.0,0.9321,0.1927,0.9805
+robustness,shadow,classical,36,1,8.333333333333334,0.5556,0.38385,0.74395
+robustness,tilt,learned,72,10,55.55555555555556,0.9460999999999999,0.769925,0.9742500000000001
+robustness,tilt,classical,48,5,0.0,0.5627,0.4366,0.72825
+robustness,curl,learned,0,0,,,,
+robustness,curl,classical,0,0,,,,
+robustness,crumple,learned,84,0,21.428571428571427,0.21055000000000001,0.0,0.88825
+robustness,crumple,classical,84,8,4.761904761904762,0.1826,0.025575,0.494925

@@ -1,0 +1,19 @@
+% caption: time and memory per sheet on the Galaxy A30s, learned tracer, robustness set (n = 17 exports);
+% harness stages excluded: score*
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Stage} & \textbf{Median (ms)} & \textbf{Range (ms)} & \textbf{Peak native (MB)}\\
+\midrule
+corners & 0 & 0--0 & 68\\
+rectify & 155 & 69--210 & 117\\
+grid & 1431 & 866--2661 & 130\\
+locate & 253 & 116--592 & 112\\
+calibrate+segment & 4 & 2--24 & 84\\
+trace & 19734 & 19422--21244 & 506\\
+cut & 10 & 5--47 & 444\\
+quality & 1 & 0--10 & 444\\
+classify & 59 & 52--101 & 452\\
+\midrule
+\textbf{Total} & 21923 & 20551--24436 & 506\\
+\bottomrule
+\end{tabular}

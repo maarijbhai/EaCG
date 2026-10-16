@@ -1,0 +1,10 @@
+stage,median_ms,min_ms,max_ms,peak_native_mb,n
+corners,0.0,0,0,67.5,17
+rectify,155.0,69,210,117.1,17
+grid,1431.0,866,2661,129.6,17
+locate,253.0,116,592,112.3,17
+calibrate+segment,4.0,2,24,83.9,17
+trace,19734.0,19422,21244,505.5,17
+cut,10.0,5,47,443.7,17
+quality,1.0,0,10,443.8,17
+classify,59.0,52,101,451.8,17

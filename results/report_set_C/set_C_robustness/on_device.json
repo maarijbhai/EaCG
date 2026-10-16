@@ -1,0 +1,48 @@
+{
+  "generated_by": "python/make_report_figures.py",
+  "utc": "2026-10-16T10:52:24+00:00",
+  "git_commit": "2e85ddb6861313b73c70c55333fe5d1f076e1565",
+  "git_dirty": false,
+  "params": {
+    "scores": "..\\results\\device\\sheet_scores_all_sets.csv",
+    "manifest": "test_set_all.csv",
+    "manifest_sha256": "e6bf448a68f2b135acd29fba2adb79c8d955b94fee049ad647387b66a341ffc3",
+    "n_boot": 2000,
+    "seed": 20261012,
+    "good_pcc": 0.9,
+    "dev_ids": [
+      9,
+      38,
+      40,
+      57
+    ],
+    "held_out_ids": [
+      1737,
+      3908,
+      4016,
+      8504,
+      167,
+      160,
+      7916,
+      5830
+    ],
+    "sets": [
+      "robustness"
+    ],
+    "mode": "single set"
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "pandas": "3.0.2",
+    "matplotlib": "3.10.5"
+  },
+  "files": [
+    "on_device.tex",
+    "on_device.csv"
+  ],
+  "n_exports": 17,
+  "harness_excluded": [
+    "score*"
+  ]
+}

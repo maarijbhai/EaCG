@@ -1,0 +1,32 @@
+{
+  "generated_by": "python/make_stats_workbook.py",
+  "utc": "2026-10-16T10:53:41+00:00",
+  "git_commit": "2e85ddb6861313b73c70c55333fe5d1f076e1565",
+  "git_dirty": false,
+  "inputs": {
+    "scores": "results\\device\\sheet_scores_all_sets.csv",
+    "manifest": "python\\test_set_all.csv"
+  },
+  "sets": [
+    "robustness"
+  ],
+  "sheets": {
+    "README": 30,
+    "Summary 12 leads": 2,
+    "Summary rhythm strip": 2,
+    "Summary by condition (C)": 6,
+    "Tracer comparison": 1,
+    "Per photo": 31,
+    "Per sheet": 8,
+    "PCC by lead": 2,
+    "SNR by lead": 2,
+    "Learned vs classical": 14,
+    "Timing & memory": 31,
+    "Per lead (all)": 403
+  },
+  "versions": {
+    "python": "3.13.5",
+    "pandas": "3.0.2",
+    "numpy": "2.5.2"
+  }
+}
