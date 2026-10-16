@@ -1180,6 +1180,53 @@ tracer, with Sets A and B read from the committed `sheet_scores.csv` -- reproduc
 All 7 failed learned runs were marked **unreliable** (SCALE_DISAGREE or NO_TICK_SCALE,
 severe; `setC_runs.csv`): none passed as ok or check. `docs/results_index.md` maps every Chapter 5 section to its files.
 
+## 44. 2026-10-16 — Set C on the same statistical standard as Sets A and B
+
+**Why:** the §43 summary (`setC_summary.csv`, `results/device/stats_set_C.xlsx`) gave
+medians and IQRs only -- no confidence intervals, no paired tracer test, and empty
+PCCs left out of the medians -- so it was NOT the standard of Sets A and B
+(`make_report_figures.py`: the lead as the unit, median [IQR], 95% CI by cluster
+bootstrap over photographs, 2,000 resamples, seed 20261012; Wilcoxon paired by
+(photograph, lead); an empty PCC a failure). Retired (git rm); `summarise_set_c.py`
+keeps only the per-run table `setC_runs.csv`.
+
+**How:** Set C goes through the SAME two scripts. `make_setC_inputs.py` writes
+`results/device/sheet_scores_all_sets.csv` (sheet_scores.csv's 988 rows unchanged +
+the Set C tilt / shadow / crumple score files) and `python/test_set_all.csv`
+(test_set.csv's 72 rows unchanged + the 31 Set C exports as set `robustness`,
+conditions tilt / shadow / crumple, photo_id = the run's pair; the rescues left
+out -- in-sample, and the report pools every robustness condition). Script changes,
+additive: `crumple` in `make_report_figures.CONDITIONS`; the robustness set, a
+*Summary by condition (C)* sheet and `--scores` / `--manifest` (defaults unchanged)
+in `make_stats_workbook.py`; the tracer test only for the sets selected.
+
+**Checked, before trusting it:** the A + B + C run reproduces Sets A and B
+byte-identically -- `fidelity_clean` / `fidelity_ideal` (.csv and .tex) and the
+headline numbers including the Wilcoxon equal `results/report/`; the A/B workbook
+rebuilt with the edited script equals the committed `stats_sets_A_B.xlsx` on every
+sheet (it also gains the three "A vs B" sheets added in ad7a45b, after that workbook
+was made). Python 131 tests.
+
+**Outputs** (`results/report_set_C/`, at 2e85ddb, all sidecars clean):
+`set_C_robustness/` (Set C's own tables, figures and `stats_set_C.xlsx`),
+`compare_sets/` (A, B, C side by side and `robustness.*`: each Set C lead minus the
+median of the same record's Set B photos), and `stats_extras.xlsx`
+(`make_extras_workbook.py`: the rescue, orientation and t0-guard CSVs in one
+workbook). `sheet_scores.csv` and `results/report/` untouched.
+
+| Set C, median lead PCC [95% CI] | learned | classical |
+|---|---|---|
+| all conditions | 0.848 [0.15, 0.94] | 0.448 [0.19, 0.56] |
+| tilt / shadow / crumple | 0.946 / 0.932 / 0.211 | 0.563 / 0.556 / 0.183 |
+| learned vs classical | Wilcoxon, 154 pairs, p = 1.3e-15 | |
+| change vs the same record's Set B photos: tilt | -0.004 [-0.77, +0.01] | -0.10 [-0.27, +0.03] |
+| shadow | -0.02 [-0.86, -0.001] | -0.20 [-0.28, -0.14] |
+| crumple | -0.76 [-0.94, -0.08] | -0.49 [-0.72, -0.22] |
+
+The medians are the ones §43 gave; what is new is the CIs and the paired tests --
+and how wide the CIs are (4-7 photographs per condition). `docs/results_index.md`
+updated.
+
 ---
 
 ## Open items (ordered)

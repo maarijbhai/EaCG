@@ -6,12 +6,13 @@ library versions (`git_dirty: false` on all the files listed). Paths are from th
 repository root. The engineering history behind each one is `docs/progress_log.md`
 (section numbers in brackets).*
 
-**To look at the numbers, open the two workbooks first:**
+**To look at the numbers, open these workbooks first.** Sets A, B and C use the SAME statistics, made by the same scripts (`make_report_figures.py`, `make_stats_workbook.py`): the lead is the unit, median [IQR], 95% CI of a median by cluster bootstrap over photographs (2,000 resamples, seed 20261012), Wilcoxon signed-rank for learned vs classical paired by (photograph, lead), an empty PCC counted as a failure. Checked: re-running Sets A and B through the Set C inputs reproduces `results/report/` byte for byte (§44).
 
 | workbook | what is in it |
 |---|---|
 | `results/report/stats_sets_A_B.xlsx` | Sets A and B: *README* (every method), *Summary 12 leads*, *Summary rhythm strip*, *Tracer comparison*, *Per photo*, *Per sheet*, *PCC by lead*, *SNR by lead*, *Learned vs classical*, *Timing & memory*, *Photo quality (B)*, *Quality vs PCC (B)*, *Per lead (all)*, *Excluded (Set B)* (§37-38) |
-| `results/device/stats_set_C.xlsx` | Set C: README, `summary` (per condition and tracer, with Sets A and B for reference), `runs` (one row per export), `leads` (every lead), `rescue_before_after` (§40-43) |
+| `results/report_set_C/set_C_robustness/stats_set_C.xlsx` | Set C, the same sheets as A/B: *README*, *Summary 12 leads* (with 95% CIs), *Summary rhythm strip*, *Summary by condition (C)* (tilt / shadow / crumple, with CIs), *Tracer comparison* (Wilcoxon), *Per photo*, *Per sheet*, *PCC by lead*, *SNR by lead*, *Learned vs classical*, *Timing & memory*, *Per lead (all)* (§44) |
+| `results/report_set_C/stats_extras.xlsx` | Everything else: *Set C runs* (one row per export, incl. the rescues), *Rescue before-after*, *Rescue scores (leads)*, *Orientation* (64/68), *Orientation rule v1* (rejected), *Orientation sideways* (76/76), *t0 guard replay*, *t0 guard what-if b3* / *cl* (in-sample) |
 
 ---
 
@@ -35,7 +36,7 @@ in each folder's `_excluded/` with a README saying why. The data itself is not i
 ### 5.1 Experiment conditions
 - The sets: the table above; Set B photo quality (frame fill, px/mm, tilt, light):
   `stats_sets_A_B.xlsx`, sheet *Photo quality (B)*, and *Quality vs PCC (B)* (§36).
-- Metrics, how each is computed: the README sheets of both workbooks; the scorer is
+- Metrics, how each is computed: the README sheets of the workbooks; the scorer is
   `python/score_12lead.py` (`score_lead`), RMSE and SNR on median-removed signals (§38).
 
 ### 5.2 Page geometry and grid fit
@@ -78,28 +79,46 @@ in each folder's `_excluded/` with a README saying why. The data itself is not i
 | Set B: leads >= 0.9 | 80% | 21% |
 
 ### 5.5 Robustness analysis (Set C)
-- **Summary**: `results/device/setC_summary.csv` (and the workbook's *summary* sheet);
-  **every run**: `results/device/setC_runs.csv`; every lead: the per-condition score
-  files `results/device/sheet_scores_setC_tilt.csv`, `_setC_shadow.csv`,
-  `_setC_crumple.csv`, `_setC_crumple_rescue.csv`, `_setC_tilt_rescue.csv`.
-- Crumple in detail: `results/device/setC_crumple_runs.csv`, `setC_crumple_summary.csv` (§40).
-- The rescue, before / after per photograph: `results/device/setC_crumple_rescue_before_after.csv` (§42).
-- Note: `results/report/robustness.*` predates Set C (its panels were empty); use the
-  Set C files above.
+- **Set C on its own** (the same tables and figures as A and B):
+  `results/report_set_C/set_C_robustness/` -- `fidelity_robustness.tex/.csv` (every
+  measure, median [IQR], Wilcoxon), `pcc_by_lead.pdf`, `plain_vs_aligned.pdf`,
+  `pcc_by_quality.pdf`, `latency_stages.pdf`, `on_device.tex`, examples
+  `example_robustness_*.pdf`, `headline.json`, and the workbook `stats_set_C.xlsx`.
+- **Set C against A and B**: `results/report_set_C/compare_sets/` --
+  `robustness.tex/.csv/.pdf` (each Set C lead minus the median of the same record's
+  Set B photos, same lead and tracer: median difference with a 95% cluster-bootstrap
+  CI, per condition), `compare_sets.tex/.csv` (A, B, C side by side), `pcc_by_set.pdf`,
+  `headline.json`.
+- Inputs: `results/device/sheet_scores_all_sets.csv` + `python/test_set_all.csv`
+  (`make_setC_inputs.py`: the A/B rows unchanged + the Set C score files); every
+  lead per condition: `results/device/sheet_scores_setC_tilt.csv`, `_setC_shadow.csv`,
+  `_setC_crumple.csv`.
+- Every run (facts: verdict, warnings, ticks, t0 source, guard): `results/device/setC_runs.csv`.
+- The rescue (IN-SAMPLE, not in the Set C statistics): before / after per photograph
+  `results/device/setC_crumple_rescue_before_after.csv`; every lead
+  `sheet_scores_setC_crumple_rescue.csv`, `_setC_tilt_rescue.csv` (§42).
+- Do not use `results/report/robustness.*` (made before Set C existed; empty) or
+  `results/device/setC_crumple_summary.csv` (§40; medians without CIs -- superseded
+  for statistics by the files above, the medians agree).
 
-Median lead PCC (learned / classical), runs failed (median lead PCC < 0.5):
+| Set C (lead = unit), median [95% CI] | learned | classical |
+|---|---|---|
+| all conditions: lead PCC | 0.848 [0.15, 0.94] | 0.448 [0.19, 0.56] |
+| leads >= 0.9 | 40% | 4% |
+| learned vs classical (Wilcoxon, 154 pairs) | p = 1.3e-15 | |
+| tilt: lead PCC | 0.946 [0.19, 0.96] | 0.563 [0.44, 0.59] |
+| shadow: lead PCC | 0.932 [0.10, 0.97] | 0.556 [0.55, 0.75] |
+| crumple: lead PCC | 0.211 [0.01, 0.88] | 0.183 [0.05, 0.51] |
 
-| condition | learned | classical | learned runs failed | verdicts ok / check / unreliable (learned) |
-|---|---|---|---|---|
-| tilt | 0.946 | 0.563 | 2 / 6 | 4 / 0 / 2 |
-| shadow | 0.932 | 0.556 | 1 / 4 | 1 / 1 / 2 |
-| crumple | 0.211 | 0.183 | 4 / 7 | 0 / 1 / 6 |
-| all three | 0.848 | 0.448 | 7 / 17 | 5 / 2 / 10 |
-| crumple, rescued (in-sample) | 0.838 | 0.561 | 0 / 5 | 0 / 0 / 5 |
-| tilt, rescued (in-sample) | -0.015 | 0.055 | 1 / 1 | 0 / 0 / 1 |
+| change from the same record's Set B photos, median [95% CI] | learned | classical |
+|---|---|---|
+| tilt | -0.004 [-0.77, +0.01] | -0.10 [-0.27, +0.03] |
+| shadow | -0.02 [-0.86, -0.001] | -0.20 [-0.28, -0.14] |
+| crumple | -0.76 [-0.94, -0.08] | -0.49 [-0.72, -0.22] |
 
-All 7 failed learned runs were marked unreliable (none passed as ok or check). Small numbers: describe
-failure modes, do not quote rates with confidence intervals.
+The CIs are wide because there are few photographs (4-7 per condition): describe
+the failure modes and give the CIs; do not present Set C rates as precise. All 7
+failed learned runs (median lead PCC < 0.5) were marked unreliable (`setC_runs.csv`).
 
 ### 5.6 Whole-sheet performance and published work
 - Per sheet and per lead name: `stats_sets_A_B.xlsx` (*Per sheet*, *PCC by lead*, *SNR by lead*, *Per lead (all)*);
@@ -129,6 +148,7 @@ failure modes, do not quote rates with confidence intervals.
 | `results/device/sheet_scores.csv` (Sets A, B) | `score_device_sheets.py` -- do **not** re-run before the report: it re-scores every folder |
 | `results/report/*` | `make_report_figures.py` (+ `make_stats_workbook.py`) |
 | `results/device/sheet_scores_setC_*.csv` | `score_device_set.py "<folder>"` (the same scorer, one folder; `--targets target_corrections.csv` for the one mis-labelled run) |
-| `results/device/setC_*.csv`, `stats_set_C.xlsx` | `summarise_set_c.py`, `summarise_crumple.py`, `rescue_before_after.py` |
+| `results/report_set_C/*` | `make_setC_inputs.py`, then `make_report_figures.py --scores results/device/sheet_scores_all_sets.csv --manifest test_set_all.csv --sets robustness` (and `--sets clean ideal robustness`), `make_stats_workbook.py --sets robustness --scores ... --manifest ...`; `make_extras_workbook.py` |
+| `results/device/setC_runs.csv`, `setC_crumple_*.csv`, `setC_crumple_rescue_before_after.csv` | `summarise_set_c.py`, `summarise_crumple.py`, `rescue_before_after.py` |
 | `results/kitphoto/orientation_sessions*.csv` | `run_orientation_sessions.py` |
 | `results/kitphoto/t0_guard_*.csv` | `run_t0_guard.py` (`--whatif`; b3 in WSL) |
