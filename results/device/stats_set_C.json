@@ -1,0 +1,14 @@
+{
+  "generated_by": "python/summarise_set_c.py",
+  "utc": "2026-10-16T10:36:49+00:00",
+  "git_commit": "87906d81562cdac51294dd1a850be3ad27b09806",
+  "git_dirty": false,
+  "params": {
+    "workbook": "stats_set_C.xlsx"
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "pandas": "3.0.2"
+  }
+}

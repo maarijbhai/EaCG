@@ -1,0 +1,21 @@
+{
+  "generated_by": "python/summarise_set_c.py",
+  "utc": "2026-10-16T10:36:49+00:00",
+  "git_commit": "87906d81562cdac51294dd1a850be3ad27b09806",
+  "git_dirty": false,
+  "params": {
+    "sources": {
+      "tilt": "sheet_scores_setC_tilt.csv",
+      "shadow": "sheet_scores_setC_shadow.csv",
+      "crumple": "sheet_scores_setC_crumple.csv",
+      "crumple rescue": "sheet_scores_setC_crumple_rescue.csv",
+      "tilt rescue": "sheet_scores_setC_tilt_rescue.csv"
+    },
+    "failed": "median lead PCC < 0.5"
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "pandas": "3.0.2"
+  }
+}
