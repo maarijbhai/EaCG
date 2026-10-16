@@ -1158,6 +1158,28 @@ guard: with one corner moved the true pulse was found -- the knife edge, and a
 reminder that a rescue by re-running is not by itself evidence for the guard.
 IN-SAMPLE: the guard was designed on these failures.
 
+## 43. 2026-10-16 — Set C scored in full; where every result is
+
+Set C Tilt (10 exports) and Shadow (7) scored by the unchanged scorer
+(`score_device_set.py`, e0067e7: `results/device/sheet_scores_setC_tilt.csv`,
+`_setC_shadow.csv`); every header target matches its README's record, and the good
+runs score 0.92-0.97 against them. `python/summarise_set_c.py` (87906d8) ->
+`results/device/setC_runs.csv` (every export), `setC_summary.csv` (per condition and
+tracer, with Sets A and B read from the committed `sheet_scores.csv` -- reproducing
+0.994 / 0.971 and 0.947 / 0.646) and one workbook, `results/device/stats_set_C.xlsx`.
+`sheet_scores.csv` and `results/report/` untouched.
+
+| condition (learned / classical) | median lead PCC | leads >= 0.9 | learned runs failed (< 0.5) |
+|---|---|---|---|
+| tilt | 0.946 / 0.563 | 56% / 0% | 2 / 6 |
+| shadow | 0.932 / 0.556 | 50% / 8% | 1 / 4 |
+| crumple | 0.211 / 0.183 | 21% / 5% | 4 / 7 |
+| all three | 0.848 / 0.448 | 40% / 4% | 7 / 17 |
+| crumple rescued (in-sample, §42) | 0.838 / 0.561 | 37% / 12% | 0 / 5 |
+
+All 7 failed learned runs were marked **unreliable** (SCALE_DISAGREE or NO_TICK_SCALE,
+severe; `setC_runs.csv`): none passed as ok or check. `docs/results_index.md` maps every Chapter 5 section to its files.
+
 ---
 
 ## Open items (ordered)
