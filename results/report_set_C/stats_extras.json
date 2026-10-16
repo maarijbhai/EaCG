@@ -1,0 +1,22 @@
+{
+  "generated_by": "python/make_extras_workbook.py",
+  "utc": "2026-10-16T10:55:26+00:00",
+  "git_commit": "ef63753a745c85ec9f083bbe65f0582eef5ee2a0",
+  "git_dirty": false,
+  "sources": [
+    "results/device/setC_runs.csv",
+    "results/device/setC_crumple_rescue_before_after.csv",
+    "results/device/sheet_scores_setC_crumple_rescue.csv",
+    "results/device/sheet_scores_setC_tilt_rescue.csv",
+    "results/kitphoto/orientation_sessions.csv",
+    "results/kitphoto/orientation_sessions_rule_v1.csv",
+    "results/kitphoto/orientation.csv",
+    "results/kitphoto/t0_guard_replay.csv",
+    "results/kitphoto/t0_guard_whatif_b3.csv",
+    "results/kitphoto/t0_guard_whatif.csv"
+  ],
+  "versions": {
+    "python": "3.13.5",
+    "pandas": "3.0.2"
+  }
+}
