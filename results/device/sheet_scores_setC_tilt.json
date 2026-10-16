@@ -1,0 +1,16 @@
+{
+  "generated_by": "python/score_device_set.py (score_device_sheets.main, unchanged)",
+  "utc": "2026-10-16T10:33:29+00:00",
+  "git_commit": "e0067e7ba40dcc7455d87eb29917ee8e986f8f12",
+  "git_dirty": false,
+  "params": {
+    "exports": "data/device_exports/Set C Tilt/eacg_sheet_*.csv",
+    "fs": 500.0,
+    "max_shift_s": 0.2,
+    "min_pcc": 0.5
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2"
+  }
+}
