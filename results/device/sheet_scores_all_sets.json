@@ -1,0 +1,26 @@
+{
+  "generated_by": "python/make_setC_inputs.py",
+  "utc": "2026-10-16T10:45:52+00:00",
+  "git_commit": "8b71d360766f65eb51e862f4a6f29163675f73d6",
+  "git_dirty": true,
+  "params": {
+    "concatenated": [
+      "results/device/sheet_scores.csv",
+      "results/device/sheet_scores_setC_tilt.csv",
+      "results/device/sheet_scores_setC_shadow.csv",
+      "results/device/sheet_scores_setC_crumple.csv"
+    ],
+    "manifest": "python/test_set_all.csv",
+    "rows": {
+      "sheet_scores.csv": 988,
+      "sheet_scores_setC_tilt.csv": 130,
+      "sheet_scores_setC_shadow.csv": 91,
+      "sheet_scores_setC_crumple.csv": 182
+    },
+    "note": "rows copied unchanged; the rescue re-runs are not included (in-sample)"
+  },
+  "versions": {
+    "python": "3.13.5",
+    "pandas": "3.0.2"
+  }
+}
