@@ -47,6 +47,9 @@ SOURCES = {
     "tilt rescue": ("sheet_scores_setC_tilt_rescue.csv", "Tilt ResQ",
                     "the failed tilt PTB-XL 9 photograph re-run with the t0 guard (in-sample)", False),
 }
+#: The committed files this reads (the dirty check covers these and python/, not its own outputs).
+INPUTS = [f"results/device/{v[0]}" for v in SOURCES.values()] + [
+    "results/device/sheet_scores.csv", "results/device/setC_crumple_rescue_before_after.csv"]
 MEASURES = ["pcc_asis", "pcc_aligned", "snr_db_asis", "shifted_snr_db_asis", "rmse_mv_asis", "gain_ratio", "r_ratio"]
 FAIL_BELOW = 0.5
 
@@ -117,7 +120,7 @@ def sidecar(params: dict) -> dict:
     return {"generated_by": "python/summarise_set_c.py",
             "utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "git_commit": git("rev-parse", "HEAD"),
-            "git_dirty": bool(git("status", "--porcelain", "--", "python", "results/device")),
+            "git_dirty": bool(git("status", "--porcelain", "--", "python", *INPUTS)),
             "params": params,
             "versions": {"python": platform.python_version(), "numpy": np.__version__, "pandas": pd.__version__}}
 
