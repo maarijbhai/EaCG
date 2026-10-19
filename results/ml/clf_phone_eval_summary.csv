@@ -1,0 +1,46 @@
+set,condition,tracer,verdict,exports,phone_line,phone_eq_offline,phone_max_abs_dp,offline_eq_truth,label_exact,label_contained,truth_label_exact,cd_false_flags,cd_false_flags_in_truth_too
+A,clean,learned,all,12,12,12,0.00012,9,7,11,5,2,2
+A,clean,learned,ok,12,12,12,0.00012,9,7,11,5,2,2
+A,clean,classical,all,12,12,12,0.00017,8,6,10,5,2,2
+A,clean,classical,ok,12,12,12,0.00017,8,6,10,5,2,2
+B,ideal,learned,all,24,24,24,0.00014,18,14,22,10,4,4
+B,ideal,learned,ok,21,21,21,0.00014,17,12,19,10,3,3
+B,ideal,learned,check,3,3,3,9e-05,1,2,3,0,1,1
+B,ideal,classical,all,24,24,24,0.0002,7,6,13,10,12,4
+B,ideal,classical,ok,4,4,4,6e-05,2,2,3,3,2,0
+B,ideal,classical,check,20,20,20,0.0002,5,4,10,7,10,4
+C,tilt,learned,all,6,6,6,0.00011,4,2,4,3,2,1
+C,tilt,learned,ok,4,4,4,0.00011,4,2,4,2,1,1
+C,tilt,learned,unreliable,2,2,2,0.00011,0,0,0,1,1,0
+C,tilt,classical,all,4,4,4,0.0001,1,0,2,2,3,1
+C,tilt,classical,ok,1,1,1,8e-05,0,0,0,0,1,1
+C,tilt,classical,check,3,3,3,0.0001,1,0,2,2,2,0
+C,shadow,learned,all,4,4,4,5e-05,3,0,3,0,2,2
+C,shadow,learned,ok,1,1,1,5e-05,1,0,1,0,1,1
+C,shadow,learned,check,1,1,1,5e-05,1,0,1,0,0,0
+C,shadow,learned,unreliable,2,2,2,5e-05,1,0,1,0,1,1
+C,shadow,classical,all,3,3,3,0.00023,2,0,2,0,1,1
+C,shadow,classical,check,2,2,2,0.00023,1,0,1,0,1,1
+C,shadow,classical,unreliable,1,1,1,3e-05,1,0,1,0,0,0
+C,crumple,learned,all,7,7,7,8e-05,3,0,3,0,3,3
+C,crumple,learned,check,1,1,1,5e-05,1,0,1,0,0,0
+C,crumple,learned,unreliable,6,6,6,8e-05,2,0,2,0,3,3
+C,crumple,classical,all,7,7,7,0.00011,3,0,3,0,4,4
+C,crumple,classical,check,1,1,1,5e-05,1,0,1,0,0,0
+C,crumple,classical,unreliable,6,6,6,0.00011,2,0,2,0,4,4
+C,all,learned,all,17,17,17,0.00011,10,2,10,3,7,6
+C,all,learned,ok,5,5,5,0.00011,5,2,5,2,2,2
+C,all,learned,check,2,2,2,5e-05,2,0,2,0,0,0
+C,all,learned,unreliable,10,10,10,0.00011,3,0,3,1,5,4
+C,all,classical,all,14,14,14,0.00023,6,0,7,2,8,6
+C,all,classical,ok,1,1,1,8e-05,0,0,0,0,1,1
+C,all,classical,check,6,6,6,0.00023,3,0,4,2,3,1
+C,all,classical,unreliable,7,7,7,0.00011,3,0,3,0,4,4
+C rescue,crumple rescue,learned,all,5,5,5,7e-05,2,0,2,0,3,3
+C rescue,crumple rescue,learned,unreliable,5,5,5,7e-05,2,0,2,0,3,3
+C rescue,crumple rescue,classical,all,5,5,5,0.00021,2,0,2,0,2,2
+C rescue,crumple rescue,classical,unreliable,5,5,5,0.00021,2,0,2,0,2,2
+C rescue,tilt rescue,learned,all,1,1,1,4e-05,0,0,0,1,0,0
+C rescue,tilt rescue,learned,unreliable,1,1,1,4e-05,0,0,0,1,0,0
+C rescue,tilt rescue,classical,all,1,1,1,5e-05,0,0,0,1,0,0
+C rescue,tilt rescue,classical,unreliable,1,1,1,5e-05,0,0,0,1,0,0

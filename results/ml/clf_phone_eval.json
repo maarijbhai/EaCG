@@ -1,0 +1,205 @@
+{
+  "generated_by": "ml/clf_phone_eval.py",
+  "utc": "2026-10-19T10:05:32+00:00",
+  "git_commit": "6981522b1a20c6f81392a5db3a7ae5e4ec484d0c",
+  "git_dirty": false,
+  "files": [
+    "clf_phone_eval.csv",
+    "clf_phone_eval_summary.csv",
+    "clf_phone_eval.tex"
+  ],
+  "sources": [
+    "python/test_set_all.csv",
+    "results/device/sheet_scores_all_sets.csv",
+    "results/device/sheet_scores_setC_crumple_rescue.csv",
+    "results/device/sheet_scores_setC_tilt_rescue.csv",
+    "results/device/setC_runs.csv"
+  ],
+  "exports_dir": "data/device_exports (not _excluded, not _from_phone_*)",
+  "n_exports": 115,
+  "n_rescue_in_sample": 12,
+  "model": {
+    "model": "clf_superclass_fp16.tflite",
+    "run": "printed_resnet_aug_s2",
+    "task": "superclass (multi-label, sigmoid)",
+    "classes": [
+      "NORM",
+      "MI",
+      "STTC",
+      "CD",
+      "HYP"
+    ],
+    "thresholds": {
+      "NORM": 0.47,
+      "MI": 0.35,
+      "STTC": 0.4,
+      "CD": 0.05,
+      "HYP": 0.48
+    },
+    "threshold_rule": "per class, the F1-maximising value on the validation fold (9)",
+    "input": {
+      "name": "ecg",
+      "shape": [
+        1,
+        1000,
+        13
+      ],
+      "fs_hz": 100,
+      "from_500hz": "mean of each block of 5 samples, NaN ignored",
+      "view": "printed: each lead in its 2.5 s window about its median, zero elsewhere; channel 13 = lead II rhythm, all 10 s; NaN -> 0",
+      "lead_order": [
+        "I",
+        "II",
+        "III",
+        "aVR",
+        "aVL",
+        "aVF",
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5",
+        "V6",
+        "II_rhythm"
+      ]
+    },
+    "output": {
+      "name": "prob",
+      "shape": [
+        1,
+        5
+      ]
+    },
+    "val_macro_auroc": 0.9199,
+    "test_macro_auroc": 0.9131,
+    "git_commit": "049c04e454fa0db6d7d71392df9cd7f5794f7a9e",
+    "git_dirty": false
+  },
+  "truth_per_record": [
+    {
+      "ecg_id": 9,
+      "labels": "NORM",
+      "truth_says": "NORM",
+      "p_NORM": 0.9441245794296265,
+      "p_MI": 0.02539709210395813,
+      "p_STTC": 0.014655010774731636,
+      "p_CD": 0.011027774773538113,
+      "p_HYP": 0.006274568848311901
+    },
+    {
+      "ecg_id": 38,
+      "labels": "NORM",
+      "truth_says": "NORM CD",
+      "p_NORM": 0.8652855753898621,
+      "p_MI": 0.03671995550394058,
+      "p_STTC": 0.03603305667638779,
+      "p_CD": 0.08326251804828644,
+      "p_HYP": 0.015704497694969177
+    },
+    {
+      "ecg_id": 40,
+      "labels": "NORM",
+      "truth_says": "NORM CD",
+      "p_NORM": 0.6291772127151489,
+      "p_MI": 0.04917509853839874,
+      "p_STTC": 0.1254756897687912,
+      "p_CD": 0.06781048327684402,
+      "p_HYP": 0.15320956707000732
+    },
+    {
+      "ecg_id": 57,
+      "labels": "NORM",
+      "truth_says": "NORM MI",
+      "p_NORM": 0.7836593985557556,
+      "p_MI": 0.39976775646209717,
+      "p_STTC": 0.0005643529002554715,
+      "p_CD": 0.0007442357018589973,
+      "p_HYP": 0.00044867859105579555
+    },
+    {
+      "ecg_id": 160,
+      "labels": "STTC",
+      "truth_says": "MI STTC",
+      "p_NORM": 0.04799365997314453,
+      "p_MI": 0.372078537940979,
+      "p_STTC": 0.7109989523887634,
+      "p_CD": 0.01387803629040718,
+      "p_HYP": 0.048159122467041016
+    },
+    {
+      "ecg_id": 167,
+      "labels": "STTC",
+      "truth_says": "HYP",
+      "p_NORM": 0.10204366594552994,
+      "p_MI": 0.06264960765838623,
+      "p_STTC": 0.3096124529838562,
+      "p_CD": 0.005760096944868565,
+      "p_HYP": 0.7602318525314331
+    },
+    {
+      "ecg_id": 1737,
+      "labels": "MI",
+      "truth_says": "MI",
+      "p_NORM": 0.014275666326284409,
+      "p_MI": 0.9816507697105408,
+      "p_STTC": 0.06373757869005203,
+      "p_CD": 0.012416456826031208,
+      "p_HYP": 0.014018935151398182
+    },
+    {
+      "ecg_id": 3908,
+      "labels": "MI",
+      "truth_says": "MI",
+      "p_NORM": 0.03997041657567024,
+      "p_MI": 0.9038770198822021,
+      "p_STTC": 0.2576761841773987,
+      "p_CD": 0.028733495622873306,
+      "p_HYP": 0.1167193204164505
+    },
+    {
+      "ecg_id": 4016,
+      "labels": "CD",
+      "truth_says": "MI CD",
+      "p_NORM": 9.903489262796938e-05,
+      "p_MI": 0.9270616173744202,
+      "p_STTC": 0.0968640148639679,
+      "p_CD": 0.6789413690567017,
+      "p_HYP": 0.47667527198791504
+    },
+    {
+      "ecg_id": 5830,
+      "labels": "HYP",
+      "truth_says": "HYP",
+      "p_NORM": 0.0067960117012262344,
+      "p_MI": 0.08836105465888977,
+      "p_STTC": 0.23524092137813568,
+      "p_CD": 0.01815902628004551,
+      "p_HYP": 0.9938482642173767
+    },
+    {
+      "ecg_id": 7916,
+      "labels": "HYP",
+      "truth_says": "STTC HYP",
+      "p_NORM": 0.0684296041727066,
+      "p_MI": 0.06263871490955353,
+      "p_STTC": 0.5640669465065002,
+      "p_CD": 0.029006699100136757,
+      "p_HYP": 0.7858538031578064
+    },
+    {
+      "ecg_id": 8504,
+      "labels": "CD",
+      "truth_says": "CD",
+      "p_NORM": 0.03561495989561081,
+      "p_MI": 0.09409855306148529,
+      "p_STTC": 0.005063578952103853,
+      "p_CD": 0.9651238322257996,
+      "p_HYP": 0.3168756663799286
+    }
+  ],
+  "versions": {
+    "python": "3.12.3",
+    "numpy": "2.5.3",
+    "pandas": "3.0.6"
+  }
+}
