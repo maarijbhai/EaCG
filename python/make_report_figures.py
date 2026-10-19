@@ -391,17 +391,24 @@ def fig_example(out: Out, plt, df: pd.DataFrame, set_name: str, pcc_lim) -> dict
     return info
 
 
-def categories(df: pd.DataFrame) -> list[tuple]:
-    """x categories of F2: clean, ideal, then each robustness condition present."""
+def present_conditions(df: pd.DataFrame) -> list[str]:
+    """The robustness conditions that have at least one lead (presentation only)."""
+    have = set(df.loc[df["set"] == "robustness", "condition"])
+    return [c for c in CONDITIONS[1:] if c in have]
+
+
+def categories(df: pd.DataFrame, present_only: bool = False) -> list[tuple]:
+    """x categories of F2: clean, ideal, then each robustness condition (with
+    present_only, only the conditions that have photographs)."""
     cats = [("clean", "clean"), ("ideal", "ideal")]
-    for c in CONDITIONS[1:]:
+    for c in (present_conditions(df) if present_only else CONDITIONS[1:]):
         cats.append(("robustness", c))
     return cats
 
 
-def fig_pcc_by_set(out: Out, plt, df: pd.DataFrame, pcc_lim):
+def fig_pcc_by_set(out: Out, plt, df: pd.DataFrame, pcc_lim, present_only: bool = False):
     d = leads12(df)
-    cats = categories(df)
+    cats = categories(df, present_only)
     fig, ax = plt.subplots(figsize=(FULL_W, 2.6))
     rows = []
     for i, (s, c) in enumerate(cats):
@@ -525,9 +532,9 @@ def robustness_rows(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def fig_robustness(out: Out, plt, rob: pd.DataFrame):
+def fig_robustness(out: Out, plt, rob: pd.DataFrame, conds: list[str] | None = None):
     fig, ax = plt.subplots(figsize=(FULL_W, 2.4))
-    conds = list(CONDITIONS[1:])
+    conds = list(CONDITIONS[1:]) if conds is None else list(conds)
     any_data = False
     for j, tk in enumerate(TRACERS):
         for i, c in enumerate(conds):
@@ -717,13 +724,15 @@ def table_compare_sets(out: Out, df: pd.DataFrame, sets: list[str]) -> pd.DataFr
     return t
 
 
-def table_robustness(out: Out, rob: pd.DataFrame):
-    tex = [r"\begin{tabular}{@{}lrlrrr@{}}", r"\toprule",
+def table_robustness(out: Out, rob: pd.DataFrame, conds: list[str] | None = None):
+    """The .tex shows `conds` (default: every condition); the .csv keeps every row."""
+    shown = rob if conds is None else rob[rob["condition"].isin(conds)]
+    tex =[r"\begin{tabular}{@{}lrlrrr@{}}", r"\toprule",
            r"\textbf{Condition} & \textbf{Median PCC} & \textbf{$\Delta$ vs ideal [95\% CI]} & "
            r"\textbf{PCC $\geq$ 0.9} & \textbf{Shifted SNR} & \textbf{Leads}\\"]
     for tk in TRACERS:
         tex += [r"\midrule", rf"\multicolumn{{6}}{{@{{}}l}}{{\emph{{{tk.capitalize()} tracer}}}}\\"]
-        for _, r in rob[rob["tracer"] == tk].iterrows():
+        for _, r in shown[shown["tracer"] == tk].iterrows():
             ci = (f"{r['median_diff']:+.3f} [{r['diff_ci_lo']:+.3f}, {r['diff_ci_hi']:+.3f}]"
                   if np.isfinite(r["diff_ci_lo"]) else (f"{r['median_diff']:+.3f}" if np.isfinite(r["median_diff"]) else "--"))
             pct = f"{r['pct_ge_09']:.0f}\\%" if r["n_leads"] else "--"
@@ -817,6 +826,9 @@ def main(argv=None) -> int:
                    help="only these sets of the manifest. ONE set: that set's own figures and tables. "
                         "SEVERAL (or none given): the comparison -- PCC by set, each set's fidelity table, "
                         "the side-by-side table and, once it has photos, robustness")
+    p.add_argument("--present-conditions-only", action="store_true",
+                   help="presentation only: leave robustness conditions with no photographs out of "
+                        "pcc_by_set.pdf and robustness.pdf/.tex (the CSVs keep every row)")
     args = p.parse_args(argv)
     if args.draft_manifest:
         return draft_manifest(args.manifest, args.force)
@@ -837,6 +849,8 @@ def main(argv=None) -> int:
               "manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),
               "n_boot": N_BOOT, "seed": SEED, "good_pcc": GOOD, "dev_ids": DEV_IDS, "held_out_ids": HELDOUT_IDS,
               "sets": sets, "mode": "single set" if single else "comparison"}
+    if args.present_conditions_only:
+        params["present_conditions_only"] = True
     out = Out(out_dir, params)
     plt = style()
 
@@ -856,12 +870,13 @@ def main(argv=None) -> int:
         fig_latency(out, plt, pe, focus)
         device = table_on_device(out, pe, focus)
     else:
-        fig_pcc_by_set(out, plt, df, pcc_lim)
+        fig_pcc_by_set(out, plt, df, pcc_lim, args.present_conditions_only)
         table_compare_sets(out, df, sets)
         if "robustness" in sets:
             rob = robustness_rows(df)
-            fig_robustness(out, plt, rob)
-            table_robustness(out, rob)
+            conds = present_conditions(df) if args.present_conditions_only else None
+            fig_robustness(out, plt, rob, conds)
+            table_robustness(out, rob, conds)
 
     pairs, pair_rep = paired_tracers(df)
     for k, v in pair_rep.items():
