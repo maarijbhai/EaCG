@@ -1,0 +1,15 @@
+{
+  "generated_by": "python/list_test_sheets.py",
+  "utc": "2026-10-19T08:47:58+00:00",
+  "git_commit": "3a429f2d5d1ce118cbb095a7d306eb59feff0783",
+  "git_dirty": false,
+  "params": {
+    "ptbxl": "data/ptb-xl/1.0.3 (ptbxl_database.csv, scp_statements.csv)",
+    "superclass": "diagnostic_class of every code with diagnostic == 1 (example_physionet.py)",
+    "sex": "PTB-XL coding: 0 male, 1 female"
+  },
+  "versions": {
+    "python": "3.13.5",
+    "pandas": "3.0.2"
+  }
+}
