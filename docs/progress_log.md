@@ -1227,6 +1227,38 @@ The medians are the ones §43 gave; what is new is the CIs and the paired tests 
 and how wide the CIs are (4-7 photographs per condition). `docs/results_index.md`
 updated.
 
+## 45. 2026-10-19 — Set C presentation: empty conditions dropped; one per-condition table
+
+Presentation only; no result changed. **Figures:** `make_report_figures.py
+--present-conditions-only` (883689e, d6d5444; default off, so `results/report/` is
+reproduced as before and was not touched) leaves conditions with no photographs
+(`side light`, `curl`) out of `compare_sets/robustness.pdf`/`.tex` and
+`pcc_by_set.pdf`; nothing renamed. Checked after regenerating (4f96230): every CSV
+and the other .tex files in `compare_sets/` are byte-identical, and `headline.json`
+changes only in its provenance lines.
+
+**Table:** `make_setC_condition_summary.py` -> `results/report_set_C/setC_condition_summary.csv/.tex`,
+from the committed `setC_runs.csv` and the compare_sets inputs, with
+`make_report_figures`' own statistics (12 leads, empty PCC a failure, cluster-bootstrap
+CI). The definitions were fixed before looking at the table: a run = a learned export;
+reliable = its verdict ok/check (the classical median uses the same photographs, and
+each classical run's own verdict selects the same ones); failure = learned median PCC
+< 0.5 (§43); cause = the first stage that went wrong (NO_PULSE, then FEW_TICKS /
+NO_TICK_SCALE, then SCALE_DISAGREE); rescues left out (in-sample).
+
+| condition | photos | runs | reliable | failures (cause) | learned PCC, reliable | Δ vs B | classical PCC | Δ vs B |
+|---|---|---|---|---|---|---|---|---|
+| tilt | 6 | 6 | 4 | 2 (2 no pulse) | 0.961 [0.948, 0.972] | +0.004 [-0.004, +0.014] | 0.563 [0.442, 0.592] | -0.100 [-0.270, +0.034] |
+| shadow | 4 | 4 | 2 | 1 (no pulse) | 0.936 [0.926, 0.936] | -0.019 [-0.025, -0.019] | 0.558 [0.550, 0.746] | -0.264 [-0.283, -0.231] |
+| crumple | 7 | 7 | 1 | 4 (1 no pulse, 3 few ticks) | 0.932 (1 photo, no CI) | -0.045 | 0.439 | -0.379 |
+
+**Gate** (17 learned runs): 7 of 7 failures marked unreliable; 3 of 10 good runs marked
+unreliable (false alarms: shadow 231610, PCC 0.974; crumple 124607, 0.828; crumple
+125545, 0.928; all SCALE_DISAGREE). Read with care: the reliable-run medians are over
+2-4 photographs (crumple: one), so they say the runs the gate lets through are as good
+as Set B, not that the condition is harmless. The whole-condition figures (§44) stay
+the headline.
+
 ---
 
 ## Open items (ordered)

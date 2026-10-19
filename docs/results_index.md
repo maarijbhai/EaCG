@@ -91,7 +91,13 @@ in each folder's `_excluded/` with a README saying why. The data itself is not i
   `robustness.tex/.csv/.pdf` (each Set C lead minus the median of the same record's
   Set B photos, same lead and tracer: median difference with a 95% cluster-bootstrap
   CI, per condition), `compare_sets.tex/.csv` (A, B, C side by side), `pcc_by_set.pdf`,
-  `headline.json`.
+  `headline.json`. The figures and `robustness.tex` show only the conditions that have
+  photographs (`--present-conditions-only`, §45); the CSVs keep every row.
+- **Per condition, with the gate**: `results/report_set_C/setC_condition_summary.csv/.tex`
+  (`make_setC_condition_summary.py`, §45) -- photos, learned runs, reliable runs
+  (ok/check), failures by cause, learned and classical median PCC over the reliable
+  runs and their change against the same records' Set B, and the gate row (7 of 7
+  failures caught, 3 of 10 good runs false alarms).
 - Inputs: `results/device/sheet_scores_all_sets.csv` + `python/test_set_all.csv`
   (`make_setC_inputs.py`: the A/B rows unchanged + the Set C score files); every
   lead per condition: `results/device/sheet_scores_setC_tilt.csv`, `_setC_shadow.csv`,
@@ -151,7 +157,7 @@ failed learned runs (median lead PCC < 0.5) were marked unreliable (`setC_runs.c
 | `results/device/sheet_scores.csv` (Sets A, B) | `score_device_sheets.py` -- do **not** re-run before the report: it re-scores every folder |
 | `results/report/*` | `make_report_figures.py` (+ `make_stats_workbook.py`) |
 | `results/device/sheet_scores_setC_*.csv` | `score_device_set.py "<folder>"` (the same scorer, one folder; `--targets target_corrections.csv` for the one mis-labelled run) |
-| `results/report_set_C/*` | `make_setC_inputs.py`, then `make_report_figures.py --scores results/device/sheet_scores_all_sets.csv --manifest test_set_all.csv --sets robustness` (and `--sets clean ideal robustness`), `make_stats_workbook.py --sets robustness --scores ... --manifest ...`; `make_extras_workbook.py` |
+| `results/report_set_C/*` | `make_setC_inputs.py`, then `make_report_figures.py --scores results/device/sheet_scores_all_sets.csv --manifest test_set_all.csv --sets robustness` (and `--sets clean ideal robustness`), `make_stats_workbook.py --sets robustness --scores ... --manifest ...`; `make_extras_workbook.py`; `compare_sets/` with `--present-conditions-only` (§45); `make_setC_condition_summary.py` |
 | `results/device/setC_runs.csv`, `setC_crumple_*.csv`, `setC_crumple_rescue_before_after.csv` | `summarise_set_c.py`, `summarise_crumple.py`, `rescue_before_after.py` |
 | `results/kitphoto/orientation_sessions*.csv` | `run_orientation_sessions.py` |
 | `results/kitphoto/t0_guard_*.csv` | `run_t0_guard.py` (`--whatif`; b3 in WSL) |
