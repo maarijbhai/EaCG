@@ -147,6 +147,12 @@ failed learned runs (median lead PCC < 0.5) were marked unreliable (`setC_runs.c
 - The 7 training runs: `results/ml/clf_*.csv/.json` (test macro AUROC in each sidecar);
   deployed model parity `results/ml/clf_export.*`; degradation curve
   `results/ml/clf_degradation.*`; on the phone's sheets `results/ml/clf_sheets.*` (§29-33).
+- **On every phone export of Sets A, B, C** (§46): `results/ml/clf_phone_eval.csv` (one
+  row per export: the phone's diagnosis line, the deployed model offline on the exported
+  signal and on the PTB-XL truth signal, the PTB-XL labels, CD false flags),
+  `clf_phone_eval_summary.csv` + `clf_phone_eval.tex` (per set / condition / tracer /
+  quality verdict); the truth-signal decision per record in the `.json`. Rescues
+  reported apart (in-sample). `clf_sheets.*` (§32, 7 pre-fix dev exports) is superseded.
 
 ---
 
@@ -161,3 +167,4 @@ failed learned runs (median lead PCC < 0.5) were marked unreliable (`setC_runs.c
 | `results/device/setC_runs.csv`, `setC_crumple_*.csv`, `setC_crumple_rescue_before_after.csv` | `summarise_set_c.py`, `summarise_crumple.py`, `rescue_before_after.py` |
 | `results/kitphoto/orientation_sessions*.csv` | `run_orientation_sessions.py` |
 | `results/kitphoto/t0_guard_*.csv` | `run_t0_guard.py` (`--whatif`; b3 in WSL) |
+| `results/ml/clf_phone_eval*` | `ml/clf_phone_eval.py` (in WSL: `wsl -d Ubuntu -- bash /mnt/c/dev/ECG-App/ml/wsl_run.sh python ml/clf_phone_eval.py`) |

@@ -1259,6 +1259,49 @@ unreliable (false alarms: shadow 231610, PCC 0.974; crumple 124607, 0.828; crump
 as Set B, not that the condition is harmless. The whole-condition figures (§44) stay
 the headline.
 
+## 46. 2026-10-19 — The classifier on every phone export of Sets A, B and C
+
+Read-only; no existing result changed. `ml/clf_phone_eval.py` (6981522; results
+1a9902f, sidecar clean), in WSL. All 115 exports: Set A 24, B 48, C 31 (from
+`python/test_set_all.csv`), plus 12 rescue re-runs reported apart (in-sample). Record
+and verdict from the committed score files (so the two target corrections apply).
+Per export: the phone's `# diagnosis:` line; the deployed `.tflite` (app thresholds)
+run offline on the exported signal through `clf_input.from_columns`; the same model
+on the record's PTB-XL signal ("truth"); the PTB-XL superclass labels.
+`results/ml/clf_phone_eval.csv`, `_summary.csv`, `.tex`, `.json`.
+
+**Port:** the phone's decisions equal the offline ones on **115 / 115** exports; max
+|dp| 0.00023.
+
+| learned tracer | exports | same as truth signal | exact label | contains label |
+|---|---|---|---|---|
+| A clean | 12 | 9 | 7 | 11 |
+| B ideal | 24 | 18 | 14 | 22 |
+| C, ok/check | 7 | **7** | 2 | 7 |
+| C, unreliable | 10 | **3** | 0 | 3 |
+| (classical: A / B / C) | 12 / 24 / 14 | 8 / 7 / 6 | 6 / 6 / 0 | 10 / 13 / 7 |
+
+Set A reproduces §33 (9/12, 7/12, 11/12; classical 6/12 exact, 10/12 contains).
+**The verdict separates the diagnoses too:** on Set C every learned run marked ok or
+check gives the truth signal's decision (7/7); unreliable runs mostly do not (3/10;
+the failed crumple runs read as MI + CD). Classical on Set B: 7/24 same as truth.
+
+**Labels cannot be matched exactly on Set C even from the truth signal:** Set C is
+mostly PTB-XL 40 and 4016, and the model on their truth signals says NORM + CD
+(40) and MI + CD (4016; LBBB mimics MI, §33). So "same as truth" is the digitiser's
+measure here; "exact label" is the classifier's.
+
+**The known CD-threshold false flags** (threshold 0.05, §32): CD without a CD label
+is raised on 38 and 40 from their truth signals (p 0.083, 0.068). Of the learned
+false CD flags, 2/2 (A), 4/4 (B) and 6/7 (C) are these; the one other is a failed
+tilt run (PTB-XL 9, unreliable). The classical tracer's are mostly NOT these: 8 of its
+12 Set B CD flags (and 2 in Set C tilt) come with a false MI on records whose truth
+signal has no CD -- a digitiser effect. Truth-signal decisions per record are in the
+`.json`; besides CD, the model adds MI on 57 and 160, STTC on 7916, and reads 167
+(STTC label) as HYP.
+
+Tagged `thesis-freeze` at this entry's commit.
+
 ---
 
 ## Open items (ordered)
