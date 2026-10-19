@@ -34,6 +34,9 @@ in each folder's `_excluded/` with a README saying why. The data itself is not i
 ## Chapter 5 section by section
 
 ### 5.1 Experiment conditions
+- The 12 test sheets -- PTB-XL diagnosis (codes, likelihood, superclass), age, sex,
+  fold, the report text, and every photograph of each in Sets A, B and C:
+  `results/kitphoto/test_sheets.csv` (`python/list_test_sheets.py`).
 - The sets: the table above; Set B photo quality (frame fill, px/mm, tilt, light):
   `stats_sets_A_B.xlsx`, sheet *Photo quality (B)*, and *Quality vs PCC (B)* (§36).
 - Metrics, how each is computed: the README sheets of the workbooks; the scorer is
