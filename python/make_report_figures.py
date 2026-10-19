@@ -438,6 +438,12 @@ def fig_pcc_by_set(out: Out, plt, df: pd.DataFrame, pcc_lim, present_only: bool 
     ax.legend(loc="lower right", frameon=False, ncol=2)
     fig.savefig(out.root / "pcc_by_set.pdf")
     plt.close(fig)
+    if present_only:  # the CSV keeps every category, drawn or not
+        drawn = {(r["set"], r["condition"], r["tracer"]): r for r in rows}
+        rows = [drawn.get((s, c, tk)) or {"set": s, "condition": c, "tracer": tk,
+                                          **summary(leads12(df[(df["set"] == s) & (df["tracer_kind"] == tk)
+                                                               & (df["condition"] == c)])["pcc_asis"])}
+                for s, c in categories(df) for tk in TRACERS]
     out.csv("pcc_by_set.csv", pd.DataFrame(rows))
     out.sidecar("pcc_by_set", ["pcc_by_set.pdf", "pcc_by_set.csv"])
 
