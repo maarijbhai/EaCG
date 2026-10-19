@@ -1,7 +1,7 @@
 {
   "generated_by": "python/make_report_figures.py",
-  "utc": "2026-10-16T10:52:37+00:00",
-  "git_commit": "2e85ddb6861313b73c70c55333fe5d1f076e1565",
+  "utc": "2026-10-19T09:51:07+00:00",
+  "git_commit": "d6d544476b60b957689255b237749082e32d8f4a",
   "git_dirty": false,
   "params": {
     "scores": "..\\results\\device\\sheet_scores_all_sets.csv",
@@ -31,7 +31,8 @@
       "ideal",
       "robustness"
     ],
-    "mode": "comparison"
+    "mode": "comparison",
+    "present_conditions_only": true
   },
   "versions": {
     "python": "3.13.5",

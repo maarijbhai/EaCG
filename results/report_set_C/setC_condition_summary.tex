@@ -1,0 +1,15 @@
+% caption: Set C by condition. Reliable = the learned run's verdict ok or check; failure = learned
+% median lead PCC < 0.5, cause = first stage that went wrong; PCC and change vs the same records'
+% Set B photographs over the reliable runs' 12 leads, median [95% CI, cluster bootstrap over photographs;
+% none with a single reliable photograph]. Rescue re-runs not included (in-sample).
+\begin{tabular}{@{}lrrrlllll@{}}
+\toprule
+\textbf{Condition} & \textbf{Photos} & \textbf{Runs} & \textbf{Reliable} & \textbf{Failures (cause)} & \textbf{Learned PCC} & \textbf{$\Delta$ vs B} & \textbf{Classical PCC} & \textbf{$\Delta$ vs B}\\
+\midrule
+tilt & 6 & 6 & 4 & 2 (2 no pulse) & 0.961 [0.948, 0.972] & +0.004 [-0.004, +0.014] & 0.563 [0.442, 0.592] & -0.100 [-0.270, +0.034]\\
+shadow & 4 & 4 & 2 & 1 (1 no pulse) & 0.936 [0.926, 0.936] & -0.019 [-0.025, -0.019] & 0.558 [0.550, 0.746] & -0.264 [-0.283, -0.231]\\
+crumple & 7 & 7 & 1 & 4 (1 no pulse, 3 few ticks) & 0.932 & -0.045 & 0.439 & -0.379\\
+\midrule
+\multicolumn{9}{@{}l}{Quality gate, 17 learned runs: 7 of 7 failures marked unreliable; 3 of 10 good runs marked unreliable (false alarms)}\\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,5 @@
+condition,photos,learned_runs,reliable_runs,failures,failures_no_pulse,failures_few_ticks,failures_scale_disagree,failures_other,learned_median_pcc,learned_ci_lo,learned_ci_hi,learned_n_leads,learned_diff_vs_B,learned_diff_ci_lo,learned_diff_ci_hi,learned_n_paired,classical_median_pcc,classical_ci_lo,classical_ci_hi,classical_n_leads,classical_diff_vs_B,classical_diff_ci_lo,classical_diff_ci_hi,classical_n_paired,failures_caught,good_runs,false_alarms
+tilt,6,6,4,2,2,0,0,0,0.96095,0.9483,0.9721,48,0.004475000000000062,-0.004150000000000098,0.01419999999999999,48,0.5627,0.4419,0.5919,48,-0.09970000000000001,-0.27014999999999995,0.034499999999999975,43,,,
+shadow,4,4,2,1,1,0,0,0,0.9357500000000001,0.9263,0.9357500000000001,24,-0.019374999999999976,-0.02477499999999999,-0.019374999999999976,24,0.5576,0.5498,0.74595,24,-0.2643,-0.2834,-0.23134999999999994,23,,,
+crumple,7,7,1,4,1,3,0,0,0.9318,,,12,-0.044675000000000076,,,12,0.4392,,,12,-0.37860000000000005,,,12,,,
+gate (all conditions),,17,,7,,,,,,,,,,,,,,,,,,,,,7,10,3

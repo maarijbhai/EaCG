@@ -1,0 +1,45 @@
+{
+  "generated_by": "python/make_setC_condition_summary.py",
+  "utc": "2026-10-19T09:51:20+00:00",
+  "git_commit": "d6d544476b60b957689255b237749082e32d8f4a",
+  "git_dirty": false,
+  "sources": [
+    "results/device/setC_runs.csv",
+    "results/device/sheet_scores_all_sets.csv",
+    "python/test_set_all.csv"
+  ],
+  "manifest_sha256": "e6bf448a68f2b135acd29fba2adb79c8d955b94fee049ad647387b66a341ffc3",
+  "params": {
+    "fail_pcc": 0.5,
+    "reliable": [
+      "ok",
+      "check"
+    ],
+    "n_boot": 2000,
+    "seed": 20261012,
+    "cause_order": [
+      "no pulse",
+      "few ticks",
+      "scale disagree"
+    ],
+    "rescues": "left out (in-sample)"
+  },
+  "classical_own_verdict_selects_same_photos": true,
+  "gate": {
+    "failures": 7,
+    "failures_caught": 7,
+    "good_runs": 10,
+    "false_alarms": 3,
+    "false_alarm_runs": [
+      "eacg_sheet_ptbxl4016_kit_500hz_300dpi_model_20261014_231732.csv",
+      "eacg_sheet_ptbxl4016_kit_500hz_300dpi_model_20261015_125638.csv",
+      "eacg_sheet_ptbxl40_kit_500hz_300dpi_model_20261015_124711.csv"
+    ],
+    "missed_failure_runs": []
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "pandas": "3.0.2"
+  }
+}
