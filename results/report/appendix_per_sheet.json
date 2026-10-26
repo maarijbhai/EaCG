@@ -1,0 +1,17 @@
+{
+  "generated_by": "python/make_appendix_tables.py",
+  "utc": "2026-10-25T22:10:02+00:00",
+  "git_commit": "0268718b0b918db380cf9c590e1f6d5e8622bd75",
+  "git_dirty": true,
+  "params": {
+    "scores": "results\\device\\sheet_scores_all_sets.csv",
+    "manifest": "python\\test_set_all.csv",
+    "leads": "12 (rhythm strip excluded)",
+    "good_pcc": 0.9
+  },
+  "versions": {
+    "python": "3.13.5",
+    "pandas": "3.0.2",
+    "numpy": "2.5.2"
+  }
+}

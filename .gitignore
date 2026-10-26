@@ -46,3 +46,16 @@ vendor/
 
 # Generated print targets — reproducible from make_print_target.py
 out/
+
+# Thesis write-up and working notes: kept locally, not published
+CLAUDE.md
+CHANGES.txt
+previous_thesis.md
+prompt_b5_and_photo.md
+convert.py
+archive/
+docs/*
+!docs/ml_plan.md
+!docs/classifier_training.md
+!docs/functional_requirements.tex
+!docs/functional_requirements_standalone.tex

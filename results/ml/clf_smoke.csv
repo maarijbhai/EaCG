@@ -1,0 +1,2 @@
+epoch,train_s,loss,val_macro_auroc,best
+1,155.4,0.92304,0.47791,True
