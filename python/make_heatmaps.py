@@ -5,9 +5,10 @@
 
 heatmap_leads_ideal   share of each lead's photographs with PCC >= 0.9, drawn in the
                       positions of the 3x4 printout (rows I/II/III, columns 0-2.5 ...
-                      7.5-10 s), learned and classical tracer side by side. Shows where
-                      on the page fidelity is lost, e.g. the last column, which has a
-                      time marker on one side only.
+                      7.5-10 s): the learned tracer as recorded and time-aligned, and
+                      the classical tracer as recorded. Shows where on the page
+                      fidelity is lost (the last column has a time marker on one side
+                      only) and that the learned tracer's loss there is timing.
 heatmap_clf_ideal     the classifier's decisions on the 24 sheets: rows the record's
                       PTB-XL superclass, columns the superclasses flagged, cells the
                       number of sheets; on the record's true PTB-XL signal, the learned
@@ -42,7 +43,6 @@ OUT = REPO / "results" / "report"
 LAYOUT = (("I", "aVR", "V1", "V4"), ("II", "aVL", "V2", "V5"), ("III", "aVF", "V3", "V6"))
 COLUMNS = ("0–2.5 s", "2.5–5 s", "5–7.5 s", "7.5–10 s")
 CLASSES = ("NORM", "MI", "STTC", "CD", "HYP")
-TRACER_TITLE = {"learned": "Learned tracer", "classical": "Classical tracer"}
 
 
 def cmap():
@@ -54,23 +54,31 @@ def ink(frac: float) -> str:
     return "white" if frac >= 0.55 else "black"
 
 
+#: The three panels: (key, tracer, PCC column, title). The aligned panel is the
+#: learned tracer's own leads after time alignment (Section 3.5.5): if a position
+#: recovers there, its loss was timing, not reading.
+PANELS = (("learned", "learned", "pcc_asis", "Learned, as recorded"),
+          ("learned_aligned", "learned", "pcc_aligned", "Learned, time-aligned"),
+          ("classical", "classical", "pcc_asis", "Classical, as recorded"))
+
+
 def lead_table(df: pd.DataFrame) -> pd.DataFrame:
     rows = []
-    for kind in R.TRACERS:
+    for key, kind, col, _ in PANELS:
         d = df[df["tracer_kind"] == kind]
         for r, names in enumerate(LAYOUT):
             for c, lead in enumerate(names):
-                s = R.summary(d[d["lead"] == lead]["pcc_asis"])
-                rows.append({"tracer": kind, "lead": lead, "row": r + 1, "col": c + 1,
-                             "n_leads": s["n"], "n_unavailable": s["n_unavailable"],
+                s = R.summary(d[d["lead"] == lead][col])
+                rows.append({"panel": key, "tracer": kind, "pcc": col, "lead": lead, "row": r + 1,
+                             "col": c + 1, "n_leads": s["n"], "n_unavailable": s["n_unavailable"],
                              "pct_ge_09": s["pct_ge_09"], "median_pcc": s["median"]})
     return pd.DataFrame(rows)
 
 
 def fig_leads(plt, t: pd.DataFrame, path: Path):
-    fig, axes = plt.subplots(1, 2, figsize=(R.FULL_W, 1.85), constrained_layout=True)
-    for ax, kind in zip(axes, R.TRACERS):
-        d = t[t["tracer"] == kind]
+    fig, axes = plt.subplots(1, 3, figsize=(R.FULL_W, 1.75), constrained_layout=True)
+    for ax, (key, _, _, title) in zip(axes, PANELS):
+        d = t[t["panel"] == key]
         grid = np.full((3, 4), np.nan)
         for _, x in d.iterrows():
             grid[x["row"] - 1, x["col"] - 1] = x["pct_ge_09"]
@@ -78,8 +86,8 @@ def fig_leads(plt, t: pd.DataFrame, path: Path):
         for _, x in d.iterrows():
             frac = x["pct_ge_09"] / 100
             ax.text(x["col"] - 1, x["row"] - 1, f"{x['lead']}\n{x['pct_ge_09']:.0f} %",
-                    ha="center", va="center", fontsize=7.5, color=ink(frac), linespacing=1.15)
-        ax.set_xticks(range(4), COLUMNS)
+                    ha="center", va="center", fontsize=7, color=ink(frac), linespacing=1.1)
+        ax.set_xticks(range(4), COLUMNS, fontsize=6.5)
         ax.set_yticks([])
         ax.xaxis.tick_top()
         ax.tick_params(length=0)
@@ -89,7 +97,7 @@ def fig_leads(plt, t: pd.DataFrame, path: Path):
         ax.set_yticks(np.arange(-0.5, 3), minor=True)
         ax.grid(which="minor", color="white", linewidth=1.5)
         ax.tick_params(which="minor", length=0)
-        ax.set_title(TRACER_TITLE[kind], fontsize=9, pad=16)
+        ax.set_title(title, fontsize=8.5, pad=14)
     cb = fig.colorbar(im, ax=axes, shrink=0.9, pad=0.02)
     cb.set_label("Leads with PCC ≥ 0.9 (%)", fontsize=8)
     cb.ax.tick_params(labelsize=7)
@@ -170,7 +178,7 @@ def main() -> int:
     out.sidecar("heatmap_clf_ideal", ["heatmap_clf_ideal.pdf", "heatmap_clf_ideal.csv"],
                 {"decisions": "phone_says (learned, classical); truth_says (true signal)"})
 
-    print(t.pivot_table(index="lead", columns="tracer", values="pct_ge_09").round(0).loc[
+    print(t.pivot_table(index="lead", columns="panel", values="pct_ge_09").round(0).loc[
         [l for r in LAYOUT for l in r]].to_string())
     print(c.to_string(index=False))
     return 0
