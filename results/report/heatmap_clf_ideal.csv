@@ -1,0 +1,16 @@
+panel,true,n_sheets,NORM,MI,STTC,CD,HYP,none
+truth,NORM,8,8,2,0,4,0,0
+truth,MI,4,0,4,0,0,0,0
+truth,STTC,4,0,2,2,0,2,0
+truth,CD,4,0,2,0,4,0,0
+truth,HYP,4,0,0,2,0,4,0
+learned,NORM,8,8,0,0,4,0,0
+learned,MI,4,0,4,0,0,0,0
+learned,STTC,4,0,0,2,0,2,0
+learned,CD,4,0,2,0,4,2,0
+learned,HYP,4,0,0,2,0,4,0
+classical,NORM,8,3,3,0,5,0,0
+classical,MI,4,0,4,0,2,0,0
+classical,STTC,4,0,2,2,2,0,1
+classical,CD,4,0,3,0,4,0,0
+classical,HYP,4,0,4,0,3,0,0

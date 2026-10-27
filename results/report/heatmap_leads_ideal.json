@@ -1,0 +1,34 @@
+{
+  "generated_by": "python/make_heatmaps.py",
+  "utc": "2026-10-27T09:36:54+00:00",
+  "git_commit": "21a62d922084f3276a40315fd3c249702675ffca",
+  "git_dirty": false,
+  "params": {
+    "scores": "results\\device\\sheet_scores_all_sets.csv",
+    "manifest": "python\\test_set_all.csv",
+    "clf": "results\\ml\\clf_phone_eval.csv",
+    "set": "ideal (Set B)",
+    "good_pcc": 0.9,
+    "leads": "12 (rhythm strip excluded)"
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "pandas": "3.0.2",
+    "matplotlib": "3.10.5"
+  },
+  "files": [
+    "heatmap_leads_ideal.pdf",
+    "heatmap_leads_ideal.csv"
+  ],
+  "n_photos": 48,
+  "load_report": {
+    "skipped_not_in_manifest": [
+      "eacg_sheet_ptbxl57_kit_500hz_300dpi_classical_20261012_144637.csv",
+      "eacg_sheet_ptbxl57_kit_500hz_300dpi_classical_20261012_144638.csv",
+      "eacg_sheet_ptbxl8504_kit_500hz_300dpi_classical_20261012_154619.csv",
+      "eacg_sheet_ptbxl8504_kit_500hz_300dpi_classical_20261012_154622.csv"
+    ],
+    "in_manifest_without_scores": []
+  }
+}

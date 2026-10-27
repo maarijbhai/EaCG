@@ -1,0 +1,25 @@
+{
+  "generated_by": "python/make_heatmaps.py",
+  "utc": "2026-10-27T09:36:54+00:00",
+  "git_commit": "21a62d922084f3276a40315fd3c249702675ffca",
+  "git_dirty": false,
+  "params": {
+    "scores": "results\\device\\sheet_scores_all_sets.csv",
+    "manifest": "python\\test_set_all.csv",
+    "clf": "results\\ml\\clf_phone_eval.csv",
+    "set": "ideal (Set B)",
+    "good_pcc": 0.9,
+    "leads": "12 (rhythm strip excluded)"
+  },
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.5.2",
+    "pandas": "3.0.2",
+    "matplotlib": "3.10.5"
+  },
+  "files": [
+    "heatmap_clf_ideal.pdf",
+    "heatmap_clf_ideal.csv"
+  ],
+  "decisions": "phone_says (learned, classical); truth_says (true signal)"
+}
